@@ -32,6 +32,9 @@
     "grunt-env": "latest"
   },
   "devDependencies": {
+    "aurelia-tools": "^0.1.19",
+    "conventional-changelog": "^1.1.0",
+    "del": "^2.2.0",
     "grunt-browserify": "^3.5.0",
     "grunt-concurrent": "latest",
     "grunt-contrib-copy": "^0.8.0",
@@ -42,6 +45,10 @@
     "grunt-include-source": "^0.6.1",
     "grunt-karma": "^0.10.1",
     "grunt-mocha-test": "latest",
+    "gulp-babel": "^6.1.2",
+    "gulp-bump": "^1.0.0",
+    "gulp-eslint": "^2.0.0",
+    "gulp-rename": "^1.2.2",
     "jspm": "^0.16.30",
     "karma": "^0.12.31",
     "karma-chai": "^0.1.0",
@@ -49,6 +56,9 @@
     "karma-mocha": "^0.1.10",
     "karma-mocha-reporter": "^1.0.2",
     "mocha": "^2.1.0",
+    "require-dir": "^0.3.0",
+    "run-sequence": "^1.1.5",
+    "vinyl-paths": "^2.1.0",
     "yargs": "^4.2.0"
   }
 }
