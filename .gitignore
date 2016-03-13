@@ -1,0 +1,12 @@
+.idea
+.DS_Store
+bin/
+gen/
+build/
+debug/
+*~
+node_modules
+jspm_packages
+bower_components
+documentation/docs/
+bundles/
