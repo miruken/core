@@ -265,9 +265,9 @@ var Package = Base.extend({
   },
 
   addPackage: function(name) {
-    var package = new Package(null, {name: name, parent: this});
-    this.addName(name, package);
-    return package;
+    var pkg = new Package(null, {name: name, parent: this});
+    this.addName(name, pkg);
+    return pkg;
   },
 
   package: function(_private, _public) {
