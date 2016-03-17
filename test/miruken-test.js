@@ -1,4 +1,4 @@
-var miruken = require('../lib/miruken.js'),
+var miruken = require('../src/miruken.js'),
     Promise = require('bluebird'),
     chai    = require("chai"),
     expect  = chai.expect;
@@ -1435,16 +1435,16 @@ describe("Package", function () {
     describe("#getPackages", function () {
         it("should expose package definitions", function () {
             var packages = [];
-            base2.getPackages(function (package) {
-                packages.push(package.member);
+            base2.getPackages(function (pkg) {
+                packages.push(pkg.member);
             });
             expect(packages).to.contain(miruken_test);
         });
 
         it("should expose filterd package definitions", function () {
             var packages = [];
-            base2.getPackages("foo", function (package) {
-                packages.push(package.member);
+            base2.getPackages("foo", function (pkg) {
+                packages.push(pkg.member);
             });
             expect(packages).to.have.length(0);
         });

@@ -1,6 +1,6 @@
 var gulp = require('gulp');
 var runSequence = require('run-sequence');
-var babel = require('gulp-babel');
+var to5 = require('gulp-babel');
 var paths = require('../paths');
 var compilerOptions = require('../babel-options');
 var assign = Object.assign || require('object.assign');
@@ -31,34 +31,36 @@ gulp.task('build-index', function(){
         .pipe(gulp.dest(paths.output));
 });
 
-gulp.task('build-es6', function () {
-  return gulp.src(paths.output + jsName)
-    .pipe(gulp.dest(paths.output + 'es6'));
+
+gulp.task('build-es2015', function () {
+    return gulp.src(paths.output + jsName)
+        .pipe(to5(assign({}, compilerOptions.es2015())))
+        .pipe(gulp.dest(paths.output + 'es2015'));
 });
 
 gulp.task('build-commonjs', function () {
-  return gulp.src(paths.output + jsName)
-    .pipe(babel(assign({}, compilerOptions, {"plugins": ["transform-es2015-modules-commonjs"]})))
-    .pipe(gulp.dest(paths.output + 'commonjs'));
+    return gulp.src(paths.output + jsName)
+        .pipe(to5(assign({}, compilerOptions.commonjs())))
+        .pipe(gulp.dest(paths.output + 'commonjs'));
 });
 
 gulp.task('build-amd', function () {
-  return gulp.src(paths.output + jsName)
-    .pipe(babel(assign({}, compilerOptions, {"plugins": ["transform-es2015-modules-amd"]})))
-    .pipe(gulp.dest(paths.output + 'amd'));
+    return gulp.src(paths.output + jsName)
+        .pipe(to5(assign({}, compilerOptions.amd())))
+        .pipe(gulp.dest(paths.output + 'amd'));
 });
 
 gulp.task('build-system', function () {
-  return gulp.src(paths.output + jsName)
-    .pipe(babel(assign({}, compilerOptions, { "plugins": ["transform-es2015-modules-systemjs"]})))
-    .pipe(gulp.dest(paths.output + 'system'));
+    return gulp.src(paths.output + jsName)
+        .pipe(to5(assign({}, compilerOptions.system())))
+        .pipe(gulp.dest(paths.output + 'system'));
 });
 
 gulp.task('build', function(callback) {
   return runSequence(
     'clean',
     'build-index',
-    ['build-es6', 'build-commonjs', 'build-amd', 'build-system'],
+    ['build-es2015', 'build-commonjs', 'build-amd', 'build-system'],
     callback
   );
 });
