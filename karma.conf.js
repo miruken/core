@@ -4,13 +4,13 @@ var babelOptions = require('./build/babel-options');
 
 module.exports = function(config) {
   var configuration = {
-    frameworks: ['jspm', 'jasmine'],
+    frameworks: ['jspm', 'mocha', 'chai'],
 
     jspm: {
       config: 'config.js',
       loadFiles: [paths.tests],
       serveFiles: [paths.source]
-    },
+    },  
 
     files: [],
 
@@ -20,15 +20,7 @@ module.exports = function(config) {
     },
 
     'babelPreprocessor': {
-      options: {
-        sourceMap: 'inline',
-        presets: [ 'es2015-loose', 'stage-1'],
-        plugins: [
-          'syntax-flow',
-          'transform-decorators-legacy',
-          'transform-flow-strip-types'
-        ]
-      }
+      options: babelOptions
     },
 
     reporters: ['coverage', 'progress'],
