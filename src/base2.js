@@ -7,48 +7,19 @@
     Doeke Zanstra
 */
 
-// timestamp: Wed, 23 Sep 2009 19:38:55
+export const Undefined = K(),
+             Null      = K(null),
+             True      = K(true),
+             False     = K(false);
 
-base2 = {
-  name:    "base2",
-  version: "1.1 (alpha1)",
-  exports:
-    "Base,Package,Abstract,Module,Enumerable," +
-    "Undefined,Null,This,True,False,assignID,global",
-  namespace: ""
-};
+let __prototyping, _counter = 1;
 
-new function(_no_shrink_) { ///////////////  BEGIN: CLOSURE  ///////////////
-
-// =========================================================================
-// base2/header.js
-// =========================================================================
-
-/*@cc_on @*/
-
-var Undefined = K(), Null = K(null), True = K(true), False = K(false), This = function(){return this};
-
-var global = This(), base2 = global.base2;
-   
-// private
-var _IGNORE  = K(),
-    _FORMAT  = /%([1-9])/g,
-    _LTRIM   = /^\s\s*/,
-    _RTRIM   = /\s\s*$/,
-    _RESCAPE = /([\/()[\]{}|*+-.,^$?\\])/g,     // safe regular expressions
-    _BASE    = /\bbase\b/,
-    _HIDDEN  = ["constructor", "toString"],     // only override these when prototyping
-    _counter = 1,
-    _slice   = Array.prototype.slice;
+const _IGNORE = K(),
+      _BASE   = /\bbase\b/,
+      _HIDDEN = ["constructor", "toString"],     // only override these when prototyping
+      _slice  = Array.prototype.slice;
 
 _Function_forEach(); // make sure this is initialised
-
-function assignID(object, name) {
-  // Assign a unique ID to an object.
-  if (!name) name = object.nodeType == 1 ? "uniqueID" : "base2ID";
-  if (!object[name]) object[name] = "b2_" + _counter++;
-  return object[name];
-};
 
 // =========================================================================
 // base2/Base.js
@@ -56,22 +27,22 @@ function assignID(object, name) {
 
 // http://dean.edwards.name/weblog/2006/03/base/
 
-var _subclass = function(_instance, _static) {
+const _subclass = function(_instance, _static) {
   // Build the prototype.
-  base2.__prototyping = this.prototype;
+  __prototyping = this.prototype;
   var _prototype = new this;
   if (_instance) extend(_prototype, _instance);
   _prototype.base = function() {
     // call this method from any other method to invoke that method's ancestor
   };
-  delete base2.__prototyping;
+  __prototyping = undefined;
   
   // Create the wrapper for the constructor function.
   var _constructor = _prototype.constructor;
   function _class() {
     // Don't call the constructor function when prototyping.
-    if (!base2.__prototyping) {
-      if (this.constructor == _class || this.__constructing) {
+    if (!__prototyping) {
+      if (this && (this.constructor == _class || this.__constructing)) {
         // Instantiation.
         this.__constructing = true;
         var instance = _constructor.apply(this, arguments);
@@ -104,14 +75,10 @@ var _subclass = function(_instance, _static) {
   _class.prototype = _prototype;
   if (_class.init) _class.init();
   
-  // introspection (removed when packed)
-  ;;; _class["#implements"] = [];
-  ;;; _class["#implemented_by"] = [];
-  
   return _class;
 };
 
-var Base = _subclass.call(Object, {
+export let Base = _subclass.call(Object, {
   constructor: function() {
     if (arguments.length > 0) {
       this.extend(arguments[0]);
@@ -124,7 +91,7 @@ var Base = _subclass.call(Object, {
     if (this.constructor.toString == Function.prototype.toString) {
       return "[object base2.Base]";
     } else {
-      return "[object " + String2.slice(this.constructor, 1, -1) + "]";
+      return "[object " + this.constructor.toString().slice(1, -1) + "]";
     }
   }
 }, Base = {
@@ -140,11 +107,6 @@ var Base = _subclass.call(Object, {
 
   implement: function(source) {
     if (typeof source == "function") {
-      ;;; if (_ancestorOf(Base, source)) {
-        // introspection (removed when packed)
-        ;;; this["#implements"].push(source);
-        ;;; source["#implemented_by"].push(this);
-      ;;; }
       source = source.prototype;
     }
     // Add the interface using the extend() function.
@@ -157,7 +119,7 @@ var Base = _subclass.call(Object, {
 // base2/Package.js
 // =========================================================================
 
-var Package = Base.extend({
+export const Package = Base.extend({
   constructor: function(_private, _public) {
     var pkg = this, openPkg;
     
@@ -172,22 +134,20 @@ var Package = Base.extend({
         }
         pkg.namespace = openPkg.namespace;
       } else {
-          if (pkg.parent) {
-             pkg.version = pkg.version || pkg.parent.version;
-             pkg.parent.addName(pkg.name, pkg);
-          }
-        pkg.namespace = format("var %1=%2;", pkg.name, String2.slice(pkg, 1, -1));
+        if (pkg.parent) {
+          pkg.version = pkg.version || pkg.parent.version;
+          pkg.parent.addName(pkg.name, pkg);
+        }
+        pkg.namespace = format("var %1=%2;", pkg.name, pkg.toString().slice(1, -1));
       }
     }
     
     if (_private) {
       _private.__package = this;
       _private.package = openPkg || this;
-      // This next line gets round a bug in old Mozilla browsers
-      var jsNamespace = base2.js ? base2.js.namespace : "";
       
       // This string should be evaluated immediately after creating a Package object.
-      var namespace = "var base2=(function(){return this.base2})(),_private=base2.toString;" + base2.namespace + jsNamespace;
+      var namespace = "var base2=(function(){return this.base2})(),_private=base2.toString;" + base2.namespace;
       var imports = csv(pkg.imports), name;
       for (var i = 0; name = imports[i]; i++) {
         var ns = lookup(name) || lookup("js." + name);
@@ -217,7 +177,7 @@ var Package = Base.extend({
       _private.exports = "if(!" + pkg.name +")var " + pkg.name + "=this.__package;" + namespace + "this._label_" + pkg.name + "();this.exported();";
       
       // give objects and classes pretty toString methods
-      var packageName = String2.slice(pkg, 1, -1);
+      var packageName = pkg.toString().slice(1, -1);
       _private["_label_" + pkg.name] = function() {
         for (var name in nsPkg) {
           var object = nsPkg[name];
@@ -258,7 +218,7 @@ var Package = Base.extend({
       this.exports += "," + name;
       this.namespace += format("var %1=%2.%1;", name, this.name);
       if (value && value.ancestorOf == Base.ancestorOf && name != "constructor") { // it's a class
-        value.toString = K("[" + String2.slice(this, 1, -1) + "." + name + "]");
+        value.toString = K("[" + this.toString().slice(1, -1) + "." + name + "]");
       }
       if (this.exported) this.exported([name]);
     }
@@ -276,7 +236,9 @@ var Package = Base.extend({
   },
     
   toString: function() {
-    return format("[%1]", this.parent ? String2.slice(this.parent, 1, -1) + "." + this.name : this.name);
+    return format("[%1]", this.parent
+         ? this.parent.toString().slice(1, -1) + "." + this.name
+         : this.name);
   }
 });
 
@@ -286,7 +248,7 @@ var Package = Base.extend({
 
 // Not very exciting this.
 
-var Abstract = Base.extend({
+export const Abstract = Base.extend({
   constructor: function() {
     throw new TypeError("Abstract class cannot be instantiated.");
   }
@@ -296,9 +258,9 @@ var Abstract = Base.extend({
 // base2/Module.js
 // =========================================================================
 
-var _moduleCount = 0;
+let _moduleCount = 0;
 
-var Module = Abstract.extend(null, {
+export const Module = Abstract.extend(null, {
   namespace: "",
 
   extend: function(_interface, _static) {
@@ -385,7 +347,6 @@ function _extendModule(module, _interface) {
       } else if (typeof property == "function" && property.call) {
         namespace = "var " + name + "=base2.lang.bind('" + name + "'," + id + ");";
         proto[name] = _createModuleMethod(module, name);
-        ;;; proto[name]._module = module; // introspection
       }
       if (module.namespace.indexOf(namespace) == -1) {
         module.namespace += namespace;
@@ -406,110 +367,6 @@ function _createModuleMethod(module, name) {
     args.unshift(this);
     return module[name].apply(module, args);
   };
-};
-
-// =========================================================================
-// base2/Enumerable.js
-// =========================================================================
-
-var Enumerable = Module.extend({
-  every: function(object, test, context) {
-    var result = true;
-    try {
-      forEach (object, function(value, key) {
-        result = test.call(context, value, key, object);
-        if (!result) throw StopIteration;
-      });
-    } catch (error) {
-      if (error != StopIteration) throw error;
-    }
-    return !!result; // cast to boolean
-  },
-  
-  filter: function(object, test, context) {
-    var i = 0;
-    return this.reduce(object, function(result, value, key) {
-      if (test.call(context, value, key, object)) {
-        result[i++] = value;
-      }
-      return result;
-    }, []);
-  },
-  
-  invoke: function(object, method) {
-    // Apply a method to each item in the enumerated object.
-    var args = _slice.call(arguments, 2);
-    return this.map(object, typeof method == "function" ? function(item) {
-      return item == null ? undefined : method.apply(item, args);
-    } : function(item) {
-      return item == null ? undefined : item[method].apply(item, args);
-    });
-  },
-  
-  map: function(object, block, context) {
-    var result = [], i = 0;
-    forEach (object, function(value, key) {
-      result[i++] = block.call(context, value, key, object);
-    });
-    return result;
-  },
-  
-  pluck: function(object, key) {
-    return this.map(object, function(item) {
-      return item == null ? undefined : item[key];
-    });
-  },
-  
-  reduce: function(object, block, result, context) {
-    var initialised = arguments.length > 2;
-    forEach (object, function(value, key) {
-      if (initialised) { 
-        result = block.call(context, result, value, key, object);
-      } else { 
-        result = value;
-        initialised = true;
-      }
-    });
-    return result;
-  },
-  
-  some: function(object, test, context) {
-    return !this.every(object, not(test), context);
-  }
-});
-
-// =========================================================================
-// lang/package.js
-// =========================================================================
-
-var lang = {
-  name:      "lang",
-  version:   base2.version,
-  exports:   "assert,assertArity,assertType,bind,copy,extend,forEach,format,instanceOf,match,pcopy,rescape,trim,typeOf",
-  namespace: "" // Fixed later.
-};
-
-// =========================================================================
-// lang/assert.js
-// =========================================================================
-
-function assert(condition, message, ErrorClass) {
-  if (!condition) {
-    throw new (ErrorClass || Error)(message || "Assertion failed.");
-  }
-};
-
-function assertArity(args, arity, message) {
-  if (arity == null) arity = args.callee.length; //-@DRE
-  if (args.length < arity) {
-    throw new SyntaxError(message || "Not enough arguments.");
-  }
-};
-
-function assertType(object, type, message) {
-  if (type && (typeof type == "function" ? !instanceOf(object, type) : typeOf(object) != type)) {
-    throw new TypeError(message || "Invalid type.");
-  }
 };
 
 // =========================================================================
@@ -536,17 +393,16 @@ function _dummy(){};
 // lang/extend.js
 // =========================================================================
 
-function extend(object, source) { // or extend(object, key, value)
+export function extend(object, source) { // or extend(object, key, value)
   if (object && source) {
-    var useProto = base2.__prototyping;
+    var useProto = __prototyping;
     if (arguments.length > 2) { // Extending with a key/value pair.
       var key = source;
       source = {};
       source[key] = arguments[2];
       useProto = true;
     }
-    //var proto = (typeof source == "function" ? Function : Object).prototype;
-    var proto = global[(typeof source == "function" ? "Function" : "Object")].prototype;
+    var proto = (typeof source == "function" ? Function : Object).prototype;
     // Add constructor, toString etc
     if (useProto) {
       var i = _HIDDEN.length, key;
@@ -588,7 +444,7 @@ function _override(object, name, desc) {
   }
   var ancestor = _getPropertyDescriptor(object, name);
   if (!ancestor) return desc;
-  var superObject = base2.__prototyping; // late binding for prototypes;
+  var superObject = __prototyping; // late binding for prototypes;
   if (superObject) {
     var sprop = _getPropertyDescriptor(superObject, name);
     if (sprop && (sprop.value != ancestor.value ||
@@ -680,89 +536,34 @@ function _getPropertyDescriptor(object, key) {
     return descriptor;
 }
 
-// =========================================================================
-// lang/forEach.js
-// =========================================================================
-
-// http://dean.edwards.name/weblog/2006/07/enum/
-
-if (typeof StopIteration == "undefined") {
-  StopIteration = new Error("StopIteration");
-}
-
-function forEach(object, block, context, fn) {
-  if (object == null) return;
-  if (!fn) {
-    if (typeof object == "function" && object.call) {
-      // Functions are a special case.
-      fn = Function;
-    } else if (typeof object.forEach == "function" && object.forEach != forEach) {
-      // The object implements a custom forEach method.
-      object.forEach(block, context);
-      return;
-    } else if (typeof object.length == "number") {
-      // The object is array-like.
-      _Array_forEach(object, block, context);
-      return;
-    }
-  }
-  _Function_forEach(fn || Object, object, block, context);
-};
-
-forEach.csv = function(string, block, context) {
-  forEach (csv(string), block, context);
-};
-
-// These are the two core enumeration methods. All other forEach methods
-//  eventually call one of these two.
-
-function _Array_forEach(array, block, context) {
-  if (array == null) array = global;
-  var length = array.length || 0, i; // preserve length
-  if (typeof array == "string") {
-    for (i = 0; i < length; i++) {
-      block.call(context, array.charAt(i), i, array);
-    }
-  } else { // Cater for sparse arrays.
-    for (i = 0; i < length; i++) {
-    /*@if (@_jscript_version < 5.2)
-      if (array[i] !== undefined && $Legacy.has(array, i))
-    @else @*/
-      if (i in array)
-    /*@end @*/
-        block.call(context, array[i], i, array);
-    }
-  }
-};
-
 function _Function_forEach(fn, object, block, context) {
-  // http://code.google.com/p/base2/issues/detail?id=10
-  // Run the test for Safari's buggy enumeration.
-  var Temp = function(){this.i=1};
-  Temp.prototype = {i:1};
-  var count = 0;
-  for (var i in new Temp) count++;
+    // http://code.google.com/p/base2/issues/detail?id=10
+    // Run the test for Safari's buggy enumeration.
+    var Temp = function(){this.i=1};
+    Temp.prototype = {i:1};
+    var count = 0;
+    for (var i in new Temp) count++;
 
-  // Overwrite the main function the first time it is called.
-  _Function_forEach = count > 1 ? function(fn, object, block, context) {
-    // Safari fix (pre version 3)
-    var processed = {};
-    for (var key in object) {
-      if (!processed[key] && fn.prototype[key] === undefined) {
-        processed[key] = true;
-        block.call(context, object[key], key, object);
-      }
-    }
-  } : function(fn, object, block, context) {
-    // Enumerate an object and compare its keys with fn's prototype.
-    for (var key in object) {
-      if (typeof fn.prototype[key] == "undefined") {
-        block.call(context, object[key], key, object);
-      }
-    }
-  };
+    // Overwrite the main function the first time it is called.
+    _Function_forEach = count > 1 ? function(fn, object, block, context) {
+        // Safari fix (pre version 3)
+        var processed = {};
+        for (var key in object) {
+            if (!processed[key] && fn.prototype[key] === undefined) {
+                processed[key] = true;
+                block.call(context, object[key], key, object);
+            }
+        }
+    } : function(fn, object, block, context) {
+        // Enumerate an object and compare its keys with fn's prototype.
+        for (var key in object) {
+            if (typeof fn.prototype[key] == "undefined") {
+                block.call(context, object[key], key, object);
+            }
+        }
+    };
 
-  _Function_forEach(fn, object, block, context);
+    _Function_forEach(fn, object, block, context);
 };
 
 // =========================================================================
@@ -821,7 +622,7 @@ var _toString = Object.prototype.toString;
 
 // http://wiki.ecmascript.org/doku.php?id=proposals:typeof
 
-function typeOf(object) {
+export function typeOf(object) {
   var type = typeof object;
   switch (type) {
     case "object":
@@ -838,537 +639,72 @@ function typeOf(object) {
   }
 };
 
-// =========================================================================
-// js/package.js
-// =========================================================================
-
-var js = {
-  name:      "js",
-  version:   base2.version,
-  exports:   "Array2,Date2,Function2,String2",
-  namespace: "", // fixed later
-  
-  bind: function(host) {
-    var top = global;
-    global = host;
-    forEach.csv(this.exports, function(name2) {
-      var name = name2.slice(0, -1);
-      extend(host[name], this[name2]);
-      this[name2](host[name].prototype); // cast
-    }, this);
-    global = top;
-    return host;
-  }
+export function assignID(object, name) {
+  // Assign a unique ID to an object.
+  if (!name) name = object.nodeType == 1 ? "uniqueID" : "base2ID";
+  if (!object[name]) object[name] = "b2_" + _counter++;
+  return object[name];
 };
 
-function _createObject2(Native, constructor, generics, extensions) {
-  // Clone native objects and extend them.
-
-  // Create a Module that will contain all the new methods.
-  var INative = Module.extend();
-  var id = INative.toString().slice(1, -1);
-  // http://developer.mozilla.org/en/docs/New_in_JavaScript_1.6#Array_and_String_generics
-  forEach.csv(generics, function(name) {
-    INative[name] = unbind(Native.prototype[name]);
-    INative.namespace += format("var %1=%2.%1;", name, id);
-  });
-  forEach (_slice.call(arguments, 3), INative.implement, INative);
-
-  // create a faux constructor that augments the native object
-  var Native2 = function() {
-    return INative(this.constructor == INative ? constructor.apply(null, arguments) : arguments[0]);
-  };
-  Native2.prototype = INative.prototype;
-
-  // Remove methods that are already implemented.
-  for (var name in INative) {
-    var method = Native[name];
-    if (method && name != "prototype" && name != "toString" && method != Function.prototype[name]) {
-      INative[name] = method;
-      delete INative.prototype[name];
-    }
-    Native2[name] = INative[name];
-  }
-  Native2.ancestor = Object;
-  delete Native2.extend;
-  
-  // remove "lang.bind.."
-  Native2.namespace = Native2.namespace.replace(/(var (\w+)=)[^,;]+,([^\)]+)\)/g, "$1$3.$2");
-  
-  return Native2;
-};
-
-// =========================================================================
-// js/~/Date.js
-// =========================================================================
-
-// Fix Date.get/setYear() (IE5-7)
-
-if ((new Date).getYear() > 1900) {
-  Date.prototype.getYear = function() {
-    return this.getFullYear() - 1900;
-  };
-  Date.prototype.setYear = function(year) {
-    return this.setFullYear(year + 1900);
-  };
-}
-
-// https://bugs.webkit.org/show_bug.cgi?id=9532
-
-var _testDate = new Date(Date.UTC(2006, 1, 20));
-_testDate.setUTCDate(15);
-if (_testDate.getUTCHours() != 0) {
-  forEach.csv("FullYear,Month,Date,Hours,Minutes,Seconds,Milliseconds", function(type) {
-    extend(Date.prototype, "setUTC" + type, function() {
-      var value = this.base.apply(this, arguments);
-      if (value >= 57722401000) {
-        value -= 3600000;
-        this.setTime(value);
-      }
-      return value;
+export function format(string) {
+    // Replace %n with arguments[n].
+    // e.g. format("%1 %2%3 %2a %1%3", "she", "se", "lls");
+    // ==> "she sells sea shells"
+    // Only %1 - %9 supported.
+    var args = arguments;
+    var pattern = new RegExp("%([1-" + (arguments.length - 1) + "])", "g");
+    return (string + "").replace(pattern, function(match, index) {
+        return args[index];
     });
-  });
-}
+};
 
-// =========================================================================
-// js/~/Function.js
-// =========================================================================
+export function csv(string) {
+    return string ? (string + "").split(/\s*,\s*/) : [];
+};
 
-// Some browsers don't define this.
-Function.prototype.prototype = {};
-
-// =========================================================================
-// js/~/String.js
-// =========================================================================
-
-// A KHTML bug.
-if ("".replace(/^/, K("$$")) == "$") {
-  extend(String.prototype, "replace", function(expression, replacement) {
-    if (typeof replacement == "function") {
-      var fn = replacement;
-      replacement = function() {
-        return String(fn.apply(null, arguments)).split("$").join("$$");
-      };
+export function bind(fn, context) {
+    var lateBound = typeof fn != "function";
+    if (arguments.length > 2) {
+        var args = _slice.call(arguments, 2);
+        return function() {
+            return (lateBound ? context[fn] : fn).apply(context, args.concat.apply(args, arguments));
+        };
+    } else { // Faster if there are no additional arguments.
+        return function() {
+            return (lateBound ? context[fn] : fn).apply(context, arguments);
+        };
     }
-    return this.base(expression, replacement);
-  });
-}
+};
 
-// =========================================================================
-// js/Array2.js
-// =========================================================================
-
-var Array2 = _createObject2(
-  Array,
-  Array,
-  "concat,join,pop,push,reverse,shift,slice,sort,splice,unshift", // generics
-  Enumerable, {
-    batch: function(array, block, timeout, oncomplete, context) {
-      var index = 0,
-          length = array.length;
-      var batch = function() {
-        var now = Date2.now(), start = now, k = 0;
-        while (index < length && (now - start < timeout)) {
-          block.call(context, array[index], index++, array);
-          if (k++ < 5 || k % 50 == 0) now = Date2.now();
+export function partial(fn) { // Based on Oliver Steele's version.
+    var args = _slice.call(arguments, 1);
+    return function() {
+        var specialised = args.concat(), i = 0, j = 0;
+        while (i < args.length && j < arguments.length) {
+            if (specialised[i] === undefined) specialised[i] = arguments[j++];
+            i++;
         }
-        if (index < length) {
-          setTimeout(batch, 10);
-        } else {
-          if (oncomplete) oncomplete.call(context);
+        while (j < arguments.length) {
+            specialised[i++] = arguments[j++];
         }
-      };
-      setTimeout(batch, 1);
-    },
-
-    combine: function(keys, values) {
-      // Combine two arrays to make a hash.
-      if (!values) values = keys;
-      return Array2.reduce(keys, function(hash, key, index) {
-        hash[key] = values[index];
-        return hash;
-      }, {});
-    },
-
-    contains: function(array, item) {
-      return Array2.indexOf(array, item) != -1;
-    },
-
-    copy: function(array) {
-      var copy = _slice.call(array);
-      if (!copy.swap) Array2(copy); // cast to Array2
-      return copy;
-    },
-
-    flatten: function(array) {
-      var i = 0;
-      var flatten = function(result, item) {
-        if (Array2.like(item)) {
-          Array2.reduce(item, flatten, result);
-        } else {
-          result[i++] = item;
+        if (Array2.contains(specialised, undefined)) {
+            specialised.unshift(fn);
+            return partial.apply(null, specialised);
         }
-        return result;
-      };
-      return Array2.reduce(array, flatten, []);
-    },
-    
-    forEach: _Array_forEach,
-    
-    indexOf: function(array, item, fromIndex) {
-      var length = array.length;
-      if (fromIndex == null) {
-        fromIndex = 0;
-      } else if (fromIndex < 0) {
-        fromIndex = Math.max(0, length + fromIndex);
-      }
-      for (var i = fromIndex; i < length; i++) {
-        if (array[i] === item) return i;
-      }
-      return -1;
-    },
-    
-    insertAt: function(array, index, item) {
-      Array2.splice(array, index, 0, item);
-    },
-    
-    item: function(array, index) {
-      if (index < 0) index += array.length; // starting from the end
-      return array[index];
-    },
-    
-    lastIndexOf: function(array, item, fromIndex) {
-      var length = array.length;
-      if (fromIndex == null) {
-        fromIndex = length - 1;
-      } else if (fromIndex < 0) {
-        fromIndex = Math.max(0, length + fromIndex);
-      }
-      for (var i = fromIndex; i >= 0; i--) {
-        if (array[i] === item) return i;
-      }
-      return -1;
-    },
-  
-    map: function(array, block, context) {
-      var result = [];
-      _Array_forEach (array, function(item, index) {
-        result[index] = block.call(context, item, index, array);
-      });
-      return result;
-    },
-
-    remove: function(array, item) {
-      var index = Array2.indexOf(array, item);
-      if (index != -1) Array2.removeAt(array, index);
-    },
-
-    removeAt: function(array, index) {
-      Array2.splice(array, index, 1);
-    },
-
-    swap: function(array, index1, index2) {
-      if (index1 < 0) index1 += array.length; // starting from the end
-      if (index2 < 0) index2 += array.length;
-      var temp = array[index1];
-      array[index1] = array[index2];
-      array[index2] = temp;
-      return array;
-    }
-  }
-);
-
-Array2.forEach = _Array_forEach;
-Array2.reduce = Enumerable.reduce; // Mozilla does not implement the thisObj argument
-
-Array2.like = function(object) {
-  // is the object like an array?
-  return typeOf(object) == "object" && typeof object.length == "number";
+        return fn.apply(this, specialised);
+    };
 };
 
-// introspection (removed when packed)
-;;; Enumerable["#implemented_by"].pop();
-;;; Enumerable["#implemented_by"].push(Array2);
-
-// =========================================================================
-// js/Date2.js
-// =========================================================================
-
-// http://developer.mozilla.org/es4/proposals/date_and_time.html
-
-// big, ugly, regular expression
-var _DATE_PATTERN = /^((-\d+|\d{4,})(-(\d{2})(-(\d{2}))?)?)?T((\d{2})(:(\d{2})(:(\d{2})(\.(\d{1,3})(\d)?\d*)?)?)?)?(([+-])(\d{2})(:(\d{2}))?|Z)?$/;
-var _DATE_PARTS = { // indexes to the sub-expressions of the RegExp above
-  FullYear: 2,
-  Month: 4,
-  Date: 6,
-  Hours: 8,
-  Minutes: 10,
-  Seconds: 12,
-  Milliseconds: 14
-};
-var _TIMEZONE_PARTS = { // idem, but without the getter/setter usage on Date object
-  Hectomicroseconds: 15, // :-P
-  UTC: 16,
-  Sign: 17,
-  Hours: 18,
-  Minutes: 20
-};
-
-//var _TRIM_ZEROES   = /(((00)?:0+)?:0+)?\.0+$/;
-//var _TRIM_TIMEZONE = /(T[0-9:.]+)$/;
-
-var Date2 = _createObject2(
-  Date, 
-  function(yy, mm, dd, h, m, s, ms) {
-    switch (arguments.length) {
-      case 0: return new Date;
-      case 1: return typeof yy == "string" ? new Date(Date2.parse(yy)) : new Date(yy.valueOf());
-      default: return new Date(yy, mm, arguments.length == 2 ? 1 : dd, h || 0, m || 0, s || 0, ms || 0);
-    }
-  }, "", {
-    toISOString: function(date) {
-      var string = "####-##-##T##:##:##.###";
-      for (var part in _DATE_PARTS) {
-        string = string.replace(/#+/, function(digits) {
-          var value = date["getUTC" + part]();
-          if (part == "Month") value++; // js month starts at zero
-          return ("000" + value).slice(-digits.length); // pad
-        });
-      }
-      //// remove trailing zeroes, and remove UTC timezone, when time's absent
-      //return string.replace(_TRIM_ZEROES, "").replace(_TRIM_TIMEZONE, "$1Z");
-      return string + "Z";
-    }
-  }
-);
-
-delete Date2.forEach;
-
-Date2.now = function() {
-  return (new Date).valueOf(); // milliseconds since the epoch
-};
-
-Date2.parse = function(string, defaultDate) {
-  if (arguments.length > 1) {
-    assertType(defaultDate, "number", "Default date should be of type 'number'.")
-  }
-  // parse ISO date
-  var parts = match(string, _DATE_PATTERN);
-  if (parts.length) {
-    var month = parts[_DATE_PARTS.Month];
-    if (month) parts[_DATE_PARTS.Month] = String(month - 1); // js months start at zero
-    // round milliseconds on 3 digits
-    if (parts[_TIMEZONE_PARTS.Hectomicroseconds] >= 5) parts[_DATE_PARTS.Milliseconds]++;
-    var utc = parts[_TIMEZONE_PARTS.UTC] || parts[_TIMEZONE_PARTS.Hours] ? "UTC" : "";
-    var date = new Date(defaultDate || 0);
-    if (parts[_DATE_PARTS.Date]) date["set" + utc + "Date"](14);
-    for (var part in _DATE_PARTS) {
-      var value = parts[_DATE_PARTS[part]];
-      if (value) {
-        // set a date part
-        date["set" + utc + part](value);
-        // make sure that this setting does not overflow
-        if (date["get" + utc + part]() != parts[_DATE_PARTS[part]]) {
-          return NaN;
-        }
-      }
-    }
-    // timezone can be set, without time being available
-    // without a timezone, local timezone is respected
-    if (parts[_TIMEZONE_PARTS.Hours]) {
-      var hours = Number(parts[_TIMEZONE_PARTS.Sign] + parts[_TIMEZONE_PARTS.Hours]);
-      var minutes = Number(parts[_TIMEZONE_PARTS.Sign] + (parts[_TIMEZONE_PARTS.Minutes] || 0));
-      date.setUTCMinutes(date.getUTCMinutes() + (hours * 60) + minutes);
-    }
-    return date.valueOf();
-  } else {
-    return Date.parse(string);
-  }
-};
-
-// =========================================================================
-// js/String2.js
-// =========================================================================
-
-var String2 = _createObject2(
-  String, 
-  function(string) {
-    return new String(arguments.length == 0 ? "" : string);
-  },
-  "charAt,charCodeAt,concat,indexOf,lastIndexOf,match,replace,search,slice,split,substr,substring,toLowerCase,toUpperCase",
-  {
-    csv: csv,
-    format: format,
-    rescape: rescape,
-    trim: trim
-  }
-);
-
-delete String2.forEach;
-
-// http://blog.stevenlevithan.com/archives/faster-trim-javascript
-function trim(string) {
-  return String(string).replace(_LTRIM, "").replace(_RTRIM, "");
-};
-
-function csv(string) {
-  return string ? (string + "").split(/\s*,\s*/) : [];
-};
-
-function format(string) {
-  // Replace %n with arguments[n].
-  // e.g. format("%1 %2%3 %2a %1%3", "she", "se", "lls");
-  // ==> "she sells sea shells"
-  // Only %1 - %9 supported.
-  var args = arguments;
-  var pattern = new RegExp("%([1-" + (arguments.length - 1) + "])", "g");
-  return (string + "").replace(pattern, function(match, index) {
-    return args[index];
-  });
-};
-
-function match(string, expression) {
-  // Same as String.match() except that this function will return an
-  // empty array if there is no match.
-  return (string + "").match(expression) || [];
-};
-
-function rescape(string) {
-  // Make a string safe for creating a RegExp.
-  return (string + "").replace(_RESCAPE, "\\$1");
-};
-
-// =========================================================================
-// js/Function2.js
-// =========================================================================
-
-var Function2 = _createObject2(
-  Function,
-  Function,
-  "", {
-    I: I,
-    II: II,
-    K: K,
-    bind: bind,
-    compose: compose,
-    delegate: delegate,
-    flip: flip,
-    not: not,
-    partial: partial,
-    unbind: unbind
-  }
-);
-
-function I(i) { // Return first argument.
-  return i;
-};
-
-function II(i, ii) { // Return second argument.
-  return ii;
+export function delegate(fn, context) {
+    return function() {
+        var args = _slice.call(arguments);
+        args.unshift(this);
+        return fn.apply(context, args);
+    };
 };
 
 function K(k) {
-  return function() {
-    return k;
-  };
-};
-
-function bind(fn, context) {
-  var lateBound = typeof fn != "function";
-  if (arguments.length > 2) {
-    var args = _slice.call(arguments, 2);
     return function() {
-      return (lateBound ? context[fn] : fn).apply(context, args.concat.apply(args, arguments));
+        return k;
     };
-  } else { // Faster if there are no additional arguments.
-    return function() {
-      return (lateBound ? context[fn] : fn).apply(context, arguments);
-    };
-  }
 };
-
-function compose() {
-  var fns = _slice.call(arguments);
-  return function() {
-    var i = fns.length, result = fns[--i].apply(this, arguments);
-    while (i--) result = fns[i].call(this, result);
-    return result;
-  };
-};
-
-function delegate(fn, context) {
-  return function() {
-    var args = _slice.call(arguments);
-    args.unshift(this);
-    return fn.apply(context, args);
-  };
-};
-
-function flip(fn) {
-  return function() {
-    return fn.apply(this, Array2.swap(arguments, 0, 1));
-  };
-};
-
-function not(fn) {
-  return function() {
-    return !fn.apply(this, arguments);
-  };
-};
-
-function partial(fn) { // Based on Oliver Steele's version.
-  var args = _slice.call(arguments, 1);
-  return function() {
-    var specialised = args.concat(), i = 0, j = 0;
-    while (i < args.length && j < arguments.length) {
-      if (specialised[i] === undefined) specialised[i] = arguments[j++];
-      i++;
-    }
-    while (j < arguments.length) {
-      specialised[i++] = arguments[j++];
-    }
-    if (Array2.contains(specialised, undefined)) {
-      specialised.unshift(fn);
-      return partial.apply(null, specialised);
-    }
-    return fn.apply(this, specialised);
-  };
-};
-
-function unbind(fn) {
-  return function(context) {
-    return fn.apply(context, _slice.call(arguments, 1));
-  };
-};
-
-// =========================================================================
-// base2/init.js
-// =========================================================================
-
-base2 = global.base2 = new Package(this, base2);
-base2.toString = K("[base2]"); // hide private data here
-
-var _exports = this.exports;
-
-lang = new Package(this, lang);
-_exports += this.exports;
-
-js = new Package(this, js);
-eval(_exports + this.exports);
-
-lang.extend = extend;
-
-// legacy support
-base2.JavaScript = pcopy(js);
-base2.JavaScript.namespace += "var JavaScript=js;";
-
-// Node.js support
-if (typeof exports !== 'undefined') {
-  if (typeof module !== 'undefined' && module.exports) {
-    exports = module.exports = base2;
-  }
-  exports.base2 = base2;
-} 
-
-}; ////////////////////  END: CLOSURE  /////////////////////////////////////

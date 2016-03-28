@@ -4,25 +4,31 @@ var compilerOptions = require('./build/babel-options');
 
 module.exports = function(config) {
     config.set({
-        frameworks: ['jspm', 'mocha', 'chai'],
+        // base path that will be used to resolve all patterns (eg. files, exclude)
+        basePath: '',
         
+        frameworks: ['jspm', 'mocha', 'chai'],
+
         jspm: {
-            config: 'config.js',
             loadFiles: [paths.tests],
             serveFiles: [paths.source]
         },  
-        
         files: [],
         
         preprocessors: {
             [paths.tests]: ['babel'],
-            [paths.source]: ['babel', 'sourcemap', 'coverage']
+            [paths.source]: ['babel']
         },
 
         'babelPreprocessor': {
-            options: compilerOptions.base()
+            options: {
+                sourceMap: 'inline',
+                presets: [ 'es2015'],
+                plugins: [
+                ]
+            }
         },
-        
+
         reporters: ['coverage', 'progress'],
         
         coverageReporter: {
