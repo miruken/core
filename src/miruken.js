@@ -1,6 +1,7 @@
-import { Abstract, Base, Package, Module,
-         True, False, Undefined, extend, typeOf, format }
-from './base2';
+import {
+    Abstract, Base, Package, Module,
+    True, False, Undefined, extend, typeOf
+} from './base2';
 
 /**
  * Annotates invariance.
@@ -44,7 +45,7 @@ export const $every = $createModifier();
  * @attribute $child
  * @for miruken.Modifier
  */                        
-export const $child  = $createModifier();
+export const $child = $createModifier();
 /**
  * Annotates optional semantics.
  * @attribute $optional
@@ -118,26 +119,21 @@ export const Enum = Base.extend({
             }
         });
         en.__defining = true;
-        let items     = [], ordinal = 0;
-        en.names      = Object.freeze(Object.keys(choices));
-        for (let choice in choices) {
-            let item = en[choice] = new en(choices[choice], choice, ordinal++);
-            items.push(item);
-        }
+        const names  = Object.freeze(Object.keys(choices));
+        let   items  = Object.keys(choices).map(
+            (name, ordinal) => en[name] = new en(choices[name], name, ordinal));
+        en.names     = Object.freeze(names);        
         en.items     = Object.freeze(items);
         en.fromValue = this.fromValue;
         delete en.__defining;
         return Object.freeze(en);
     },
     fromValue(value) {
-        let names = this.names;
-        for (let i = 0; i < names.length; ++i) {
-            let e = this[names[i]];
-            if (e.value == value) {
-                return e;
-            }
+        const match = this.items.find(item => item.value == value);
+        if (!match) {
+            throw new TypeError(`${value} is not a valid value for this Enum.`);            
         }
-        throw new TypeError(format("%1 is not a valid value for this Enum.", value));
+        return match;
     }
 });
 Enum.prototype.valueOf = function () {
@@ -170,13 +166,13 @@ export const Flags = Enum.extend({
     },
     addFlag(flag) {
         return $isSomething(flag)
-            ? this.constructor.fromValue(this | flag)
-            : this;
+             ? this.constructor.fromValue(this | flag)
+             : this;
     },
     removeFlag(flag) {
         return $isSomething(flag)
-            ? this.constructor.fromValue(this & (~flag))
-            : this;
+             ? this.constructor.fromValue(this & (~flag))
+             : this;
     },
     constructing(value, name) {}        
 }, {
@@ -235,6 +231,10 @@ export const Variance = Enum({
  * @param   {boolean}           [strict=false]  -  true if strict, false otherwise
  * @extends Base
  */
+const ProtocolGet    = Symbol(),
+      ProtocolSet    = Symbol(),
+      ProtocolInvoke = Symbol();
+
 export const Protocol = Base.extend({
     constructor(delegate, strict) {
         if ($isNothing(delegate)) {
@@ -243,8 +243,7 @@ export const Protocol = Base.extend({
             if ($isFunction(delegate.toDelegate)) {
                 delegate = delegate.toDelegate();
                 if ((delegate instanceof Delegate) === false) {
-                    throw new TypeError(format(
-                        "Invalid delegate: %1 is not a Delegate nor does it have a 'toDelegate' method that returned one.", delegate));
+                    throw new TypeError("'toDelegate' method did not return a Delegate.");
                 }
             } else if ($isArray(delegate)) {
                 delegate = new ArrayDelegate(delegate);
@@ -252,18 +251,20 @@ export const Protocol = Base.extend({
                 delegate = new ObjectDelegate(delegate);
             }
         }
-        Object.defineProperty(this, 'delegate', { value: delegate });
-        Object.defineProperty(this, 'strict', { value: !!strict });
+        Object.defineProperties(this, {
+            'delegate': { value: delegate },            
+            'strict':   { value: !!strict }
+        });
     },
-    __get(propertyName) {
+    [ProtocolGet](propertyName) {
         const delegate = this.delegate;
         return delegate && delegate.get(this.constructor, propertyName, this.strict);
     },
-    __set(propertyName, propertyValue) {
+    [ProtocolSet](propertyName, propertyValue) {
         const delegate = this.delegate;            
         return delegate && delegate.set(this.constructor, propertyName, propertyValue, this.strict);
     },
-    __invoke(methodName, args) {
+    [ProtocolInvoke](methodName, args) {
         const delegate = this.delegate;                        
         return delegate && delegate.invoke(this.constructor, methodName, args, this.strict);
     }
@@ -440,7 +441,7 @@ export const MetaBase = MetaMacro.extend({
                     return;
                 }
                 if (!$isArray(protocols)) {
-                    protocols = Array.prototype.slice.call(arguments);
+                    protocols = Array.from(arguments);
                 }
                 for (let i = 0; i < protocols.length; ++i) {
                     const protocol = protocols[i];
@@ -595,10 +596,7 @@ export const MetaBase = MetaMacro.extend({
             linkBase(method) {
                 if (!this[method]) {
                     this.extend(method, function () {
-                        const baseMethod = parent && parent[method];
-                        if (baseMethod) {
-                            return baseMethod.apply(parent, arguments);
-                        }
+                        return parent && parent[method](...arguments);
                     });
                 }
                 return this;
@@ -705,7 +703,7 @@ export const ClassMeta = MetaBase.extend({
              * @returns  {Function} the newly created class function.
              */                                                                
             createSubclass() {
-                const args        = Array.prototype.slice.call(arguments);
+                const args        = Array.from(arguments);
                 let   constraints = args, protocols, mixins, macros;
                 if (subClass.prototype instanceof Protocol) {
                     (protocols = []).push(subClass);
@@ -793,10 +791,10 @@ export const ClassMeta = MetaBase.extend({
         Base.$meta         = new this(undefined, Base);
         Abstract.$meta     = new this(Base.$meta, Abstract);            
         Base.extend = Abstract.extend = function () {
-            return this.$meta.createSubclass.apply(this.$meta, arguments);
+            return this.$meta.createSubclass(...arguments);
         };
         Base.implement = Abstract.implement = function () {
-            return this.$meta.embellishClass.apply(this.$meta, arguments);                
+            return this.$meta.embellishClass(...arguments);                
         }
         Base.prototype.conformsTo = function (protocol) {
             return this.constructor.$meta.conformsTo(protocol);
@@ -887,26 +885,19 @@ export const $proxyProtocol = MetaMacro.extend({
             expanded = expanded || expand();
             const member = _getPropertyDescriptor(definition, key);
             if ($isFunction(member.value)) {
-                (function (method) {
-                    member.value = function () {
-                        const args = Array.prototype.slice.call(arguments);
-                        return this.__invoke(method, args);
-                    };
-                })(key);
+                member.value = function () {
+                    return this[ProtocolInvoke](key, Array.from(arguments));
+                };
             } else if (member.get || member.set) {
                 if (member.get) {
-                    (function (get) {
-                        member.get = function () {
-                            return this.__get(get);
-                        };
-                    })(key);
+                    member.get = function () {
+                        return this[ProtocolGet](key);
+                    };
                 }
                 if (member.set) {
-                    (function (set) {                        
-                        member.set = function (value) {
-                            return this.__set(set, value);
-                        }
-                    })(key);
+                    member.set = function (value) {
+                        return this[ProtocolSet](key, value);
+                    }
                 }
             } else {
                 continue;
@@ -1174,7 +1165,7 @@ function _cleanDescriptor(descriptor) {
 export const $inheritStatic = MetaMacro.extend({
     constructor(/*members*/) {
         const spec = {
-            value: Array.prototype.slice.call(arguments)
+            value: Array.from(arguments)
         };
         Object.defineProperty(this, 'members', spec);
         delete spec.value;
@@ -1236,7 +1227,7 @@ export const Delegate = Base.extend({
     /**
      * Delegates the method invocation on `protocol`.
      * @method invoke
-     * @param   {miruken.Protocol} protocol      - receiving protocol
+     * @param   {miruken.Protocol} protocol    - receiving protocol
      * @param   {string}           methodName  - name of the method
      * @param   {Array}            args        - method arguments
      * @param   {boolean}          strict      - true if target must adopt protocol
@@ -1949,7 +1940,7 @@ function _proxyMethod(key, method, source) {
             interceptors = this.getInterceptors(source, key);
         }
         const invocation = {
-            args: Array.prototype.slice.call(arguments),
+            args: Array.from(arguments),
             useDelegate(value) {
                 delegate = value;
             },
@@ -1970,8 +1961,7 @@ function _proxyMethod(key, method, source) {
                 } else if (method) {
                     return method.apply(_this, this.args);
                 }
-                throw new Error(format(
-                    "Interceptor cannot proceed without a class or delegate method '%1'.", key));
+                throw new Error(`Interceptor cannot proceed without a class or delegate method '${key}'.`);
             }
         };
         spec.value = key;

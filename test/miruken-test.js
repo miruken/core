@@ -1,10 +1,11 @@
-import { Enum, Flags, Base, Protocol, Modifier,
-         Interceptor, InterceptorSelector, ProxyBuilder,
-         Miruken, Disposing, DisposingMixin, $using,
-         $decorator, $decorate, $decorated, $createModifier,
-         $isClass, $isFunction, $isString, assignID,
-         $properties, $inferProperties, $inheritStatic }
-from '../src/miruken';
+import {
+    Enum, Flags, Base, Protocol, Modifier,
+    Interceptor, InterceptorSelector, ProxyBuilder,
+    Miruken, Disposing, DisposingMixin, $using,
+    $decorator, $decorate, $decorated, $createModifier,
+    $isClass, $isFunction, $isString, assignID,
+    $properties, $inferProperties, $inheritStatic
+} from '../src/miruken';
 
 import chai from 'chai';
 

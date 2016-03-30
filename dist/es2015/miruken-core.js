@@ -4,8 +4,12 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 
+var _Base$extend;
+
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
+exports.copy = copy;
+exports.pcopy = pcopy;
 exports.typeOf = typeOf;
 exports.assignID = assignID;
 exports.format = format;
@@ -43,20 +47,21 @@ Object.keys(_base).forEach(function (key) {
         }
     });
 });
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var Undefined = exports.Undefined = K(),
     Null = exports.Null = K(null),
     True = exports.True = K(true),
     False = exports.False = K(false);
 
-var __prototyping = void 0,
+var __prototyping,
     _counter = 1;
 
 var _IGNORE = K(),
     _BASE = /\bbase\b/,
     _HIDDEN = ["constructor", "toString"],
     _slice = Array.prototype.slice;
-
-_Function_forEach();
 
 var _subclass = function _subclass(_instance, _static) {
     __prototyping = this.prototype;
@@ -124,10 +129,6 @@ var Base = exports.Base = _subclass.call(Object, {
     },
 
     extend: _subclass,
-
-    forEach: function forEach(object, block, context) {
-        _Function_forEach(this, object, block, context);
-    },
 
     implement: function implement(source) {
         if (typeof source == "function") {
@@ -289,14 +290,6 @@ var Module = exports.Module = Abstract.extend(null, {
         return module;
     },
 
-    forEach: function forEach(block, context) {
-        _Function_forEach(Module, this.prototype, function (method, name) {
-            if (typeOf(method) == "function") {
-                block.call(context, this[name], name, this);
-            }
-        }, this);
-    },
-
     implement: function implement(_interface) {
         var module = this;
         var id = module.toString().slice(1, -1);
@@ -402,7 +395,7 @@ function _extend(object, source) {
             var i = _HIDDEN.length,
                 key;
             while (key = _HIDDEN[--i]) {
-                var desc = _getPropertyDescriptor(source, key);
+                var desc = _getPropertyDescriptors(source, key);
                 if (desc.value != proto[key]) {
                     desc = _override(object, key, desc);
                     if (desc) Object.defineProperty(object, key, desc);
@@ -410,13 +403,13 @@ function _extend(object, source) {
             }
         }
 
-        for (key in source) {
+        var props = _getPropertyDescriptors(source);
+        Reflect.ownKeys(props).forEach(function (key) {
             if (typeof proto[key] == "undefined" && key !== "base") {
-                var desc = _getPropertyDescriptor(source, key);
-                desc = _override(object, key, desc);
+                var desc = _override(object, key, props[key]);
                 if (desc) Object.defineProperty(object, key, desc);
             }
-        }
+        });
     }
     return object;
 }exports.extend = _extend;
@@ -431,17 +424,17 @@ function _ancestorOf(ancestor, fn) {
     return false;
 };
 
-function _override(object, name, desc) {
+function _override(object, key, desc) {
     var value = desc.value;
     if (value === _IGNORE) return;
     if (typeof value !== "function" && "value" in desc) {
         return desc;
     }
-    var ancestor = _getPropertyDescriptor(object, name);
+    var ancestor = _getPropertyDescriptors(object, key);
     if (!ancestor) return desc;
     var superObject = __prototyping;
     if (superObject) {
-        var sprop = _getPropertyDescriptor(superObject, name);
+        var sprop = _getPropertyDescriptors(superObject, key);
         if (sprop && (sprop.value != ancestor.value || sprop.get != ancestor.get || sprop.set != ancestor.set)) {
             superObject = null;
         }
@@ -453,7 +446,7 @@ function _override(object, name, desc) {
                 var b = this.base;
                 this.base = function () {
                     var b = this.base,
-                        method = superObject && superObject[name] || avalue;
+                        method = superObject && superObject[key] || avalue;
                     this.base = Undefined;
                     var ret = method.apply(this, arguments);
                     this.base = b;
@@ -474,7 +467,7 @@ function _override(object, name, desc) {
                 var b = this.base;
                 this.base = function () {
                     var b = this.base,
-                        get = superObject && _getPropertyDescriptor(superObject, name).get || aget;
+                        get = superObject && _getPropertyDescriptors(superObject, key).get || aget;
                     this.base = Undefined;
                     var ret = get.apply(this, arguments);
                     this.base = b;
@@ -487,7 +480,7 @@ function _override(object, name, desc) {
         }
     } else if (superObject) {
         desc.get = function () {
-            var get = _getPropertyDescriptor(superObject, name).get;
+            var get = _getPropertyDescriptors(superObject, key).get;
             return get.apply(this, arguments);
         };
     } else {
@@ -501,7 +494,7 @@ function _override(object, name, desc) {
                 var b = this.base;
                 this.base = function () {
                     var b = this.base,
-                        set = superObject && _getPropertyDescriptor(superObject, name).set || aset;
+                        set = superObject && _getPropertyDescriptors(superObject, key).set || aset;
                     this.base = Undefined;
                     var ret = set.apply(this, arguments);
                     this.base = b;
@@ -514,7 +507,7 @@ function _override(object, name, desc) {
         }
     } else if (superObject) {
         desc.set = function () {
-            var set = _getPropertyDescriptor(superObject, name).set;
+            var set = _getPropertyDescriptors(superObject, key).set;
             return set.apply(this, arguments);
         };
     } else {
@@ -523,41 +516,24 @@ function _override(object, name, desc) {
     return desc;
 };
 
-function _getPropertyDescriptor(object, key) {
-    var source = object,
-        descriptor;
-    while (source && !(descriptor = Object.getOwnPropertyDescriptor(source, key))) {
-        source = Object.getPrototypeOf(source);
-    }return descriptor;
+function _getPropertyDescriptors(obj, key) {
+    var props = {},
+        prop;
+    do {
+        if (key) {
+            prop = Reflect.getOwnPropertyDescriptor(obj, key);
+            if (prop) return prop;
+        } else {
+            Reflect.getOwnKeys(obj).forEach(function (key) {
+                if (!Reflect.has(props, key)) {
+                    prop = Reflect.getOwnPropertyDescriptor(obj, key);
+                    if (prop) props[key] = prop;
+                }
+            });
+        }
+    } while (obj = Object.getPrototypeOf(obj));
+    return props;
 }
-
-function _Function_forEach(fn, object, block, context) {
-    var Temp = function Temp() {
-        this.i = 1;
-    };
-    Temp.prototype = { i: 1 };
-    var count = 0;
-    for (var i in new Temp()) {
-        count++;
-    }
-    _Function_forEach = count > 1 ? function (fn, object, block, context) {
-        var processed = {};
-        for (var key in object) {
-            if (!processed[key] && fn.prototype[key] === undefined) {
-                processed[key] = true;
-                block.call(context, object[key], key, object);
-            }
-        }
-    } : function (fn, object, block, context) {
-        for (var key in object) {
-            if (typeof fn.prototype[key] == "undefined") {
-                block.call(context, object[key], key, object);
-            }
-        }
-    };
-
-    _Function_forEach(fn, object, block, context);
-};
 
 function instanceOf(object, klass) {
 
@@ -730,27 +706,24 @@ var Enum = exports.Enum = Base.extend({
             }
         });
         en.__defining = true;
-        var items = [],
-            ordinal = 0;
-        en.names = Object.freeze(Object.keys(choices));
-        for (var choice in choices) {
-            var item = en[choice] = new en(choices[choice], choice, ordinal++);
-            items.push(item);
-        }
+        var names = Object.freeze(Object.keys(choices));
+        var items = Object.keys(choices).map(function (name, ordinal) {
+            return en[name] = new en(choices[name], name, ordinal);
+        });
+        en.names = Object.freeze(names);
         en.items = Object.freeze(items);
         en.fromValue = this.fromValue;
         delete en.__defining;
         return Object.freeze(en);
     },
     fromValue: function fromValue(value) {
-        var names = this.names;
-        for (var i = 0; i < names.length; ++i) {
-            var e = this[names[i]];
-            if (e.value == value) {
-                return e;
-            }
+        var match = this.items.find(function (item) {
+            return item.value == value;
+        });
+        if (!match) {
+            throw new TypeError(value + " is not a valid value for this Enum.");
         }
-        throw new TypeError(format("%1 is not a valid value for this Enum.", value));
+        return match;
     }
 });
 Enum.prototype.valueOf = function () {
@@ -796,7 +769,11 @@ var Variance = exports.Variance = Enum({
     Invariant: 3
 });
 
-var Protocol = exports.Protocol = Base.extend({
+var ProtocolGet = Symbol(),
+    ProtocolSet = Symbol(),
+    ProtocolInvoke = Symbol();
+
+var Protocol = exports.Protocol = Base.extend((_Base$extend = {
     constructor: function constructor(delegate, strict) {
         if ($isNothing(delegate)) {
             delegate = new Delegate();
@@ -804,7 +781,7 @@ var Protocol = exports.Protocol = Base.extend({
             if ($isFunction(delegate.toDelegate)) {
                 delegate = delegate.toDelegate();
                 if (delegate instanceof Delegate === false) {
-                    throw new TypeError(format("Invalid delegate: %1 is not a Delegate nor does it have a 'toDelegate' method that returned one.", delegate));
+                    throw new TypeError("'toDelegate' method did not return a Delegate.");
                 }
             } else if ($isArray(delegate)) {
                 delegate = new ArrayDelegate(delegate);
@@ -812,22 +789,21 @@ var Protocol = exports.Protocol = Base.extend({
                 delegate = new ObjectDelegate(delegate);
             }
         }
-        Object.defineProperty(this, 'delegate', { value: delegate });
-        Object.defineProperty(this, 'strict', { value: !!strict });
-    },
-    __get: function __get(propertyName) {
-        var delegate = this.delegate;
-        return delegate && delegate.get(this.constructor, propertyName, this.strict);
-    },
-    __set: function __set(propertyName, propertyValue) {
-        var delegate = this.delegate;
-        return delegate && delegate.set(this.constructor, propertyName, propertyValue, this.strict);
-    },
-    __invoke: function __invoke(methodName, args) {
-        var delegate = this.delegate;
-        return delegate && delegate.invoke(this.constructor, methodName, args, this.strict);
+        Object.defineProperties(this, {
+            'delegate': { value: delegate },
+            'strict': { value: !!strict }
+        });
     }
-}, {
+}, _defineProperty(_Base$extend, ProtocolGet, function (propertyName) {
+    var delegate = this.delegate;
+    return delegate && delegate.get(this.constructor, propertyName, this.strict);
+}), _defineProperty(_Base$extend, ProtocolSet, function (propertyName, propertyValue) {
+    var delegate = this.delegate;
+    return delegate && delegate.set(this.constructor, propertyName, propertyValue, this.strict);
+}), _defineProperty(_Base$extend, ProtocolInvoke, function (methodName, args) {
+    var delegate = this.delegate;
+    return delegate && delegate.invoke(this.constructor, methodName, args, this.strict);
+}), _Base$extend), {
     conformsTo: False,
     isProtocol: function isProtocol(target) {
         return target && target.prototype instanceof Protocol;
@@ -1279,21 +1255,21 @@ var $proxyProtocol = exports.$proxyProtocol = MetaMacro.extend({
                 (function (method) {
                     member.value = function () {
                         var args = Array.prototype.slice.call(arguments);
-                        return this.__invoke(method, args);
+                        return this[ProtocolInvoke](method, args);
                     };
                 })(key);
             } else if (member.get || member.set) {
                 if (member.get) {
                     (function (get) {
                         member.get = function () {
-                            return this.__get(get);
+                            return this[ProtocolGet](get);
                         };
                     })(key);
                 }
                 if (member.set) {
                     (function (set) {
                         member.set = function (value) {
-                            return this.__set(set, value);
+                            return this[ProtocolSet](set, value);
                         };
                     })(key);
                 }
@@ -1986,7 +1962,7 @@ function _proxyMethod(key, method, source) {
                 } else if (method) {
                     return method.apply(_this, this.args);
                 }
-                throw new Error(format("Interceptor cannot proceed without a class or delegate method '%1'.", key));
+                throw new Error("Interceptor cannot proceed without a class or delegate method '" + key + "'.");
             }
         };
         spec.value = key;
