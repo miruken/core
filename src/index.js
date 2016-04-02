@@ -3,6 +3,14 @@ import { Protocol, StrictProtocol } from './meta';
 import { Enum } from './enum';
 
 /**
+ * Package containing enhancements to the javascript language.
+ * @module miruken
+ * @namespace miruken
+ * @main miruken
+ * @class $
+ */
+
+/**
  * Variance enum
  * @class Variance
  * @extends miruken.Enum
