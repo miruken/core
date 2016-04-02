@@ -391,7 +391,7 @@ export function extend(object, source) { // or extend(object, key, value)
     if (useProto) {
       var i = _HIDDEN.length, key;
       while ((key = _HIDDEN[--i])) {
-        var desc = _getPropertyDescriptors(source, key);
+        var desc = getPropertyDescriptors(source, key);
         if (desc.value != proto[key]) {
           desc = _override(object, key, desc);
           if (desc) Object.defineProperty(object, key, desc);
@@ -399,7 +399,7 @@ export function extend(object, source) { // or extend(object, key, value)
       }
     }
       // Copy each of the source object's properties to the target object.
-    var props = _getPropertyDescriptors(source);
+    var props = getPropertyDescriptors(source);
     Reflect.ownKeys(props).forEach(function (key) {
       if (typeof proto[key] == "undefined" && key !== "base") {
         var desc = _override(object, key, props[key]);
@@ -426,11 +426,11 @@ function _override(object, key, desc) {
   if ((typeof value !== "function") && ("value" in desc)) {
     return desc;
   }
-  var ancestor = _getPropertyDescriptors(object, key);
+  var ancestor = getPropertyDescriptors(object, key);
   if (!ancestor) return desc;
   var superObject = __prototyping; // late binding for prototypes;
   if (superObject) {
-    var sprop = _getPropertyDescriptors(superObject, key);
+    var sprop = getPropertyDescriptors(superObject, key);
     if (sprop && (sprop.value != ancestor.value ||
                   sprop.get   != ancestor.get ||
                   sprop.set   != ancestor.set)) {
@@ -464,7 +464,7 @@ function _override(object, key, desc) {
         var b = this.base;
         this.base = function () {
           var b = this.base,
-              get = (superObject && _getPropertyDescriptors(superObject, key).get) || aget;
+              get = (superObject && getPropertyDescriptors(superObject, key).get) || aget;
           this.base = Undefined;  // getter overriden in ctor            
           var ret = get.apply(this, arguments);
           this.base = b;
@@ -477,7 +477,7 @@ function _override(object, key, desc) {
     }
   } else if (superObject) {
     desc.get = function () {
-      var get = _getPropertyDescriptors(superObject, key).get;
+      var get = getPropertyDescriptors(superObject, key).get;
       return get.apply(this, arguments);
     };
   } else {
@@ -490,7 +490,7 @@ function _override(object, key, desc) {
         var b = this.base;
         this.base = function () {
           var b = this.base,
-              set = (superObject && _getPropertyDescriptors(superObject, key).set) || aset;
+              set = (superObject && getPropertyDescriptors(superObject, key).set) || aset;
           this.base = Undefined;  // setter overriden in ctor            
           var ret = set.apply(this, arguments);
           this.base = b;
@@ -503,7 +503,7 @@ function _override(object, key, desc) {
     }
   } else if (superObject) {
     desc.set = function () {
-      var set = _getPropertyDescriptors(superObject, key).set;
+      var set = getPropertyDescriptors(superObject, key).set;
       return set.apply(this, arguments);
     };      
   } else {
@@ -512,7 +512,7 @@ function _override(object, key, desc) {
   return desc;
 };
     
-function _getPropertyDescriptors(obj, key) {
+export function getPropertyDescriptors(obj, key) {
     var props = {}, prop;
     do {
       if (key) {

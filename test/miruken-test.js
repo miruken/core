@@ -5,7 +5,7 @@ import {
     $decorator, $decorate, $decorated, $createModifier,
     $isClass, $isFunction, $isString, assignID,
     $properties, $inferProperties, $inheritStatic
-} from '../src/miruken';
+} from '../src/index';
 
 import chai from 'chai';
 
@@ -633,31 +633,6 @@ describe("$inheritStatic", () => {
     it("should inherit static members", () => {
         expect(Geometry.PI).to.equal(Math.PI);
         expect(Geometry.add).to.equal(Math.add);
-    });
-});
-
-describe("Miruken", () => {
-    it("should pass arguments to base", () => {
-        const Something = Miruken.extend({
-            constructor() {
-                this.base({name: 'Larry'});
-            }
-        }),
-        something = new Something;
-        expect(something.name).to.equal('Larry');
-    });
-
-    it("should perform coercion by default", () => {
-        const Pet = Miruken.extend({
-                constructor: function (name) {
-                    this.extend({
-                        getName() { return name; }
-                    });
-                }
-            }),
-            pet = Pet('Spike');
-        expect(pet).to.be.instanceOf(Pet);
-        expect(pet.getName()).to.equal('Spike');
     });
 });
 
