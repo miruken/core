@@ -917,19 +917,19 @@ describe("Protocol", () => {
         });
     });
 
-    describe("#getProtocols", () => {
+    describe("#protocols", () => {
         it("should retrieve declaring protocols", () => {
-            expect(Dog[Metadata].getProtocols()).to.eql([Animal, Tricks]);
+            expect(Dog[Metadata].protocols).to.eql([Animal, Tricks]);
         });
     });
 
-    describe("#getAllProtocols", () => {
+    describe("#allProtocols", () => {
         it("should retrieve all protocol protocols", () => {
-            expect(CircusAnimal[Metadata].getAllProtocols()).to.eql([Animal, Tricks]);
+            expect(CircusAnimal[Metadata].allProtocols).to.eql([Animal, Tricks]);
         });
 
         it("should retrieve all class protocols", () => {
-            expect(AsianElephant[Metadata].getAllProtocols()).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
+            expect(AsianElephant[Metadata].allProtocols).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
         });
     });
 
@@ -972,18 +972,18 @@ describe("Protocol", () => {
         it("should only list protocol once", () => {
             const Cat = Base.extend(Animal, Animal);
             expect(Cat.conformsTo(Animal)).to.be.true;
-            expect(Cat[Metadata].getProtocols()).to.eql([Animal]);
+            expect(Cat[Metadata].protocols).to.eql([Animal]);
         });
 
         it("should only list protocol once if extended", () => {
             const Cat = Animal.extend(Animal);
             expect(Cat.conformsTo(Animal)).to.be.true;
-            expect(Cat[Metadata].getProtocols()).to.eql([Animal]);
+            expect(Cat[Metadata].protocols).to.eql([Animal]);
         });
 
         it("should support protocol inheritance", () => {
             expect(Elephant.conformsTo(Animal)).to.be.true;
-            expect(CircusAnimal[Metadata].getProtocols()).to.eql([Animal, Tricks]);
+            expect(CircusAnimal[Metadata].protocols).to.eql([Animal, Tricks]);
         });
 
         it("should inherit protocol conformance", () => {
@@ -995,7 +995,7 @@ describe("Protocol", () => {
             const EndangeredAnimal = Base.extend([Animal, Tracked]);
             expect(EndangeredAnimal.conformsTo(Animal)).to.be.true;
             expect(EndangeredAnimal.conformsTo(Tracked)).to.be.true;
-            expect(EndangeredAnimal[Metadata].getProtocols()).to.eql([Animal, Tracked]);
+            expect(EndangeredAnimal[Metadata].protocols).to.eql([Animal, Tracked]);
         });
 
         it("should allow redefining method", () => {

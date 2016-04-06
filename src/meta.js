@@ -194,26 +194,24 @@ export const MetaBase = MetaMacro.extend({
         this.extend({
             /**
              * Gets the parent metadata.
-             * @method getParent
-             * @returns {miruken.MetaBase} parent metadata if present.
+             * @property {miruken.Metabase} parent
              */
-            getParent() { return parent; },
+            get parent() { return parent; },
             /**
              * Gets the declared protocols.
-             * @method getProtocols
-             * @returns {Array} declared protocols.
+             * @property {Array} protocols
              */
-            getProtocols() { return _protocols.slice(0) },
+            get protocols() { return _protocols.slice(0) },
+            
             /**
              * Gets all conforming protocools.
-             * @method getAllProtocols
-             * @returns {Array} conforming protocols.
+             * @property {Array} allProtocols
              */
-            getAllProtocols() {
-                const protocols = this.getProtocols(),
+            get allProtocols() {
+                const protocols = this.protocols,
                       inner     = protocols.slice(0);
                 for (let i = 0; i < inner.length; ++i) {
-                    const innerProtocols = inner[i][Metadata].getAllProtocols();
+                    const innerProtocols = inner[i][Metadata].allProtocols;
                     for (let ii = 0; ii < innerProtocols.length; ++ii) {
                         const protocol = innerProtocols[ii];
                         if (protocols.indexOf(protocol) < 0) {
@@ -415,21 +413,20 @@ export const ClassMeta = MetaBase.extend({
         this.base(baseMeta);
         this.extend({
             /**
-             * Gets the associated class.
-             * @method getClass
-             * @returns  {Function} class.
+             * Gets the associated type.
+             * @property {Function} type
              */                                
-            getClass() { return subClass; },
+            get type() { return subClass; },
             /**
              * Determines if the meta-data represents a protocol.
              * @method isProtocol
              * @returns  {boolean} true if a protocol, false otherwise.
              */                                
             isProtocol() { return _isProtocol; },
-            getAllProtocols() {
+            get allProtocols() {
                 const protocols = this.base();
                 if (!_isProtocol && baseMeta) {
-                    const baseProtocols = baseMeta.getAllProtocols();
+                    const baseProtocols = baseMeta.allProtocols;
                     for (let i = 0; i < baseProtocols.length; ++i) {
                         const protocol = baseProtocols[i];
                         if (protocols.indexOf(protocol) < 0) {
@@ -606,11 +603,10 @@ export const InstanceMeta = MetaBase.extend({
         this.base(classMeta);
         this.extend({
             /**
-             * Gets the associated class.
-             * @method getClass
-             * @returns  {Function} class.
+             * Gets the associated type.
+             * @property {Function} type
              */                                              
-            getClass() { return classMeta.getClass(); },
+            get type() { return classMeta.type; },
             /**
              * Determines if the meta-data represents a protocol.
              * @method isProtocol
@@ -689,13 +685,13 @@ export const $proxyProtocol = MetaMacro.extend({
     },
     execute(step, metadata, target, definition) {
         if (step === MetaStep.Subclass) {
-            const clazz = metadata.getClass();                
-            clazz.adoptedBy = Protocol.adoptedBy;
+            const type = metadata.type;                
+            type.adoptedBy = Protocol.adoptedBy;
         }
     },
     protocolAdded(metadata, protocol) {
         const source        = protocol.prototype,
-              target        = metadata.getClass().prototype,
+              target        = metadata.type.prototype,
               protocolProto = Protocol.prototype;
         for (let key in source) {
             if (!((key in protocolProto) && (key in this))) {
@@ -825,7 +821,7 @@ export const $properties = MetaMacro.extend({
         if (step == MetaStep.Extend) {
             target.extend(expanded);
         } else {
-            metadata.getClass().implement(expanded);
+            metadata.type.implement(expanded);
         }
     },
     defineProperty(metadata, target, name, spec, descriptor) {
@@ -964,19 +960,19 @@ export const $inheritStatic = MetaMacro.extend({
     execute(step, metadata, target) {
         if (step === MetaStep.Subclass) {
             const members  = this.members,
-                  clazz    = metadata.getClass(),
-                  ancestor = $ancestorOf(clazz);
+                  type     = metadata.type,
+                  ancestor = $ancestorOf(type);
             if (members.length > 0) {
                 for (let i = 0; i < members.length; ++i) {
                     const member = members[i];
-                    if (!(member in clazz)) {
-                        clazz[member] = ancestor[member];
+                    if (!(member in type)) {
+                        type[member] = ancestor[member];
                     }
                 }
             } else if (ancestor !== Base && ancestor !== Object) {
                 for (let key in ancestor) {
-                    if (ancestor.hasOwnProperty(key) && !(key in clazz)) {
-                        clazz[key] = ancestor[key];
+                    if (ancestor.hasOwnProperty(key) && !(key in type)) {
+                        type[key] = ancestor[key];
                     }
                 }
             }
