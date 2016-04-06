@@ -1,5 +1,5 @@
 import {
-    Enum, Flags, Base, Protocol, Modifier,
+    Enum, Flags, Base, Protocol, Modifier, Metadata,
     Interceptor, InterceptorSelector, ProxyBuilder,
     Miruken, Disposing, DisposingMixin, $using,
     $decorator, $decorate, $decorated, $createModifier,
@@ -269,27 +269,28 @@ describe("Flags", () => {
 
 describe("$meta", () => {
     it("should have class metadata", () => {
-        expect(Dog.$meta).to.be.ok;
+        expect(Dog[Metadata]).to.be.ok;
     });
 
     it("should not be able to delete class metadata", () => {
-        expect(Dog.$meta).to.be.ok;
+        expect(Dog[Metadata]).to.be.ok;
         expect(() => {
-            delete Dog.$meta;            
-        }).to.throw(Error, /Cannot delete property '[$]meta'/);
+            delete Dog[Metadata];            
+        }).to.throw(Error, /Cannot delete property/);
     });
 
     it("should have instance metadata", () => {
         const dog = new Dog;
-        expect(dog.$meta).to.be.ok;
-        expect(dog.$meta).to.not.equal(Dog.$meta);
+        expect(dog[Metadata]).to.be.ok;
+        expect(dog[Metadata]).to.not.equal(Dog[Metadata]);
     });
 
     it("should not be able to delete instance metadata", () => {
         const dog = new Dog;
-        expect(Dog.$meta).to.be.ok;
-        delete dog.$meta;
-        expect(Dog.$meta).to.be.ok;
+        expect(Dog[Metadata]).to.be.ok;
+        expect(() => {
+            delete dog[Metadata];            
+        }).to.throw(Error, /Cannot delete property/);
     });
 });
 
@@ -395,7 +396,7 @@ describe("$properties", () => {
     });
 
     it("should retrieve property descriptor", () => {
-        const descriptor = Doctor.$meta.getDescriptor('patient');
+        const descriptor = Doctor[Metadata].getDescriptor('patient');
         expect(descriptor.map).to.equal(Person);
     });
 
@@ -408,19 +409,19 @@ describe("$properties", () => {
                     return new Doctor({firstName: "Phil"});
                 }
             }),
-            descriptor = Hospital.$meta.getDescriptor('chiefDoctor'),
+            descriptor = Hospital[Metadata].getDescriptor('chiefDoctor'),
             hospital = new Hospital;
         expect(hospital.chiefDoctor.firstName).to.equal("Phil");
         expect(descriptor.map).to.equal(Doctor);        
     });
 
     it("should retrieve inherited property descriptor", () => {
-        const descriptor = Doctor.$meta.getDescriptor('pet');
+        const descriptor = Doctor[Metadata].getDescriptor('pet');
         expect(descriptor.map).to.equal(Animal);
     });
 
     it("should retrieve all property descriptors", () => {
-        const descriptors = Doctor.$meta.getDescriptor();
+        const descriptors = Doctor[Metadata].getDescriptor();
         expect(descriptors['pet'].map).to.equal(Animal);
         expect(descriptors['patient'].map).to.equal(Person);
     });
@@ -441,21 +442,21 @@ describe("$properties", () => {
             }
         });
 
-        let descriptors = Something.$meta.getDescriptor({ val: false });
+        let descriptors = Something[Metadata].getDescriptor({ val: false });
         expect(descriptors).to.be.undefined;
-        descriptors = Something.$meta.getDescriptor({ val: true });
+        descriptors = Something[Metadata].getDescriptor({ val: true });
         expect(descriptors).to.eql({ matchBool: { val: true } });
-        descriptors = Something.$meta.getDescriptor({ val: 22 });
+        descriptors = Something[Metadata].getDescriptor({ val: 22 });
         expect(descriptors).to.eql({ matchNumber: { val: 22 } });
-        descriptors = Something.$meta.getDescriptor({ val: 22 });
+        descriptors = Something[Metadata].getDescriptor({ val: 22 });
         expect(descriptors).to.eql({ matchNumber: { val: 22 } });
-        descriptors = Something.$meta.getDescriptor({ val: "Hello" });
+        descriptors = Something[Metadata].getDescriptor({ val: "Hello" });
         expect(descriptors).to.eql({ matchString: { val: "Hello" } });
-        descriptors = Something.$meta.getDescriptor({ val: ["z"] });
+        descriptors = Something[Metadata].getDescriptor({ val: ["z"] });
         expect(descriptors).to.be.undefined;
-        descriptors = Something.$meta.getDescriptor({ val: ["b"] });
+        descriptors = Something[Metadata].getDescriptor({ val: ["b"] });
         expect(descriptors).to.eql({ matchArray: { val: ["a", "b", "c" ] } });
-        descriptors = Something.$meta.getDescriptor({ nestedBool: { val: false } });
+        descriptors = Something[Metadata].getDescriptor({ nestedBool: { val: false } });
         expect(descriptors).to.eql({  
               matchNested: {
                     nestedBool: { val: false },
@@ -463,7 +464,7 @@ describe("$properties", () => {
                     nestedString: { val: "Goodbye" },
                     nestedArray:  { val: ["x", "y", "z"] }
                 }});
-        descriptors = Something.$meta.getDescriptor({ nestedBool: undefined });
+        descriptors = Something[Metadata].getDescriptor({ nestedBool: undefined });
         expect(descriptors).to.eql({  
               matchNested: {
                     nestedBool: { val: false },
@@ -492,9 +493,9 @@ describe("$properties", () => {
                 friend: { map: Person }
             }
         });
-        const descriptor = person.$meta.getDescriptor('friend');
+        const descriptor = person[Metadata].getDescriptor('friend');
         expect(descriptor.map).to.equal(Person);
-        expect(Person.$meta.getDescriptor('friend')).to.be.undefined;
+        expect(Person[Metadata].getDescriptor('friend')).to.be.undefined;
     });
 
     it("should synthesize protocol properties", () => {
@@ -918,17 +919,17 @@ describe("Protocol", () => {
 
     describe("#getProtocols", () => {
         it("should retrieve declaring protocols", () => {
-            expect(Dog.$meta.getProtocols()).to.eql([Animal, Tricks]);
+            expect(Dog[Metadata].getProtocols()).to.eql([Animal, Tricks]);
         });
     });
 
     describe("#getAllProtocols", () => {
         it("should retrieve all protocol protocols", () => {
-            expect(CircusAnimal.$meta.getAllProtocols()).to.eql([Animal, Tricks]);
+            expect(CircusAnimal[Metadata].getAllProtocols()).to.eql([Animal, Tricks]);
         });
 
         it("should retrieve all class protocols", () => {
-            expect(AsianElephant.$meta.getAllProtocols()).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
+            expect(AsianElephant[Metadata].getAllProtocols()).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
         });
     });
 
@@ -971,18 +972,18 @@ describe("Protocol", () => {
         it("should only list protocol once", () => {
             const Cat = Base.extend(Animal, Animal);
             expect(Cat.conformsTo(Animal)).to.be.true;
-            expect(Cat.$meta.getProtocols()).to.eql([Animal]);
+            expect(Cat[Metadata].getProtocols()).to.eql([Animal]);
         });
 
         it("should only list protocol once if extended", () => {
             const Cat = Animal.extend(Animal);
             expect(Cat.conformsTo(Animal)).to.be.true;
-            expect(Cat.$meta.getProtocols()).to.eql([Animal]);
+            expect(Cat[Metadata].getProtocols()).to.eql([Animal]);
         });
 
         it("should support protocol inheritance", () => {
             expect(Elephant.conformsTo(Animal)).to.be.true;
-            expect(CircusAnimal.$meta.getProtocols()).to.eql([Animal, Tricks]);
+            expect(CircusAnimal[Metadata].getProtocols()).to.eql([Animal, Tricks]);
         });
 
         it("should inherit protocol conformance", () => {
@@ -994,7 +995,7 @@ describe("Protocol", () => {
             const EndangeredAnimal = Base.extend([Animal, Tracked]);
             expect(EndangeredAnimal.conformsTo(Animal)).to.be.true;
             expect(EndangeredAnimal.conformsTo(Tracked)).to.be.true;
-            expect(EndangeredAnimal.$meta.getProtocols()).to.eql([Animal, Tracked]);
+            expect(EndangeredAnimal[Metadata].getProtocols()).to.eql([Animal, Tracked]);
         });
 
         it("should allow redefining method", () => {
@@ -1046,7 +1047,7 @@ describe("Protocol", () => {
                   eagle = (new Bird).extend({
                    getTag() { return "Eagle"; }
 				});
-            Bird.$meta.addProtocol(Tracked);
+            Bird[Metadata].addProtocol(Tracked);
             expect(Bird.conformsTo(Tracked)).to.be.true;
 			expect(eagle.getTag()).to.equal("Eagle");
         });
@@ -1056,7 +1057,7 @@ describe("Protocol", () => {
                   polarBear = (new Bear).extend({
                   getTag() { return "Polar Bear"; }
             });
-			Animal.$meta.addProtocol(Tracked);
+			Animal[Metadata].addProtocol(Tracked);
             expect(polarBear.conformsTo(Tracked)).to.be.true;
 			expect(polarBear.getTag()).to.equal("Polar Bear");
 			expect(Animal(polarBear).getTag()).to.equal("Polar Bear");

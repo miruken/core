@@ -5,6 +5,8 @@ import {
 
 import { Enum } from './enum'
 
+export const Metadata = Symbol.for('miruken.$meta');
+
 /**
  * Declares methods and properties independent of a class.
  * <pre>
@@ -211,7 +213,7 @@ export const MetaBase = MetaMacro.extend({
                 const protocols = this.getProtocols(),
                       inner     = protocols.slice(0);
                 for (let i = 0; i < inner.length; ++i) {
-                    const innerProtocols = inner[i].$meta.getAllProtocols();
+                    const innerProtocols = inner[i][Metadata].getAllProtocols();
                     for (let ii = 0; ii < innerProtocols.length; ++ii) {
                         const protocol = innerProtocols[ii];
                         if (protocols.indexOf(protocol) < 0) {
@@ -529,13 +531,8 @@ export const ClassMeta = MetaBase.extend({
                 instanceDef  = expand.x || instanceDef;
                 const derived  = ClassMeta.baseExtend.call(subClass, instanceDef, staticDef),
                       metadata = new ClassMeta(this, derived, protocols, macros);
-                Object.defineProperty(derived, '$meta', {
-                    enumerable:   false,
-                    configurable: false,
-                    writable:     false,
-                    value:        metadata
-                });
-                Object.defineProperty(derived.prototype, '$meta', {
+                _defineMetadataProperty(derived, metadata);
+                Object.defineProperty(derived.prototype, Metadata, {
                     enumerable:   false,
                     configurable: false,
                     get:          ClassMeta.createInstanceMeta
@@ -578,26 +575,21 @@ export const ClassMeta = MetaBase.extend({
     init() {
         this.baseExtend    = Base.extend;
         this.baseImplement = Base.implement;
-        Base.$meta         = new this(undefined, Base);
-        Abstract.$meta     = new this(Base.$meta, Abstract);            
+        _defineMetadataProperty(Base, new this(undefined, Base));
+        _defineMetadataProperty(Abstract, new this(Base[Metadata], Abstract));
         Base.extend = Abstract.extend = function () {
-            return this.$meta.createSubclass(...arguments);
+            return this[Metadata].createSubclass(...arguments);
         };
         Base.implement = Abstract.implement = function () {
-            return this.$meta.embellishClass(...arguments);                
+            return this[Metadata].embellishClass(...arguments);                
         }
         Base.prototype.conformsTo = function (protocol) {
-            return this.constructor.$meta.conformsTo(protocol);
+            return this.constructor[Metadata].conformsTo(protocol);
         };
     },
     createInstanceMeta(parent) {
-        const metadata = new InstanceMeta(parent || this.constructor.$meta);
-        Object.defineProperty(this, '$meta', {
-            enumerable:   false,
-            configurable: true,
-            writable:     false,
-            value:        metadata
-        });
+        const metadata = new InstanceMeta(parent || this.constructor[Metadata]);
+        _defineMetadataProperty(this, metadata);
         return metadata;            
     }
 });
@@ -638,7 +630,7 @@ export const InstanceMeta = MetaBase.extend({
             } else if (numArgs === 0) {
                 return this;
             }
-            const metadata = this.$meta;
+            const metadata = this[Metadata];
             if (metadata) {
                 metadata.inflate(MetaStep.Extend, metadata, this, definition, expand);
                 definition = expand.x || definition;
@@ -655,9 +647,9 @@ export const InstanceMeta = MetaBase.extend({
     }
 });
 
-Enum.$meta      = new ClassMeta(Base.$meta, Enum);
 Enum.extend     = Base.extend
 Enum.implement  = Base.implement;
+_defineMetadataProperty(Enum, new ClassMeta(Base[Metadata], Enum));
 
 /**
  * Metamacro to proxy protocol members through a delegate.<br/>
@@ -727,7 +719,7 @@ export const $proxyProtocol = MetaMacro.extend({
 });
 Protocol.extend    = Base.extend
 Protocol.implement = Base.implement;
-Protocol.$meta     = new ClassMeta(Base.$meta, Protocol, null, [new $proxyProtocol]);
+_defineMetadataProperty(Protocol, new ClassMeta(Base[Metadata], Protocol, null, [new $proxyProtocol]));
 
 /**
  * Protocol base requiring conformance to match methods.
@@ -742,6 +734,15 @@ export const StrictProtocol = Protocol.extend({
         this.base(proxy, (strict === undefined) || strict);
     }
 });
+
+function _defineMetadataProperty(target, metadata) {
+    Object.defineProperty(target, Metadata, {
+        enumerable:   false,
+        configurable: false,
+        writable:     false,
+        value:        metadata
+    });
+}
 
 const GETTER_CONVENTIONS = ['get', 'is'];
 
@@ -1112,7 +1113,7 @@ export function $decorator(decorations) {
               spec      = $decorator.spec || ($decorator.spec = {});
         spec.value = decoratee;
         Object.defineProperty(decorator, 'decoratee', spec);
-        ClassMeta.createInstanceMeta.call(decorator, decoratee.$meta);
+        ClassMeta.createInstanceMeta.call(decorator, decoratee[Metadata]);
         if (decorations) {
             decorator.extend(decorations);
         }
