@@ -13,7 +13,7 @@
   "main": "dist/commonjs/miruken.js",
   "repository": {
     "type": "git",
-    "url": "http://github.com/miruken/MirukenJS"
+    "url": "http://github.com/miruken/core"
   },
   "jspm": {
     "dependencies": {},
