@@ -11,12 +11,17 @@ import chai from 'chai';
 
 const expect = chai.expect;
 
+const Code  = Symbol(),
+      Breed = Symbol();
+
 const Animal = Protocol.extend({
     $properties: {
-        name: undefined
+        name: undefined,
+        [Code]: undefined
     },
     talk() {},
-    eat(food) {}
+    eat(food) {},
+    [Breed]() {}
 });
 
 const Tricks = Protocol.extend({
@@ -37,7 +42,8 @@ const Dog = Base.extend(Animal, Tricks,
        });
     },
     talk() { return 'Ruff Ruff'; },
-    fetch(item) { return 'Fetched ' + item; }
+    fetch(item) { return 'Fetched ' + item; },
+    get [Code]() {return 1234; }    
 });
     
 const Elephant = Base.extend(CircusAnimal, {
@@ -1071,8 +1077,8 @@ describe("Protocol", () => {
         });
 
         it("should delegate invocations to array", () => {
-            let count = 0;
-            const Dog2  = Dog.extend({
+            let count  = 0;
+            const Dog2 = Dog.extend({
                       talk() {
                           ++count;
                           return this.base();
@@ -1088,9 +1094,10 @@ describe("Protocol", () => {
         it("should delegate property gets to object", () => {
             const dog  = new Dog('Franky');
             expect(Animal(dog).name).to.equal('Franky');
+            // expect(Animal(dog)[Code]).to.equal(1234);            
             expect(CircusAnimal(dog).name).to.equal('Franky');
         });
-
+        
         it("should delegate property gets to array", () => {
             let count = 0;
             const Dog2  = Dog.extend({

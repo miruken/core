@@ -393,7 +393,7 @@ export function extend(object, source) { // or extend(object, key, value)
       var i = _HIDDEN.length, key;
       while ((key = _HIDDEN[--i])) {
         var desc = getPropertyDescriptors(source, key);
-        if (desc.value != proto[key]) {
+        if (!desc || desc.value != proto[key]) {
           desc = _override(object, key, desc);
           if (desc) Object.defineProperty(object, key, desc);
         }
@@ -514,7 +514,7 @@ function _override(object, key, desc) {
 };
     
 export function getPropertyDescriptors(obj, key) {
-    var props = {}, prop;
+    var props = key ? null : {}, prop;
     do {
       if (key) {
         prop = Reflect.getOwnPropertyDescriptor(obj, key);

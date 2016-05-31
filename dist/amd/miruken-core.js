@@ -366,7 +366,7 @@ define(["exports"], function (exports) {
             key;
         while (key = _HIDDEN[--i]) {
           var desc = getPropertyDescriptors(source, key);
-          if (desc.value != proto[key]) {
+          if (!desc || desc.value != proto[key]) {
             desc = _override(object, key, desc);
             if (desc) Object.defineProperty(object, key, desc);
           }
@@ -487,7 +487,7 @@ define(["exports"], function (exports) {
   };
 
   function getPropertyDescriptors(obj, key) {
-    var props = {},
+    var props = key ? null : {},
         prop;
     do {
       if (key) {

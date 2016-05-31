@@ -23,9 +23,12 @@ export const Metadata = Symbol.for('miruken.$meta');
  * @param   {boolean}           [strict=false]  -  true if strict, false otherwise
  * @extends Base
  */
-const ProtocolGet    = Symbol(),
-      ProtocolSet    = Symbol(),
-      ProtocolInvoke = Symbol();
+const ProtocolGet      = Symbol(),
+      ProtocolSet      = Symbol(),
+      ProtocolInvoke   = Symbol();
+
+export const ProtocolDelegate = Symbol(),
+             ProtocolStrict   = Symbol();
 
 export const Protocol = Base.extend({
     constructor(delegate, strict) {
@@ -44,21 +47,21 @@ export const Protocol = Base.extend({
             }
         }
         Object.defineProperties(this, {
-            'delegate': { value: delegate },            
-            'strict':   { value: !!strict }
+            [ProtocolDelegate]: { value: delegate, writable: false },            
+            [ProtocolStrict]:   { value: !!strict, writable: false }
         });
     },
-    [ProtocolGet](propertyName) {
-        const delegate = this.delegate;
-        return delegate && delegate.get(this.constructor, propertyName, this.strict);
+    [ProtocolGet](key) {
+        const delegate = this[ProtocolDelegate];
+        return delegate && delegate.get(this.constructor, key, this[ProtocolStrict]);
     },
-    [ProtocolSet](propertyName, propertyValue) {
-        const delegate = this.delegate;            
-        return delegate && delegate.set(this.constructor, propertyName, propertyValue, this.strict);
+    [ProtocolSet](key, value) {
+        const delegate = this[ProtocolDelegate];            
+        return delegate && delegate.set(this.constructor, key, value, this[ProtocolStrict]);
     },
     [ProtocolInvoke](methodName, args) {
-        const delegate = this.delegate;                        
-        return delegate && delegate.invoke(this.constructor, methodName, args, this.strict);
+        const delegate = this[ProtocolDelegate];                        
+        return delegate && delegate.invoke(this.constructor, methodName, args, this[ProtocolStrict]);
     }
 }, {
     conformsTo: False,        
@@ -655,16 +658,13 @@ _defineMetadataProperty(Enum, new ClassMeta(Base[Metadata], Enum));
  */
 export const $proxyProtocol = MetaMacro.extend({
     inflate(step, metadata, target, definition, expand) {
-        let protocolProto = Protocol.prototype, expanded;
-        for (let key in definition) {
-            if (key in protocolProto) {
-                continue;
-            }
-            expanded = expanded || expand();
-            const member = getPropertyDescriptors(definition, key);
+        let expanded;
+        const props = getPropertyDescriptors(definition);
+        Reflect.ownKeys(props).forEach(key => {
+            const member = props[key];
             if ($isFunction(member.value)) {
-                member.value = function () {
-                    return this[ProtocolInvoke](key, Array.from(arguments));
+                member.value = function (...args) {
+                    return this[ProtocolInvoke](key, args);
                 };
             } else if (member.get || member.set) {
                 if (member.get) {
@@ -678,10 +678,11 @@ export const $proxyProtocol = MetaMacro.extend({
                     }
                 }
             } else {
-                continue;
+                return;
             }
+            expanded = expanded || expand();            
             Object.defineProperty(expanded, key, member);                
-        }            
+        });            
     },
     execute(step, metadata, target, definition) {
         if (step === MetaStep.Subclass) {
@@ -692,13 +693,13 @@ export const $proxyProtocol = MetaMacro.extend({
     protocolAdded(metadata, protocol) {
         const source        = protocol.prototype,
               target        = metadata.type.prototype,
-              protocolProto = Protocol.prototype;
-        for (let key in source) {
-            if (!((key in protocolProto) && (key in this))) {
-                const descriptor = getPropertyDescriptors(source, key);
-                Object.defineProperty(target, key, descriptor);
-            }
-        }
+              protocolProto = Protocol.prototype,
+              props         = getPropertyDescriptors(source);
+        Reflect.ownKeys(props).forEach(key => {
+            if (getPropertyDescriptors(protocolProto, key) ||
+                getPropertyDescriptors(this, key)) return;
+            Object.defineProperty(target, key, props[key]);            
+        });
     },
     /**
      * Determines if the macro should be inherited
@@ -772,22 +773,24 @@ const GETTER_CONVENTIONS = ['get', 'is'];
  * @param   {string}  [tag='$properties']  - properties tag
  * @extends miruken.MetaMacro
  */
+const PropertiesTag = Symbol();
+      
 export const $properties = MetaMacro.extend({
     constructor(tag) {
         if ($isNothing(tag)) {
             throw new Error("$properties requires a tag name");
         }
-        Object.defineProperty(this, 'tag', { value: tag });
+        Object.defineProperty(this, PropertiesTag, { value: tag });
     },
     execute(step, metadata, target, definition) {
-        const properties = this.extractProperty(this.tag, target, definition); 
-        if (!properties) {
-            return;
-        }
+        const tag        = this[PropertiesTag],
+              properties = this.extractProperty(tag, target, definition); 
+        if (!properties) return;
         let expanded = {}, source;
-        for (let name in properties) {
+        const props = getPropertyDescriptors(properties);
+        Reflect.ownKeys(props).forEach(key => {
             source = expanded;
-            let property = properties[name],
+            let property = properties[key],
                 spec     = {
                     configurable: true,
                     enumerable:   true
@@ -796,8 +799,8 @@ export const $properties = MetaMacro.extend({
                 typeOf(property.length) == "number" || typeOf(property) !== 'object') {
                 property = { value: property };
             }
-            if (name in definition) {
-                source = null;  // don't replace standard property
+            if (getPropertyDescriptors(definition, key)) {
+                source = null;  // don't replace standard properties
             } else if (property.get || property.set) {
                 spec.get = property.get;
                 spec.set = property.set;
@@ -805,10 +808,7 @@ export const $properties = MetaMacro.extend({
                 // $proxyProtocol will do the real work
                 spec.get = spec.set = Undefined;
             } else if ("auto" in property) {
-                let field = property.auto;
-                if (!(field && $isString(field))) {
-                    field = "_" + name;
-                }
+                const field = property.auto || Symbol();
                 spec.get = function () { return this[field]; };
                 spec.set = function (value) { this[field] = value; };
             } else {
@@ -816,8 +816,8 @@ export const $properties = MetaMacro.extend({
                 spec.value    = property.value;
             }
             _cleanDescriptor(property);
-            this.defineProperty(metadata, source, name, spec, property);
-        }
+            this.defineProperty(metadata, source, key, spec, property);
+        });
         if (step == MetaStep.Extend) {
             target.extend(expanded);
         } else {
@@ -869,7 +869,7 @@ export const $inferProperties = MetaMacro.extend({
         let expanded;
         for (let key in definition) {
             const member = getPropertyDescriptors(definition, key);
-            if ($isFunction(member.value)) {
+            if (member && $isFunction(member.value)) {
                 const spec = { configurable: true, enumerable: true },
                       name = this.inferProperty(key, member.value, definition, spec);
                 if (name) {
@@ -996,21 +996,21 @@ export const Delegate = Base.extend({
     /**
      * Delegates the property get on `protocol`.
      * @method get
-     * @param   {miruken.Protocol} protocol      - receiving protocol
-     * @param   {string}           propertyName  - name of the property
-     * @param   {boolean}          strict        - true if target must adopt protocol
+     * @param   {miruken.Protocol} protocol  - receiving protocol
+     * @param   {string}           key       - key of the property
+     * @param   {boolean}          strict    - true if target must adopt protocol
      * @returns {Any} result of the proxied get.
      */
-    get(protocol, propertyName, strict) {},
+    get(protocol, key, strict) {},
     /**
      * Delegates the property set on `protocol`.
      * @method set
-     * @param   {miruken.Protocol} protocol      - receiving protocol
-     * @param   {string}           propertyName  - name of the property
-     * @param   {Object}           propertyValue - value of the property
-     * @param   {boolean}          strict        - true if target must adopt protocol
+     * @param   {miruken.Protocol} protocol  - receiving protocol
+     * @param   {string}           key       - key of the property
+     * @param   {Object}           value     - value of the property
+     * @param   {boolean}          strict    - true if target must adopt protocol
      */
-    set(protocol, propertyName, propertyValue, strict) {},
+    set(protocol, key, value, strict) {},
     /**
      * Delegates the method invocation on `protocol`.
      * @method invoke
@@ -1034,16 +1034,16 @@ export const ObjectDelegate = Delegate.extend({
     constructor(object) {
         Object.defineProperty(this, 'object', { value: object });
     },
-    get(protocol, propertyName, strict) {
+    get(protocol, key, strict) {
         const object = this.object;
         if (object && (!strict || protocol.adoptedBy(object))) {
-            return object[propertyName];
+            return object[key];
         }
     },
-    set(protocol, propertyName, propertyValue, strict) {
+    set(protocol, key, value, strict) {
         const object = this.object;
         if (object && (!strict || protocol.adoptedBy(object))) {
-            return object[propertyName] = propertyValue;
+            return object[key] = value;
         }
     },
     invoke(protocol, methodName, args, strict) {
@@ -1066,20 +1066,16 @@ export const ArrayDelegate = Delegate.extend({
     constructor(array) {
         Object.defineProperty(this, 'array', { value: array });
     },
-    get(protocol, propertyName, strict) {
+    get(protocol, key, strict) {
         const array = this.array;
         return array && array.reduce((result, object) =>
-            !strict || protocol.adoptedBy(object)
-                ? object[propertyName]
-                : result
+            !strict || protocol.adoptedBy(object) ? object[key] : result
         , undefined);  
     },
-    set(protocol, propertyName, propertyValue, strict) {
+    set(protocol, key, value, strict) {
         const array = this.array;
         return array && array.reduce((result, object) =>
-            !strict || protocol.adoptedBy(object)
-                ? object[propertyName] = propertyValue
-                : result
+            !strict || protocol.adoptedBy(object) ? object[key] = value : result
         , undefined);  
     },
     invoke(protocol, methodName, args, strict) {

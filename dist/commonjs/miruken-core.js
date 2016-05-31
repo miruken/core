@@ -361,7 +361,7 @@ function _extend(object, source) {
           key;
       while (key = _HIDDEN[--i]) {
         var desc = getPropertyDescriptors(source, key);
-        if (desc.value != proto[key]) {
+        if (!desc || desc.value != proto[key]) {
           desc = _override(object, key, desc);
           if (desc) Object.defineProperty(object, key, desc);
         }
@@ -482,7 +482,7 @@ function _override(object, key, desc) {
 };
 
 function getPropertyDescriptors(obj, key) {
-  var props = {},
+  var props = key ? null : {},
       prop;
   do {
     if (key) {

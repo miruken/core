@@ -1,6 +1,8 @@
 "use strict";
 
 System.register([], function (_export, _context) {
+  "use strict";
+
   var _typeof, Undefined, Null, True, False, __prototyping, _counter, _IGNORE, _BASE, _HIDDEN, _slice, _subclass, Base, Package, Abstract, _moduleCount, Module, _toString;
 
   function _extendModule(module, _interface) {
@@ -53,7 +55,7 @@ System.register([], function (_export, _context) {
             key;
         while (key = _HIDDEN[--i]) {
           var desc = getPropertyDescriptors(source, key);
-          if (desc.value != proto[key]) {
+          if (!desc || desc.value != proto[key]) {
             desc = _override(object, key, desc);
             if (desc) Object.defineProperty(object, key, desc);
           }
@@ -563,7 +565,7 @@ System.register([], function (_export, _context) {
       ;;;
 
       function getPropertyDescriptors(obj, key) {
-        var props = {},
+        var props = key ? null : {},
             prop;
         do {
           if (key) {
