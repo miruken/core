@@ -536,7 +536,7 @@ export function getPropertyDescriptors(obj, key) {
 // lang/instanceOf.js
 // =========================================================================
 
-function instanceOf(object, klass) {
+export function instanceOf(object, klass) {
   // Handle exceptions where the target object originates from another frame.
   // This is handy for JSON parsing (amongst other things).
   

@@ -14,23 +14,19 @@ var jsName = paths.packageName + '.js';
 
 gulp.task('build-index', function(){
     var importsToAdd = [];
-    var files = ['base2.js', 'miruken.js'].map(function(file){
-        return paths.root + file;
-    });
-
-    return gulp.src(files)
+    return gulp.src(paths.source)
+        .pipe(tools.sortFiles())
         .pipe(through2.obj(function(file, enc, callback) {
             file.contents = new Buffer(tools.extractImports(file.contents.toString("utf8"), importsToAdd));
             this.push(file);
             return callback();
         }))
         .pipe(concat(jsName))
-        .pipe(insert.transform(function(contents) {
+        .pipe(insert.transform(function (contents) {
             return tools.createImportBlock(importsToAdd) + contents;
         }))
         .pipe(gulp.dest(paths.output));
 });
-
 
 gulp.task('build-es2015', function () {
     return gulp.src(paths.output + jsName)

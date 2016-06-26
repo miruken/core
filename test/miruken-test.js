@@ -1,11 +1,15 @@
+import { Base, assignID } from '../src/base2';
+import { Enum, Flags } from '../src/enum';
+import { Modifier,  $createModifier } from '../src/modifier';
+import { Disposing, DisposingMixin, $using } from '../src/dispose';
+import { Interceptor, InterceptorSelector, ProxyBuilder } from '../src/proxy';
 import {
-    Enum, Flags, Base, Protocol, Modifier, Metadata,
-    Interceptor, InterceptorSelector, ProxyBuilder,
-    Miruken, Disposing, DisposingMixin, $using,
-    $decorator, $decorate, $decorated, $createModifier,
-    $isClass, $isFunction, $isString, assignID,
+    Protocol, Metadata,
+    $decorator, $decorate, $decorated,
+    $isClass, $isFunction, $isString,
     $properties, $inferProperties, $inheritStatic
-} from '../src/index';
+} from '../src/meta';
+import { $flatten } from '../src/util';
 
 import chai from 'chai';
 
@@ -828,7 +832,32 @@ describe("$decorated", () => {
              decorator = $decorate($decorate(dog));
         expect($decorated(decorator, true)).to.equal(dog);
     });
+});
 
+describe("$flatten", () => {
+    it("should ignore if not an array", () => {
+        expect($flatten("hello")).to.equal("hello");
+    });
+
+    it("should preserve flattened arrays", () => {
+        expect($flatten([1,2,null,3])).to.eql([1,2,null,3]);
+    });
+
+    it("should flatten arrays", () => {
+        expect($flatten([[1,2],[3,4]])).to.eql([1,2,3,4]);
+    });
+
+    it("should flatten deep arrays", () => {
+        expect($flatten([[[1,'a'],[2,'b']],[[3,'c'],4]])).to.eql([1,'a',2,'b',3,'c',4]);
+    });
+
+    it("should prune arrays", () => {
+        expect($flatten([1,2,null,3], true)).to.eql([1,2,3]);
+    });
+
+    it("should prune deep arrays", () => {
+        expect($flatten([1,[2,[3,null]],null,[4,[null,5]]], true)).to.eql([1,2,3,4,5]);
+    });    
 });
 
 describe("Modifier", () => {

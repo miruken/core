@@ -1,6 +1,7 @@
 {
   "name": "miruken-core",
   "version": "0.0.1",
+  "registry": "npm",    
   "description": "Enhancements to the javascript language",
   "keywords": [
     "miruken",
@@ -10,12 +11,19 @@
   "homepage": "http://miruken.com",
   "license": "MIT",
   "author": "Craig Neuwirt <Craig.Neuwirt@Improving.com>",
-  "main": "dist/commonjs/miruken.js",
+  "main": "dist/commonjs/miruken-core.js",
   "repository": {
     "type": "git",
     "url": "http://github.com/miruken/core"
   },
   "jspm": {
+    "registry": "npm",
+    "jspmPackage": true,
+    "main": "miruken-core.js",
+    "format": "amd",
+    "directories": {
+      "dist": "dist/amd"
+    },
     "dependencies": {},
     "devDependencies": {
       "babel": "npm:babel-core@^5.8.24",

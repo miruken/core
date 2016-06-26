@@ -15,6 +15,8 @@ import { Base } from './base2';
  * @param  {string}  name     -  enum name
  * @param  {number}  ordinal  -  enum position
  */
+const Defining = Symbol();
+
 export const Enum = Base.extend({
     constructor(value, name, ordinal) {
         this.constructing(value, name);
@@ -39,7 +41,7 @@ export const Enum = Base.extend({
     },
     toString() { return this.name; },
     constructing(value, name) {
-        if (!this.constructor.__defining) {
+        if (!this.constructor[Defining]) {
             throw new TypeError("Enums cannot be instantiated.");
         }            
     }
@@ -53,20 +55,20 @@ export const Enum = Base.extend({
                 return this.fromValue(value);
             }
         });
-        en.__defining = true;
+        en[Defining] = true;
         const names  = Object.freeze(Object.keys(choices));
         let   items  = Object.keys(choices).map(
             (name, ordinal) => en[name] = new en(choices[name], name, ordinal));
         en.names     = Object.freeze(names);        
         en.items     = Object.freeze(items);
         en.fromValue = this.fromValue;
-        delete en.__defining;
+        delete en[Defining]
         return Object.freeze(en);
     },
     fromValue(value) {
         const match = this.items.find(item => item.value == value);
         if (!match) {
-            throw new TypeError(`${value} is not a valid value for this Enum.`);            
+            throw new TypeError(`${value} is not a valid value for this Enum.`);
         }
         return match;
     }

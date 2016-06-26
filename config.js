@@ -1,6 +1,6 @@
 System.config({
   defaultJSExtensions: true,
-  transpiler: "–latest",
+  transpiler: "babel",
   babelOptions: {
     "optional": [
       "runtime",

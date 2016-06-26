@@ -105,12 +105,3 @@ export const Starting = Protocol.extend({
 export const Startup = Base.extend(Starting, {
     start() {}
 });
-
-export * from './enum';
-export * from './meta';
-export * from './proxy';
-export * from './dispose';
-export * from './modifier';
-export * from './package';
-export * from './util';
-export * from './base2';

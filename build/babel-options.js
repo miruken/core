@@ -1,21 +1,22 @@
 var path = require('path');
 var paths = require('./paths');
 
-exports.base = function() {   
-    return {
-        filename: '',
-        filenameRelative: '',
-        sourceMap: true,
-        sourceMapTarget: '',
-        sourceRoot: '',
-        moduleRoot: path.resolve('src').replace(/\\/g, '/'),
-        comments: false,
-        compact: false,
-        code:true,
-        presets: ['es2015'],
-        plugins: []
-    };
-};
+exports.base = function() {
+  var config = {
+    filename: '',
+    filenameRelative: '',
+    sourceMap: true,
+    sourceRoot: '',
+    moduleRoot: path.resolve('src').replace(/\\/g, '/'),
+    moduleIds: false,
+    comments: false,
+    compact: false,
+    code: true,
+    presets: [ 'es2015' ],
+    plugins: []
+  };
+  return config;
+}
 
 exports.commonjs = function() {
     var options = exports.base();
