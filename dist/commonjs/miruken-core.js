@@ -1731,6 +1731,280 @@ function $using(disposing, action, context) {
     }
 }
 
+var TraversingAxis = exports.TraversingAxis = Enum({
+    Self: 1,
+
+    Root: 2,
+
+    Child: 3,
+
+    Sibling: 4,
+
+    Ancestor: 5,
+
+    Descendant: 6,
+
+    DescendantReverse: 7,
+
+    ChildOrSelf: 8,
+
+    SiblingOrSelf: 9,
+
+    AncestorOrSelf: 10,
+
+    DescendantOrSelf: 11,
+
+    DescendantOrSelfReverse: 12,
+
+    AncestorSiblingOrSelf: 13
+});
+
+var Traversing = exports.Traversing = Protocol.extend({
+    traverse: function traverse(axis, visitor, context) {}
+});
+
+var TraversingMixin = exports.TraversingMixin = Module.extend({
+    traverse: function traverse(object, axis, visitor, context) {
+        if ($isFunction(axis)) {
+            context = visitor;
+            visitor = axis;
+            axis = TraversingAxis.Child;
+        }
+        if (!$isFunction(visitor)) return;
+        switch (axis) {
+            case TraversingAxis.Self:
+                _traverseSelf.call(object, visitor, context);
+                break;
+
+            case TraversingAxis.Root:
+                _traverseRoot.call(object, visitor, context);
+                break;
+
+            case TraversingAxis.Child:
+                _traverseChildren.call(object, visitor, false, context);
+                break;
+
+            case TraversingAxis.Sibling:
+                _traverseAncestorSiblingOrSelf.call(object, visitor, false, false, context);
+                break;
+
+            case TraversingAxis.ChildOrSelf:
+                _traverseChildren.call(object, visitor, true, context);
+                break;
+
+            case TraversingAxis.SiblingOrSelf:
+                _traverseAncestorSiblingOrSelf.call(object, visitor, true, false, context);
+                break;
+
+            case TraversingAxis.Ancestor:
+                _traverseAncestors.call(object, visitor, false, context);
+                break;
+
+            case TraversingAxis.AncestorOrSelf:
+                _traverseAncestors.call(object, visitor, true, context);
+                break;
+
+            case TraversingAxis.Descendant:
+                _traverseDescendants.call(object, visitor, false, context);
+                break;
+
+            case TraversingAxis.DescendantReverse:
+                _traverseDescendantsReverse.call(object, visitor, false, context);
+                break;
+
+            case TraversingAxis.DescendantOrSelf:
+                _traverseDescendants.call(object, visitor, true, context);
+                break;
+
+            case TraversingAxis.DescendantOrSelfReverse:
+                _traverseDescendantsReverse.call(object, visitor, true, context);
+                break;
+
+            case TraversingAxis.AncestorSiblingOrSelf:
+                _traverseAncestorSiblingOrSelf.call(object, visitor, true, true, context);
+                break;
+
+            default:
+                throw new Error(format("Unrecognized TraversingAxis %1.", axis));
+        }
+    }
+});
+
+function _checkCircularity(visited, node) {
+    if (visited.indexOf(node) !== -1) {
+        throw new Error(format("Circularity detected for node %1", node));
+    }
+    visited.push(node);
+    return node;
+}
+
+function _traverseSelf(visitor, context) {
+    visitor.call(context, this);
+}
+
+function _traverseRoot(visitor, context) {
+    var parent = void 0,
+        root = this,
+        visited = [this];
+    while (parent = root.parent) {
+        _checkCircularity(visited, parent);
+        root = parent;
+    }
+    visitor.call(context, root);
+}
+
+function _traverseChildren(visitor, withSelf, context) {
+    if (withSelf && visitor.call(context, this)) {
+        return;
+    }
+    var children = this.children;
+    for (var i = 0; i < children.length; ++i) {
+        if (visitor.call(context, children[i])) {
+            return;
+        }
+    }
+}
+
+function _traverseAncestors(visitor, withSelf, context) {
+    var parent = this,
+        visited = [this];
+    if (withSelf && visitor.call(context, this)) {
+        return;
+    }
+    while ((parent = parent.parent) && !visitor.call(context, parent)) {
+        _checkCircularity(visited, parent);
+    }
+}
+
+function _traverseDescendants(visitor, withSelf, context) {
+    var _this6 = this;
+
+    if (withSelf) {
+        Traversal.levelOrder(this, visitor, context);
+    } else {
+        Traversal.levelOrder(this, function (node) {
+            if (!$equals(_this6, node)) {
+                return visitor.call(context, node);
+            }
+        }, context);
+    }
+}
+
+function _traverseDescendantsReverse(visitor, withSelf, context) {
+    var _this7 = this;
+
+    if (withSelf) {
+        Traversal.reverseLevelOrder(this, visitor, context);
+    } else {
+        Traversal.reverseLevelOrder(this, function (node) {
+            if (!$equals(_this7, node)) {
+                return visitor.call(context, node);
+            }
+        }, context);
+    }
+}
+
+function _traverseAncestorSiblingOrSelf(visitor, withSelf, withAncestor, context) {
+    if (withSelf && visitor.call(context, this)) {
+        return;
+    }
+    var parent = this.parent;
+    if (parent) {
+        var children = parent.children;
+        for (var i = 0; i < children.length; ++i) {
+            var sibling = children[i];
+            if (!$equals(this, sibling) && visitor.call(context, sibling)) {
+                return;
+            }
+        }
+        if (withAncestor) {
+            _traverseAncestors.call(parent, visitor, true, context);
+        }
+    }
+}
+
+var Traversal = exports.Traversal = Abstract.extend({}, {
+    preOrder: function preOrder(node, visitor, context) {
+        return _preOrder(node, visitor, context, []);
+    },
+    postOrder: function postOrder(node, visitor, context) {
+        return _postOrder(node, visitor, context, []);
+    },
+    levelOrder: function levelOrder(node, visitor, context) {
+        return _levelOrder(node, visitor, context, []);
+    },
+    reverseLevelOrder: function reverseLevelOrder(node, visitor, context) {
+        return _reverseLevelOrder(node, visitor, context, []);
+    }
+});
+
+function _preOrder(node, visitor, context, visited) {
+    _checkCircularity(visited, node);
+    if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
+        return true;
+    }
+    if ($isFunction(node.traverse)) node.traverse(function (child) {
+        return _preOrder(child, visitor, context, visited);
+    });
+    return false;
+}
+
+function _postOrder(node, visitor, context, visited) {
+    _checkCircularity(visited, node);
+    if (!node || !$isFunction(visitor)) {
+        return true;
+    }
+    if ($isFunction(node.traverse)) node.traverse(function (child) {
+        return _postOrder(child, visitor, context, visited);
+    });
+    return visitor.call(context, node);
+}
+
+function _levelOrder(node, visitor, context, visited) {
+    if (!node || !$isFunction(visitor)) {
+        return;
+    }
+    var queue = [node];
+    while (queue.length > 0) {
+        var next = queue.shift();
+        _checkCircularity(visited, next);
+        if (visitor.call(context, next)) {
+            return;
+        }
+        if ($isFunction(next.traverse)) next.traverse(function (child) {
+            if (child) queue.push(child);
+        });
+    }
+}
+
+function _reverseLevelOrder(node, visitor, context, visited) {
+    if (!node || !$isFunction(visitor)) {
+        return;
+    }
+    var queue = [node],
+        stack = [];
+
+    var _loop = function _loop() {
+        var next = queue.shift();
+        _checkCircularity(visited, next);
+        stack.push(next);
+        var level = [];
+        if ($isFunction(next.traverse)) next.traverse(function (child) {
+            if (child) level.unshift(child);
+        });
+        queue.push.apply(queue, level);
+    };
+
+    while (queue.length > 0) {
+        _loop();
+    }
+    while (stack.length > 0) {
+        if (visitor.call(context, stack.pop())) {
+            return;
+        }
+    }
+}
+
 Package.implement({
     export: function _export(name, member) {
         this.addName(name, member);
