@@ -10,6 +10,7 @@ import {
     $properties, $inferProperties, $inheritStatic
 } from '../src/meta';
 import { $flatten } from '../src/util';
+import '../src/promise';
 
 import chai from 'chai';
 

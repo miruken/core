@@ -244,7 +244,7 @@ System.register([], function (_export2, _context) {
 
     function _checkCircularity(visited, node) {
         if (visited.indexOf(node) !== -1) {
-            throw new Error(format("Circularity detected for node %1", node));
+            throw new Error("Circularity detected for node " + node);
         }
         visited.push(node);
         return node;
@@ -269,10 +269,30 @@ System.register([], function (_export2, _context) {
         if (withSelf && visitor.call(context, this)) {
             return;
         }
-        var children = this.children;
-        for (var i = 0; i < children.length; ++i) {
-            if (visitor.call(context, children[i])) {
-                return;
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
+
+        try {
+            for (var _iterator = this.children[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                var child = _step.value;
+
+                if (visitor.call(context, child)) {
+                    return;
+                }
+            }
+        } catch (err) {
+            _didIteratorError = true;
+            _iteratorError = err;
+        } finally {
+            try {
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                    _iterator.return();
+                }
+            } finally {
+                if (_didIteratorError) {
+                    throw _iteratorError;
+                }
             }
         }
     }
@@ -295,9 +315,7 @@ System.register([], function (_export2, _context) {
             Traversal.levelOrder(this, visitor, context);
         } else {
             Traversal.levelOrder(this, function (node) {
-                if (!$equals(_this6, node)) {
-                    return visitor.call(context, node);
-                }
+                return !$equals(_this6, node) && visitor.call(context, node);
             }, context);
         }
     }
@@ -309,9 +327,7 @@ System.register([], function (_export2, _context) {
             Traversal.reverseLevelOrder(this, visitor, context);
         } else {
             Traversal.reverseLevelOrder(this, function (node) {
-                if (!$equals(_this7, node)) {
-                    return visitor.call(context, node);
-                }
+                return !$equals(_this7, node) && visitor.call(context, node);
             }, context);
         }
     }
@@ -322,20 +338,42 @@ System.register([], function (_export2, _context) {
         }
         var parent = this.parent;
         if (parent) {
-            var children = parent.children;
-            for (var i = 0; i < children.length; ++i) {
-                var sibling = children[i];
-                if (!$equals(this, sibling) && visitor.call(context, sibling)) {
-                    return;
+            var _iteratorNormalCompletion2 = true;
+            var _didIteratorError2 = false;
+            var _iteratorError2 = undefined;
+
+            try {
+                for (var _iterator2 = parent.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                    var sibling = _step2.value;
+
+                    if (!$equals(this, sibling) && visitor.call(context, sibling)) {
+                        return;
+                    }
+                }
+            } catch (err) {
+                _didIteratorError2 = true;
+                _iteratorError2 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                        _iterator2.return();
+                    }
+                } finally {
+                    if (_didIteratorError2) {
+                        throw _iteratorError2;
+                    }
                 }
             }
+
             if (withAncestor) {
                 _traverseAncestors.call(parent, visitor, true, context);
             }
         }
     }
 
-    function _preOrder(node, visitor, context, visited) {
+    function _preOrder(node, visitor, context) {
+        var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+
         _checkCircularity(visited, node);
         if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
             return true;
@@ -346,7 +384,9 @@ System.register([], function (_export2, _context) {
         return false;
     }
 
-    function _postOrder(node, visitor, context, visited) {
+    function _postOrder(node, visitor, context) {
+        var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+
         _checkCircularity(visited, node);
         if (!node || !$isFunction(visitor)) {
             return true;
@@ -357,7 +397,9 @@ System.register([], function (_export2, _context) {
         return visitor.call(context, node);
     }
 
-    function _levelOrder(node, visitor, context, visited) {
+    function _levelOrder(node, visitor, context) {
+        var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+
         if (!node || !$isFunction(visitor)) {
             return;
         }
@@ -374,7 +416,9 @@ System.register([], function (_export2, _context) {
         }
     }
 
-    function _reverseLevelOrder(node, visitor, context, visited) {
+    function _reverseLevelOrder(node, visitor, context) {
+        var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+
         if (!node || !$isFunction(visitor)) {
             return;
         }
@@ -599,6 +643,26 @@ System.register([], function (_export2, _context) {
                 return typeof obj;
             } : function (obj) {
                 return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+            };
+
+
+            if (Promise.prototype.finally === undefined) Promise.prototype.finally = function (callback) {
+                var p = this.constructor;
+                return this.then(function (value) {
+                    return p.resolve(callback()).then(function () {
+                        return value;
+                    });
+                }, function (reason) {
+                    return p.resolve(callback()).then(function () {
+                        throw reason;
+                    });
+                });
+            };
+
+            if (Promise.delay === undefined) Promise.delay = function (ms) {
+                return new Promise(function (resolve) {
+                    return setTimeout(resolve, ms);
+                });
             };
 
             _export2("$eq", $eq = $createModifier());
@@ -2335,7 +2399,7 @@ System.register([], function (_export2, _context) {
                             break;
 
                         default:
-                            throw new Error(format("Unrecognized TraversingAxis %1.", axis));
+                            throw new Error("Unrecognized TraversingAxis " + axis + ".");
                     }
                 }
             }));
@@ -2344,16 +2408,16 @@ System.register([], function (_export2, _context) {
 
             _export2("Traversal", Traversal = Abstract.extend({}, {
                 preOrder: function preOrder(node, visitor, context) {
-                    return _preOrder(node, visitor, context, []);
+                    return _preOrder(node, visitor, context);
                 },
                 postOrder: function postOrder(node, visitor, context) {
-                    return _postOrder(node, visitor, context, []);
+                    return _postOrder(node, visitor, context);
                 },
                 levelOrder: function levelOrder(node, visitor, context) {
-                    return _levelOrder(node, visitor, context, []);
+                    return _levelOrder(node, visitor, context);
                 },
                 reverseLevelOrder: function reverseLevelOrder(node, visitor, context) {
-                    return _reverseLevelOrder(node, visitor, context, []);
+                    return _reverseLevelOrder(node, visitor, context);
                 }
             }));
 
@@ -2608,25 +2672,6 @@ System.register([], function (_export2, _context) {
             _export2("$debounce", $debounce);
 
             ;
-
-            if (Promise.prototype.finally === undefined) Promise.prototype.finally = function (callback) {
-                var p = this.constructor;
-                return this.then(function (value) {
-                    return p.resolve(callback()).then(function () {
-                        return value;
-                    });
-                }, function (reason) {
-                    return p.resolve(callback()).then(function () {
-                        throw reason;
-                    });
-                });
-            };
-
-            if (Promise.delay === undefined) Promise.delay = function (ms) {
-                return new Promise(function (resolve) {
-                    return setTimeout(resolve, ms);
-                });
-            };
         }
     };
 });

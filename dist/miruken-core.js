@@ -1,4 +1,19 @@
 
+
+if (Promise.prototype.finally === undefined)
+    Promise.prototype.finally = function (callback) {
+        let p = this.constructor;
+        return this.then(
+            value  => p.resolve(callback()).then(() => value),
+            reason => p.resolve(callback()).then(() => { throw reason })
+        );
+    };
+
+if (Promise.delay === undefined)
+    Promise.delay = function (ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    };
+
 /**
  * Annotates invariance.
  * @attribute $eq
@@ -2524,14 +2539,14 @@ export const TraversingMixin = Module.extend({
             break;
 
         default:
-            throw new Error(format("Unrecognized TraversingAxis %1.", axis));
+            throw new Error(`Unrecognized TraversingAxis ${axis}.`);
         }
     }
 });
 
 function _checkCircularity(visited, node) {
     if (visited.indexOf(node) !== -1) {
-        throw new Error(format("Circularity detected for node %1", node));
+        throw new Error(`Circularity detected for node ${node}`);
     }
     visited.push(node);
     return node;
@@ -2554,9 +2569,8 @@ function _traverseChildren(visitor, withSelf, context) {
     if ((withSelf && visitor.call(context, this))) {
         return;
     }
-    const children = this.children;
-    for (let i = 0; i < children.length; ++i) {
-        if (visitor.call(context, children[i])) {
+    for (const child of this.children) {
+        if (visitor.call(context, child)) {
             return;
         }
     }
@@ -2576,11 +2590,9 @@ function _traverseDescendants(visitor, withSelf, context) {
     if (withSelf) {
         Traversal.levelOrder(this, visitor, context);
     } else {
-        Traversal.levelOrder(this, node => {
-            if (!$equals(this, node)) {
-                return visitor.call(context, node);
-            }
-        }, context);
+        Traversal.levelOrder(this, node =>
+            !$equals(this, node) && visitor.call(context, node),
+            context);
     }
 }
 
@@ -2588,11 +2600,9 @@ function _traverseDescendantsReverse(visitor, withSelf, context) {
     if (withSelf) {
         Traversal.reverseLevelOrder(this, visitor, context);
     } else {
-        Traversal.reverseLevelOrder(this, node => {
-            if (!$equals(this, node)) {
-                return visitor.call(context, node);
-            }
-        }, context);
+        Traversal.reverseLevelOrder(this, node =>
+            !$equals(this, node) && visitor.call(context, node),
+            context);
     }
 }
 
@@ -2602,9 +2612,7 @@ function _traverseAncestorSiblingOrSelf(visitor, withSelf, withAncestor, context
     }
     const parent = this.parent;
     if (parent) {
-        const children = parent.children;
-        for (let i = 0; i < children.length; ++i) {
-            const sibling = children[i];
+        for (const sibling of parent.children) {
             if (!$equals(this, sibling) && visitor.call(context, sibling)) {
                 return;
             }
@@ -2631,7 +2639,7 @@ export const Traversal = Abstract.extend({}, {
      * @param  {Object}                    [context]  -  visitor calling context
      */
     preOrder(node, visitor, context) {
-        return _preOrder(node, visitor, context, []);
+        return _preOrder(node, visitor, context);
     },
     /**
      * Performs a post-order graph traversal.
@@ -2642,7 +2650,7 @@ export const Traversal = Abstract.extend({}, {
      * @param  {Object}                    [context]  -  visitor calling context
      */
     postOrder(node, visitor, context) {
-        return _postOrder(node, visitor, context, []);
+        return _postOrder(node, visitor, context);
     },
     /**
      * Performs a level-order graph traversal.
@@ -2653,7 +2661,7 @@ export const Traversal = Abstract.extend({}, {
      * @param  {Object}                    [context]  -  visitor calling context
      */
     levelOrder(node, visitor, context) {
-        return _levelOrder(node, visitor, context, []);
+        return _levelOrder(node, visitor, context);
     },
     /**
      * Performs a reverse level-order graph traversal.
@@ -2664,35 +2672,31 @@ export const Traversal = Abstract.extend({}, {
      * @param  {Object}                    [context]  -  visitor calling context
      */
     reverseLevelOrder(node, visitor, context) {
-        return _reverseLevelOrder(node, visitor, context, []);
+        return _reverseLevelOrder(node, visitor, context);
     }
 });
 
-function _preOrder(node, visitor, context, visited) {
+function _preOrder(node, visitor, context, visited = []) {
     _checkCircularity(visited, node);
     if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
         return true;
     }
     if ($isFunction(node.traverse))
-        node.traverse(function (child) {
-            return _preOrder(child, visitor, context, visited);
-        });
+        node.traverse(child => _preOrder(child, visitor, context, visited));
     return false;
 }
 
-function _postOrder(node, visitor, context, visited) {
+function _postOrder(node, visitor, context, visited = []) {
     _checkCircularity(visited, node);
     if (!node || !$isFunction(visitor)) {
         return true;
     }
     if ($isFunction(node.traverse))
-        node.traverse(function (child) {
-            return _postOrder(child, visitor, context, visited);
-        });
+        node.traverse(child => _postOrder(child, visitor, context, visited));
     return visitor.call(context, node);
 }
 
-function _levelOrder(node, visitor, context, visited) {
+function _levelOrder(node, visitor, context, visited = []) {
     if (!node || !$isFunction(visitor)) {
         return;
     }
@@ -2704,13 +2708,13 @@ function _levelOrder(node, visitor, context, visited) {
             return;
         }
         if ($isFunction(next.traverse))
-            next.traverse(function (child) {
+            next.traverse(child => {
                 if (child) queue.push(child);
             });
     }
 }
 
-function _reverseLevelOrder(node, visitor, context, visited) {
+function _reverseLevelOrder(node, visitor, context, visited = []) {
     if (!node || !$isFunction(visitor)) {
         return;
     }
@@ -2722,7 +2726,7 @@ function _reverseLevelOrder(node, visitor, context, visited) {
         stack.push(next);
         const level = [];
         if ($isFunction(next.traverse))
-            next.traverse(function (child) {
+            next.traverse(child => {
                 if (child) level.unshift(child);
             });
         queue.push.apply(queue, level);
@@ -3315,17 +3319,3 @@ export function $debounce(fn, wait, immediate, defaultReturnValue) {
         return defaultReturnValue;
     };
 };
-
-if (Promise.prototype.finally === undefined)
-    Promise.prototype.finally = function (callback) {
-        let p = this.constructor;
-        return this.then(
-            value  => p.resolve(callback()).then(() => value),
-            reason => p.resolve(callback()).then(() => { throw reason })
-        );
-    };
-
-if (Promise.delay === undefined)
-    Promise.delay = function (ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    };

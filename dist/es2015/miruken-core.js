@@ -42,6 +42,25 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
+if (Promise.prototype.finally === undefined) Promise.prototype.finally = function (callback) {
+    var p = this.constructor;
+    return this.then(function (value) {
+        return p.resolve(callback()).then(function () {
+            return value;
+        });
+    }, function (reason) {
+        return p.resolve(callback()).then(function () {
+            throw reason;
+        });
+    });
+};
+
+if (Promise.delay === undefined) Promise.delay = function (ms) {
+    return new Promise(function (resolve) {
+        return setTimeout(resolve, ms);
+    });
+};
+
 var $eq = exports.$eq = $createModifier();
 
 var $use = exports.$use = $createModifier();
@@ -1825,14 +1844,14 @@ var TraversingMixin = exports.TraversingMixin = Module.extend({
                 break;
 
             default:
-                throw new Error(format("Unrecognized TraversingAxis %1.", axis));
+                throw new Error("Unrecognized TraversingAxis " + axis + ".");
         }
     }
 });
 
 function _checkCircularity(visited, node) {
     if (visited.indexOf(node) !== -1) {
-        throw new Error(format("Circularity detected for node %1", node));
+        throw new Error("Circularity detected for node " + node);
     }
     visited.push(node);
     return node;
@@ -1857,10 +1876,30 @@ function _traverseChildren(visitor, withSelf, context) {
     if (withSelf && visitor.call(context, this)) {
         return;
     }
-    var children = this.children;
-    for (var i = 0; i < children.length; ++i) {
-        if (visitor.call(context, children[i])) {
-            return;
+    var _iteratorNormalCompletion = true;
+    var _didIteratorError = false;
+    var _iteratorError = undefined;
+
+    try {
+        for (var _iterator = this.children[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var child = _step.value;
+
+            if (visitor.call(context, child)) {
+                return;
+            }
+        }
+    } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+    } finally {
+        try {
+            if (!_iteratorNormalCompletion && _iterator.return) {
+                _iterator.return();
+            }
+        } finally {
+            if (_didIteratorError) {
+                throw _iteratorError;
+            }
         }
     }
 }
@@ -1883,9 +1922,7 @@ function _traverseDescendants(visitor, withSelf, context) {
         Traversal.levelOrder(this, visitor, context);
     } else {
         Traversal.levelOrder(this, function (node) {
-            if (!$equals(_this6, node)) {
-                return visitor.call(context, node);
-            }
+            return !$equals(_this6, node) && visitor.call(context, node);
         }, context);
     }
 }
@@ -1897,9 +1934,7 @@ function _traverseDescendantsReverse(visitor, withSelf, context) {
         Traversal.reverseLevelOrder(this, visitor, context);
     } else {
         Traversal.reverseLevelOrder(this, function (node) {
-            if (!$equals(_this7, node)) {
-                return visitor.call(context, node);
-            }
+            return !$equals(_this7, node) && visitor.call(context, node);
         }, context);
     }
 }
@@ -1910,13 +1945,33 @@ function _traverseAncestorSiblingOrSelf(visitor, withSelf, withAncestor, context
     }
     var parent = this.parent;
     if (parent) {
-        var children = parent.children;
-        for (var i = 0; i < children.length; ++i) {
-            var sibling = children[i];
-            if (!$equals(this, sibling) && visitor.call(context, sibling)) {
-                return;
+        var _iteratorNormalCompletion2 = true;
+        var _didIteratorError2 = false;
+        var _iteratorError2 = undefined;
+
+        try {
+            for (var _iterator2 = parent.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                var sibling = _step2.value;
+
+                if (!$equals(this, sibling) && visitor.call(context, sibling)) {
+                    return;
+                }
+            }
+        } catch (err) {
+            _didIteratorError2 = true;
+            _iteratorError2 = err;
+        } finally {
+            try {
+                if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                    _iterator2.return();
+                }
+            } finally {
+                if (_didIteratorError2) {
+                    throw _iteratorError2;
+                }
             }
         }
+
         if (withAncestor) {
             _traverseAncestors.call(parent, visitor, true, context);
         }
@@ -1925,20 +1980,22 @@ function _traverseAncestorSiblingOrSelf(visitor, withSelf, withAncestor, context
 
 var Traversal = exports.Traversal = Abstract.extend({}, {
     preOrder: function preOrder(node, visitor, context) {
-        return _preOrder(node, visitor, context, []);
+        return _preOrder(node, visitor, context);
     },
     postOrder: function postOrder(node, visitor, context) {
-        return _postOrder(node, visitor, context, []);
+        return _postOrder(node, visitor, context);
     },
     levelOrder: function levelOrder(node, visitor, context) {
-        return _levelOrder(node, visitor, context, []);
+        return _levelOrder(node, visitor, context);
     },
     reverseLevelOrder: function reverseLevelOrder(node, visitor, context) {
-        return _reverseLevelOrder(node, visitor, context, []);
+        return _reverseLevelOrder(node, visitor, context);
     }
 });
 
-function _preOrder(node, visitor, context, visited) {
+function _preOrder(node, visitor, context) {
+    var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+
     _checkCircularity(visited, node);
     if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
         return true;
@@ -1949,7 +2006,9 @@ function _preOrder(node, visitor, context, visited) {
     return false;
 }
 
-function _postOrder(node, visitor, context, visited) {
+function _postOrder(node, visitor, context) {
+    var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+
     _checkCircularity(visited, node);
     if (!node || !$isFunction(visitor)) {
         return true;
@@ -1960,7 +2019,9 @@ function _postOrder(node, visitor, context, visited) {
     return visitor.call(context, node);
 }
 
-function _levelOrder(node, visitor, context, visited) {
+function _levelOrder(node, visitor, context) {
+    var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+
     if (!node || !$isFunction(visitor)) {
         return;
     }
@@ -1977,7 +2038,9 @@ function _levelOrder(node, visitor, context, visited) {
     }
 }
 
-function _reverseLevelOrder(node, visitor, context, visited) {
+function _reverseLevelOrder(node, visitor, context) {
+    var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+
     if (!node || !$isFunction(visitor)) {
         return;
     }
@@ -2427,23 +2490,4 @@ function $debounce(fn, wait, immediate, defaultReturnValue) {
         }
         return defaultReturnValue;
     };
-};
-
-if (Promise.prototype.finally === undefined) Promise.prototype.finally = function (callback) {
-    var p = this.constructor;
-    return this.then(function (value) {
-        return p.resolve(callback()).then(function () {
-            return value;
-        });
-    }, function (reason) {
-        return p.resolve(callback()).then(function () {
-            throw reason;
-        });
-    });
-};
-
-if (Promise.delay === undefined) Promise.delay = function (ms) {
-    return new Promise(function (resolve) {
-        return setTimeout(resolve, ms);
-    });
 };
