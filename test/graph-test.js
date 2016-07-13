@@ -4,6 +4,8 @@ import {
     Traversal, Traversing, TraversingAxis, TraversingMixin
 } from '../src/graph';
 
+import { expect } from 'chai';
+
 export const TreeNode = Base.extend(Traversing, TraversingMixin, {
     constructor(data) { 
         let _children = [];

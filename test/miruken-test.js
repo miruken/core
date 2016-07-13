@@ -12,9 +12,7 @@ import {
 import { $flatten } from '../src/util';
 import '../src/promise';
 
-import chai from 'chai';
-
-const expect = chai.expect;
+import { expect } from 'chai';
 
 const Code  = Symbol(),
       Breed = Symbol();
