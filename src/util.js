@@ -1,5 +1,4 @@
 import { Base } from './base2';
-import { $isSomething } from './meta';
 
 /**
  * Helper class to simplify array manipulation.
@@ -240,20 +239,6 @@ export const IndexedList = Base.extend({
         });
     }
 });
-
-/**
- * Recursively flattens and optionally prune an array.
- * @method $flatten
- * @param    {Array}   arr     -  array to flatten
- * @param    {boolean} prune  -  true if prune null items
- * @returns  {Array}   flattend/pruned array or `arr`
- */
-export function $flatten(arr, prune) {
-    if (!Array.isArray(arr)) return arr;
-    let items = arr.map(item => $flatten(item, prune));
-    if (prune) items = items.filter($isSomething);
-    return [].concat(...items);
-}
 
 /**
  * Throttles `fn` over a time period.

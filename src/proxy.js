@@ -81,11 +81,11 @@ export const ProxyBuilder = Base.extend({
         }
         const classes   = types.filter($isClass),
               protocols = types.filter($isProtocol);
-        return _buildProxy(classes, protocols, options || {});
+        return buildProxy(classes, protocols, options || {});
     }
 });
 
-function _buildProxy(classes, protocols, options) {
+function buildProxy(classes, protocols, options) {
     const base  = options.baseType || classes.shift() || Base,
           proxy = base.extend(classes.concat(protocols), {
             constructor(facets) {
@@ -103,7 +103,7 @@ function _buildProxy(classes, protocols, options) {
                     spec.writable = true;
                     Object.defineProperty(this, "delegate", spec);
                 }
-                const ctor = _proxyMethod("constructor", this.base, base);
+                const ctor = proxyMethod("constructor", this.base, base);
                 ctor.apply(this, facets[Facet.Parameters]);
                 delete spec.writable;
                 delete spec.value;
@@ -116,21 +116,21 @@ function _buildProxy(classes, protocols, options) {
                     , this.interceptors)
                 : this.interceptors;
             },
-            extend: _extendProxy
+            extend: extendProxy
         }, {
             shouldProxy: options.shouldProxy
         });
-    _proxyClass(proxy, protocols);
-    proxy.extend = proxy.implement = _throwProxiesSealedExeception;
+    proxyClass(proxy, protocols);
+    proxy.extend = proxy.implement = throwProxiesSealedExeception;
     return proxy;
 }
 
-function _throwProxiesSealedExeception()
+function throwProxiesSealedExeception()
 {
     throw new TypeError("Proxy classes are sealed and cannot be extended from.");
 }
 
-function _proxyClass(proxy, protocols) {
+function proxyClass(proxy, protocols) {
     const sources    = [proxy].concat(protocols),
           proxyProto = proxy.prototype,
           proxied    = {};
@@ -139,20 +139,20 @@ function _proxyClass(proxy, protocols) {
               sourceProto = source.prototype,
               isProtocol  = $isProtocol(source);
         for (let key in sourceProto) {
-            if (!((key in proxied) || (key in _noProxyMethods))
+            if (!((key in proxied) || (key in noProxyMethods))
                 && (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
                 const descriptor = getPropertyDescriptors(sourceProto, key);
                 if ('value' in descriptor) {
                     const member = isProtocol ? undefined : descriptor.value;
                     if ($isNothing(member) || $isFunction(member)) {
-                        proxyProto[key] = _proxyMethod(key, member, proxy);
+                        proxyProto[key] = proxyMethod(key, member, proxy);
                     }
                     proxied[key] = true;
                 } else if (isProtocol) {
                     const cname = key.charAt(0).toUpperCase() + key.slice(1),
                           get   = 'get' + cname,
                           set   = 'set' + cname,
-                          spec  = _proxyClass.spec || (_proxyClass.spec = {
+                          spec  = proxyClass.spec || (proxyClass.spec = {
                               enumerable: true
                           });
                     spec.get = function (get) {
@@ -162,7 +162,7 @@ function _proxyClass(proxy, protocols) {
                                 return (this[get]).call(this);
                             }
                             if (!proxyGet) {
-                                proxyGet = _proxyMethod(get, undefined, proxy);
+                                proxyGet = proxyMethod(get, undefined, proxy);
                             }
                             return proxyGet.call(this);
                         }
@@ -174,7 +174,7 @@ function _proxyClass(proxy, protocols) {
                                 return (this[set]).call(this, value);
                             }
                             if (!proxySet) {
-                                proxySet = _proxyMethod(set, undefined, proxy);
+                                proxySet = proxyMethod(set, undefined, proxy);
                             }
                             return proxySet.call(this, value);
                         }
@@ -187,9 +187,9 @@ function _proxyClass(proxy, protocols) {
     }
 }
 
-function _proxyMethod(key, method, source) {
+function proxyMethod(key, method, source) {
     let interceptors;    
-    const spec = _proxyMethod.spec || (_proxyMethod.spec = {});
+    const spec = proxyMethod.spec || (proxyMethod.spec = {});
     function methodProxy() {
         const _this    = this;
         let   delegate = this.delegate,
@@ -244,7 +244,7 @@ function _proxyMethod(key, method, source) {
     return methodProxy;
 }
 
-function _extendProxy() {
+function extendProxy() {
     const proxy     = this.constructor,
           clazz     = proxy.prototype,
           overrides = (arguments.length === 1) ? arguments[0] : {};
@@ -252,20 +252,20 @@ function _extendProxy() {
         overrides[arguments[0]] = arguments[1];
     }
     for (let methodName in overrides) {
-        if (!(methodName in _noProxyMethods) && 
+        if (!(methodName in noProxyMethods) && 
             (!proxy.shouldProxy || proxy.shouldProxy(methodName, clazz))) {
             const method = this[methodName];
             if (method && method.baseMethod) {
                 this[methodName] = method.baseMethod;
             }
             this.base(methodName, overrides[methodName]);
-            this[methodName] = _proxyMethod(methodName, this[methodName], clazz);
+            this[methodName] = proxyMethod(methodName, this[methodName], clazz);
         }
     }
     return this;
 }
 
-const _noProxyMethods = {
+const noProxyMethods = {
     base: true, extend: true, constructor: true, conformsTo: true,
     getInterceptors: true, getDelegate: true, setDelegate: true
 };

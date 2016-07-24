@@ -3,7 +3,7 @@
 System.register([], function (_export, _context) {
     "use strict";
 
-    var _Base$extend, _typeof, $eq, $use, $copy, $lazy, $eval, $every, $child, $optional, $promise, $instant, Undefined, Null, True, False, __prototyping, _counter, _IGNORE, _BASE, _HIDDEN, _slice, _subclass, Base, Package, Abstract, _moduleCount, Module, _toString, Defining, Enum, Flags, Metadata, ProtocolGet, ProtocolSet, ProtocolInvoke, ProtocolDelegate, ProtocolStrict, Protocol, MetaStep, MetaMacro, MetaBase, ClassMeta, InstanceMeta, $proxyProtocol, StrictProtocol, GETTER_CONVENTIONS, PropertiesTag, $properties, $inferProperties, $inheritStatic, Delegate, ObjectDelegate, ArrayDelegate, $isProtocol, Variance, Initializing, Resolving, Invoking, Parenting, Starting, Startup, Disposing, DisposingMixin, TraversingAxis, Traversing, TraversingMixin, Traversal, Facet, Interceptor, InterceptorSelector, ProxyBuilder, _noProxyMethods, ArrayManager, IndexedList;
+    var _Base$extend, _typeof, $eq, $use, $copy, $lazy, $eval, $every, $child, $optional, $promise, $instant, Undefined, Null, True, False, __prototyping, _counter, _IGNORE, _BASE, _HIDDEN, _slice, _subclass, Base, Package, Abstract, _moduleCount, Module, _toString, Defining, Enum, Flags, ArrayManager, IndexedList, Metadata, ProtocolGet, ProtocolSet, ProtocolInvoke, ProtocolDelegate, ProtocolStrict, Protocol, MetaStep, MetaMacro, MetaBase, ClassMeta, InstanceMeta, $proxyProtocol, StrictProtocol, GETTER_CONVENTIONS, PropertiesTag, $properties, $inferProperties, $inheritStatic, Delegate, ObjectDelegate, ArrayDelegate, $isProtocol, Variance, Initializing, Resolving, Invoking, Parenting, Starting, Startup, Disposing, DisposingMixin, TraversingAxis, Traversing, TraversingMixin, Traversal, Facet, Interceptor, InterceptorSelector, ProxyBuilder, noProxyMethods;
 
     function _toConsumableArray(arr) {
         if (Array.isArray(arr)) {
@@ -226,7 +226,7 @@ System.register([], function (_export, _context) {
         };
     }
 
-    function _defineMetadata(target, metadata) {
+    function defineMetadata(target, metadata) {
         Object.defineProperty(target, Metadata, {
             enumerable: false,
             configurable: false,
@@ -235,14 +235,14 @@ System.register([], function (_export, _context) {
         });
     }
 
-    function _cleanDescriptor(descriptor) {
+    function cleanDescriptor(descriptor) {
         delete descriptor.writable;
         delete descriptor.value;
         delete descriptor.get;
         delete descriptor.set;
     }
 
-    function _checkCircularity(visited, node) {
+    function checkCircularity(visited, node) {
         if (visited.indexOf(node) !== -1) {
             throw new Error("Circularity detected for node " + node);
         }
@@ -250,22 +250,22 @@ System.register([], function (_export, _context) {
         return node;
     }
 
-    function _traverseSelf(visitor, context) {
+    function traverseSelf(visitor, context) {
         visitor.call(context, this);
     }
 
-    function _traverseRoot(visitor, context) {
+    function traverseRoot(visitor, context) {
         var parent = void 0,
             root = this,
             visited = [this];
         while (parent = root.parent) {
-            _checkCircularity(visited, parent);
+            checkCircularity(visited, parent);
             root = parent;
         }
         visitor.call(context, root);
     }
 
-    function _traverseChildren(visitor, withSelf, context) {
+    function traverseChildren(visitor, withSelf, context) {
         if (withSelf && visitor.call(context, this)) {
             return;
         }
@@ -297,18 +297,18 @@ System.register([], function (_export, _context) {
         }
     }
 
-    function _traverseAncestors(visitor, withSelf, context) {
+    function traverseAncestors(visitor, withSelf, context) {
         var parent = this,
             visited = [this];
         if (withSelf && visitor.call(context, this)) {
             return;
         }
         while ((parent = parent.parent) && !visitor.call(context, parent)) {
-            _checkCircularity(visited, parent);
+            checkCircularity(visited, parent);
         }
     }
 
-    function _traverseDescendants(visitor, withSelf, context) {
+    function traverseDescendants(visitor, withSelf, context) {
         var _this6 = this;
 
         if (withSelf) {
@@ -320,7 +320,7 @@ System.register([], function (_export, _context) {
         }
     }
 
-    function _traverseDescendantsReverse(visitor, withSelf, context) {
+    function traverseDescendantsReverse(visitor, withSelf, context) {
         var _this7 = this;
 
         if (withSelf) {
@@ -332,7 +332,7 @@ System.register([], function (_export, _context) {
         }
     }
 
-    function _traverseAncestorSiblingOrSelf(visitor, withSelf, withAncestor, context) {
+    function traverseAncestorSiblingOrSelf(visitor, withSelf, withAncestor, context) {
         if (withSelf && visitor.call(context, this)) {
             return;
         }
@@ -366,7 +366,7 @@ System.register([], function (_export, _context) {
             }
 
             if (withAncestor) {
-                _traverseAncestors.call(parent, visitor, true, context);
+                traverseAncestors.call(parent, visitor, true, context);
             }
         }
     }
@@ -374,7 +374,7 @@ System.register([], function (_export, _context) {
     function _preOrder(node, visitor, context) {
         var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
 
-        _checkCircularity(visited, node);
+        checkCircularity(visited, node);
         if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
             return true;
         }
@@ -387,7 +387,7 @@ System.register([], function (_export, _context) {
     function _postOrder(node, visitor, context) {
         var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
 
-        _checkCircularity(visited, node);
+        checkCircularity(visited, node);
         if (!node || !$isFunction(visitor)) {
             return true;
         }
@@ -406,7 +406,7 @@ System.register([], function (_export, _context) {
         var queue = [node];
         while (queue.length > 0) {
             var next = queue.shift();
-            _checkCircularity(visited, next);
+            checkCircularity(visited, next);
             if (visitor.call(context, next)) {
                 return;
             }
@@ -427,7 +427,7 @@ System.register([], function (_export, _context) {
 
         var _loop = function _loop() {
             var next = queue.shift();
-            _checkCircularity(visited, next);
+            checkCircularity(visited, next);
             stack.push(next);
             var level = [];
             if ($isFunction(next.traverse)) next.traverse(function (child) {
@@ -464,7 +464,7 @@ System.register([], function (_export, _context) {
                     spec.writable = true;
                     Object.defineProperty(this, "delegate", spec);
                 }
-                var ctor = _proxyMethod("constructor", this.base, base);
+                var ctor = proxyMethod("constructor", this.base, base);
                 ctor.apply(this, facets[Facet.Parameters]);
                 delete spec.writable;
                 delete spec.value;
@@ -476,20 +476,20 @@ System.register([], function (_export, _context) {
                 }, this.interceptors) : this.interceptors;
             },
 
-            extend: _extendProxy
+            extend: extendProxy
         }, {
             shouldProxy: options.shouldProxy
         });
-        _proxyClass(proxy, protocols);
-        proxy.extend = proxy.implement = _throwProxiesSealedExeception;
+        proxyClass(proxy, protocols);
+        proxy.extend = proxy.implement = throwProxiesSealedExeception;
         return proxy;
     }
 
-    function _throwProxiesSealedExeception() {
+    function throwProxiesSealedExeception() {
         throw new TypeError("Proxy classes are sealed and cannot be extended from.");
     }
 
-    function _proxyClass(proxy, protocols) {
+    function proxyClass(proxy, protocols) {
         var sources = [proxy].concat(protocols),
             proxyProto = proxy.prototype,
             proxied = {};
@@ -498,19 +498,19 @@ System.register([], function (_export, _context) {
                 sourceProto = source.prototype,
                 isProtocol = $isProtocol(source);
             for (var key in sourceProto) {
-                if (!(key in proxied || key in _noProxyMethods) && (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
+                if (!(key in proxied || key in noProxyMethods) && (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
                     var descriptor = getPropertyDescriptors(sourceProto, key);
                     if ('value' in descriptor) {
                         var member = isProtocol ? undefined : descriptor.value;
                         if ($isNothing(member) || $isFunction(member)) {
-                            proxyProto[key] = _proxyMethod(key, member, proxy);
+                            proxyProto[key] = proxyMethod(key, member, proxy);
                         }
                         proxied[key] = true;
                     } else if (isProtocol) {
                         var cname = key.charAt(0).toUpperCase() + key.slice(1),
                             get = 'get' + cname,
                             set = 'set' + cname,
-                            spec = _proxyClass.spec || (_proxyClass.spec = {
+                            spec = proxyClass.spec || (proxyClass.spec = {
                             enumerable: true
                         });
                         spec.get = function (get) {
@@ -520,7 +520,7 @@ System.register([], function (_export, _context) {
                                     return this[get].call(this);
                                 }
                                 if (!proxyGet) {
-                                    proxyGet = _proxyMethod(get, undefined, proxy);
+                                    proxyGet = proxyMethod(get, undefined, proxy);
                                 }
                                 return proxyGet.call(this);
                             };
@@ -532,7 +532,7 @@ System.register([], function (_export, _context) {
                                     return this[set].call(this, value);
                                 }
                                 if (!proxySet) {
-                                    proxySet = _proxyMethod(set, undefined, proxy);
+                                    proxySet = proxyMethod(set, undefined, proxy);
                                 }
                                 return proxySet.call(this, value);
                             };
@@ -545,9 +545,9 @@ System.register([], function (_export, _context) {
         }
     }
 
-    function _proxyMethod(key, method, source) {
+    function proxyMethod(key, method, source) {
         var interceptors = void 0;
-        var spec = _proxyMethod.spec || (_proxyMethod.spec = {});
+        var spec = proxyMethod.spec || (proxyMethod.spec = {});
         function methodProxy() {
             var _this = this;
             var delegate = this.delegate,
@@ -602,7 +602,7 @@ System.register([], function (_export, _context) {
         return methodProxy;
     }
 
-    function _extendProxy() {
+    function extendProxy() {
         var proxy = this.constructor,
             clazz = proxy.prototype,
             overrides = arguments.length === 1 ? arguments[0] : {};
@@ -610,13 +610,13 @@ System.register([], function (_export, _context) {
             overrides[arguments[0]] = arguments[1];
         }
         for (var methodName in overrides) {
-            if (!(methodName in _noProxyMethods) && (!proxy.shouldProxy || proxy.shouldProxy(methodName, clazz))) {
+            if (!(methodName in noProxyMethods) && (!proxy.shouldProxy || proxy.shouldProxy(methodName, clazz))) {
                 var method = this[methodName];
                 if (method && method.baseMethod) {
                     this[methodName] = method.baseMethod;
                 }
                 this.base(methodName, overrides[methodName]);
-                this[methodName] = _proxyMethod(methodName, this[methodName], clazz);
+                this[methodName] = proxyMethod(methodName, this[methodName], clazz);
             }
         }
         return this;
@@ -1296,6 +1296,179 @@ System.register([], function (_export, _context) {
 
             _export("Flags", Flags);
 
+            _export("ArrayManager", ArrayManager = Base.extend({
+                constructor: function constructor(items) {
+                    var _items = [];
+                    this.extend({
+                        getItems: function getItems() {
+                            return _items;
+                        },
+                        getIndex: function getIndex(index) {
+                            if (_items.length > index) {
+                                return _items[index];
+                            }
+                        },
+                        setIndex: function setIndex(index, item) {
+                            if (_items.length <= index || _items[index] === undefined) {
+                                _items[index] = this.mapItem(item);
+                            }
+                            return this;
+                        },
+                        insertIndex: function insertIndex(index, item) {
+                            _items.splice(index, 0, this.mapItem(item));
+                            return this;
+                        },
+                        replaceIndex: function replaceIndex(index, item) {
+                            _items[index] = this.mapItem(item);
+                            return this;
+                        },
+                        removeIndex: function removeIndex(index) {
+                            if (_items.length > index) {
+                                _items.splice(index, 1);
+                            }
+                            return this;
+                        },
+                        append: function append() {
+                            var newItems = void 0;
+                            if (arguments.length === 1 && Array.isArray(arguments[0])) {
+                                newItems = arguments[0];
+                            } else if (arguments.length > 0) {
+                                newItems = arguments;
+                            }
+                            if (newItems) {
+                                for (var i = 0; i < newItems.length; ++i) {
+                                    _items.push(this.mapItem(newItems[i]));
+                                }
+                            }
+                            return this;
+                        },
+                        merge: function merge(items) {
+                            for (var index = 0; index < items.length; ++index) {
+                                var item = items[index];
+                                if (item !== undefined) {
+                                    this.setIndex(index, item);
+                                }
+                            }
+                            return this;
+                        }
+                    });
+                    if (items) {
+                        this.append(items);
+                    }
+                },
+                mapItem: function mapItem(item) {
+                    return item;
+                }
+            }));
+
+            _export("ArrayManager", ArrayManager);
+
+            _export("IndexedList", IndexedList = Base.extend({
+                constructor: function constructor(order) {
+                    var _index = {};
+                    this.extend({
+                        isEmpty: function isEmpty() {
+                            return !this.head;
+                        },
+                        getIndex: function getIndex(index) {
+                            return index && _index[index];
+                        },
+                        insert: function insert(node, index) {
+                            var indexedNode = this.getIndex(index);
+                            var insert = indexedNode;
+                            if (index) {
+                                insert = insert || this.head;
+                                while (insert && order(node, insert) >= 0) {
+                                    insert = insert.next;
+                                }
+                            }
+                            if (insert) {
+                                var prev = insert.prev;
+                                node.next = insert;
+                                node.prev = prev;
+                                insert.prev = node;
+                                if (prev) {
+                                    prev.next = node;
+                                }
+                                if (this.head === insert) {
+                                    this.head = node;
+                                }
+                            } else {
+                                delete node.next;
+                                var tail = this.tail;
+                                if (tail) {
+                                    node.prev = tail;
+                                    tail.next = node;
+                                } else {
+                                    this.head = node;
+                                    delete node.prev;
+                                }
+                                this.tail = node;
+                            }
+                            if (index) {
+                                node.index = index;
+                                if (!indexedNode) {
+                                    _index[index] = node;
+                                }
+                            }
+                        },
+                        remove: function remove(node) {
+                            var prev = node.prev,
+                                next = node.next;
+                            if (prev) {
+                                if (next) {
+                                    prev.next = next;
+                                    next.prev = prev;
+                                } else {
+                                    this.tail = prev;
+                                    delete prev.next;
+                                }
+                            } else if (next) {
+                                this.head = next;
+                                delete next.prev;
+                            } else {
+                                delete this.head;
+                                delete this.tail;
+                            }
+                            var index = node.index;
+                            if (this.getIndex(index) === node) {
+                                if (next && next.index === index) {
+                                    _index[index] = next;
+                                } else {
+                                    delete _index[index];
+                                }
+                            }
+                        }
+                    });
+                }
+            }));
+
+            _export("IndexedList", IndexedList);
+
+            function $debounce(fn, wait, immediate, defaultReturnValue) {
+                var timeout = void 0;
+                return function () {
+                    var context = this,
+                        args = arguments;
+                    var later = function later() {
+                        timeout = null;
+                        if (!immediate) {
+                            return fn.apply(context, args);
+                        }
+                    };
+                    var callNow = immediate && !timeout;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                    if (callNow) {
+                        return fn.apply(context, args);
+                    }
+                    return defaultReturnValue;
+                };
+            }
+            _export("$debounce", $debounce);
+
+            ;
+
             _export("Metadata", Metadata = Symbol.for('miruken.$meta'));
 
             _export("Metadata", Metadata);
@@ -1655,7 +1828,7 @@ System.register([], function (_export, _context) {
                             instanceDef = expand.x || instanceDef;
                             var derived = ClassMeta.baseExtend.call(subClass, instanceDef, staticDef),
                                 metadata = new ClassMeta(this, derived, protocols, macros);
-                            _defineMetadata(derived, metadata);
+                            defineMetadata(derived, metadata);
                             Object.defineProperty(derived.prototype, Metadata, {
                                 enumerable: false,
                                 configurable: false,
@@ -1701,8 +1874,8 @@ System.register([], function (_export, _context) {
                 init: function init() {
                     this.baseExtend = Base.extend;
                     this.baseImplement = Base.implement;
-                    _defineMetadata(Base, new this(undefined, Base));
-                    _defineMetadata(Abstract, new this(Base[Metadata], Abstract));
+                    defineMetadata(Base, new this(undefined, Base));
+                    defineMetadata(Abstract, new this(Base[Metadata], Abstract));
                     Base.extend = Abstract.extend = function () {
                         var _Metadata;
 
@@ -1719,7 +1892,7 @@ System.register([], function (_export, _context) {
                 },
                 createInstanceMeta: function createInstanceMeta(parent) {
                     var metadata = new InstanceMeta(parent || this.constructor[Metadata]);
-                    _defineMetadata(this, metadata);
+                    defineMetadata(this, metadata);
                     return metadata;
                 }
             }));
@@ -1776,7 +1949,7 @@ System.register([], function (_export, _context) {
 
             Enum.extend = Base.extend;
             Enum.implement = Base.implement;
-            _defineMetadata(Enum, new ClassMeta(Base[Metadata], Enum));
+            defineMetadata(Enum, new ClassMeta(Base[Metadata], Enum));
 
             _export("$proxyProtocol", $proxyProtocol = MetaMacro.extend({
                 inflate: function inflate(step, metadata, target, definition, expand) {
@@ -1838,7 +2011,7 @@ System.register([], function (_export, _context) {
 
             Protocol.extend = Base.extend;
             Protocol.implement = Base.implement;
-            _defineMetadata(Protocol, new ClassMeta(Base[Metadata], Protocol, null, [new $proxyProtocol()]));
+            defineMetadata(Protocol, new ClassMeta(Base[Metadata], Protocol, null, [new $proxyProtocol()]));
 
             _export("StrictProtocol", StrictProtocol = Protocol.extend({
                 constructor: function constructor(proxy, strict) {
@@ -1898,7 +2071,7 @@ System.register([], function (_export, _context) {
                                 spec.writable = true;
                                 spec.value = property.value;
                             }
-                        _cleanDescriptor(property);
+                        cleanDescriptor(property);
                         _this5.defineProperty(metadata, source, key, spec, property);
                     });
                     if (step == MetaStep.Extend) {
@@ -2179,6 +2352,19 @@ System.register([], function (_export, _context) {
 
             _export("$lift", $lift);
 
+            function $flatten(arr, prune) {
+                var _ref;
+
+                if (!Array.isArray(arr)) return arr;
+                var items = arr.map(function (item) {
+                    return $flatten(item, prune);
+                });
+                if (prune) items = items.filter($isSomething);
+                return (_ref = []).concat.apply(_ref, _toConsumableArray(items));
+            }
+
+            _export("$flatten", $flatten);
+
             function $equals(obj1, obj2) {
                 if (obj1 === obj2) {
                     return true;
@@ -2333,55 +2519,55 @@ System.register([], function (_export, _context) {
                     if (!$isFunction(visitor)) return;
                     switch (axis) {
                         case TraversingAxis.Self:
-                            _traverseSelf.call(object, visitor, context);
+                            traverseSelf.call(object, visitor, context);
                             break;
 
                         case TraversingAxis.Root:
-                            _traverseRoot.call(object, visitor, context);
+                            traverseRoot.call(object, visitor, context);
                             break;
 
                         case TraversingAxis.Child:
-                            _traverseChildren.call(object, visitor, false, context);
+                            traverseChildren.call(object, visitor, false, context);
                             break;
 
                         case TraversingAxis.Sibling:
-                            _traverseAncestorSiblingOrSelf.call(object, visitor, false, false, context);
+                            traverseAncestorSiblingOrSelf.call(object, visitor, false, false, context);
                             break;
 
                         case TraversingAxis.ChildOrSelf:
-                            _traverseChildren.call(object, visitor, true, context);
+                            traverseChildren.call(object, visitor, true, context);
                             break;
 
                         case TraversingAxis.SiblingOrSelf:
-                            _traverseAncestorSiblingOrSelf.call(object, visitor, true, false, context);
+                            traverseAncestorSiblingOrSelf.call(object, visitor, true, false, context);
                             break;
 
                         case TraversingAxis.Ancestor:
-                            _traverseAncestors.call(object, visitor, false, context);
+                            traverseAncestors.call(object, visitor, false, context);
                             break;
 
                         case TraversingAxis.AncestorOrSelf:
-                            _traverseAncestors.call(object, visitor, true, context);
+                            traverseAncestors.call(object, visitor, true, context);
                             break;
 
                         case TraversingAxis.Descendant:
-                            _traverseDescendants.call(object, visitor, false, context);
+                            traverseDescendants.call(object, visitor, false, context);
                             break;
 
                         case TraversingAxis.DescendantReverse:
-                            _traverseDescendantsReverse.call(object, visitor, false, context);
+                            traverseDescendantsReverse.call(object, visitor, false, context);
                             break;
 
                         case TraversingAxis.DescendantOrSelf:
-                            _traverseDescendants.call(object, visitor, true, context);
+                            traverseDescendants.call(object, visitor, true, context);
                             break;
 
                         case TraversingAxis.DescendantOrSelfReverse:
-                            _traverseDescendantsReverse.call(object, visitor, true, context);
+                            traverseDescendantsReverse.call(object, visitor, true, context);
                             break;
 
                         case TraversingAxis.AncestorSiblingOrSelf:
-                            _traverseAncestorSiblingOrSelf.call(object, visitor, true, true, context);
+                            traverseAncestorSiblingOrSelf.call(object, visitor, true, true, context);
                             break;
 
                         default:
@@ -2450,196 +2636,10 @@ System.register([], function (_export, _context) {
 
             _export("ProxyBuilder", ProxyBuilder);
 
-            _noProxyMethods = {
+            noProxyMethods = {
                 base: true, extend: true, constructor: true, conformsTo: true,
                 getInterceptors: true, getDelegate: true, setDelegate: true
             };
-
-            _export("ArrayManager", ArrayManager = Base.extend({
-                constructor: function constructor(items) {
-                    var _items = [];
-                    this.extend({
-                        getItems: function getItems() {
-                            return _items;
-                        },
-                        getIndex: function getIndex(index) {
-                            if (_items.length > index) {
-                                return _items[index];
-                            }
-                        },
-                        setIndex: function setIndex(index, item) {
-                            if (_items.length <= index || _items[index] === undefined) {
-                                _items[index] = this.mapItem(item);
-                            }
-                            return this;
-                        },
-                        insertIndex: function insertIndex(index, item) {
-                            _items.splice(index, 0, this.mapItem(item));
-                            return this;
-                        },
-                        replaceIndex: function replaceIndex(index, item) {
-                            _items[index] = this.mapItem(item);
-                            return this;
-                        },
-                        removeIndex: function removeIndex(index) {
-                            if (_items.length > index) {
-                                _items.splice(index, 1);
-                            }
-                            return this;
-                        },
-                        append: function append() {
-                            var newItems = void 0;
-                            if (arguments.length === 1 && Array.isArray(arguments[0])) {
-                                newItems = arguments[0];
-                            } else if (arguments.length > 0) {
-                                newItems = arguments;
-                            }
-                            if (newItems) {
-                                for (var i = 0; i < newItems.length; ++i) {
-                                    _items.push(this.mapItem(newItems[i]));
-                                }
-                            }
-                            return this;
-                        },
-                        merge: function merge(items) {
-                            for (var index = 0; index < items.length; ++index) {
-                                var item = items[index];
-                                if (item !== undefined) {
-                                    this.setIndex(index, item);
-                                }
-                            }
-                            return this;
-                        }
-                    });
-                    if (items) {
-                        this.append(items);
-                    }
-                },
-                mapItem: function mapItem(item) {
-                    return item;
-                }
-            }));
-
-            _export("ArrayManager", ArrayManager);
-
-            _export("IndexedList", IndexedList = Base.extend({
-                constructor: function constructor(order) {
-                    var _index = {};
-                    this.extend({
-                        isEmpty: function isEmpty() {
-                            return !this.head;
-                        },
-                        getIndex: function getIndex(index) {
-                            return index && _index[index];
-                        },
-                        insert: function insert(node, index) {
-                            var indexedNode = this.getIndex(index);
-                            var insert = indexedNode;
-                            if (index) {
-                                insert = insert || this.head;
-                                while (insert && order(node, insert) >= 0) {
-                                    insert = insert.next;
-                                }
-                            }
-                            if (insert) {
-                                var prev = insert.prev;
-                                node.next = insert;
-                                node.prev = prev;
-                                insert.prev = node;
-                                if (prev) {
-                                    prev.next = node;
-                                }
-                                if (this.head === insert) {
-                                    this.head = node;
-                                }
-                            } else {
-                                delete node.next;
-                                var tail = this.tail;
-                                if (tail) {
-                                    node.prev = tail;
-                                    tail.next = node;
-                                } else {
-                                    this.head = node;
-                                    delete node.prev;
-                                }
-                                this.tail = node;
-                            }
-                            if (index) {
-                                node.index = index;
-                                if (!indexedNode) {
-                                    _index[index] = node;
-                                }
-                            }
-                        },
-                        remove: function remove(node) {
-                            var prev = node.prev,
-                                next = node.next;
-                            if (prev) {
-                                if (next) {
-                                    prev.next = next;
-                                    next.prev = prev;
-                                } else {
-                                    this.tail = prev;
-                                    delete prev.next;
-                                }
-                            } else if (next) {
-                                this.head = next;
-                                delete next.prev;
-                            } else {
-                                delete this.head;
-                                delete this.tail;
-                            }
-                            var index = node.index;
-                            if (this.getIndex(index) === node) {
-                                if (next && next.index === index) {
-                                    _index[index] = next;
-                                } else {
-                                    delete _index[index];
-                                }
-                            }
-                        }
-                    });
-                }
-            }));
-
-            _export("IndexedList", IndexedList);
-
-            function $flatten(arr, prune) {
-                var _ref;
-
-                if (!Array.isArray(arr)) return arr;
-                var items = arr.map(function (item) {
-                    return $flatten(item, prune);
-                });
-                if (prune) items = items.filter($isSomething);
-                return (_ref = []).concat.apply(_ref, _toConsumableArray(items));
-            }
-
-            _export("$flatten", $flatten);
-
-            function $debounce(fn, wait, immediate, defaultReturnValue) {
-                var timeout = void 0;
-                return function () {
-                    var context = this,
-                        args = arguments;
-                    var later = function later() {
-                        timeout = null;
-                        if (!immediate) {
-                            return fn.apply(context, args);
-                        }
-                    };
-                    var callNow = immediate && !timeout;
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                    if (callNow) {
-                        return fn.apply(context, args);
-                    }
-                    return defaultReturnValue;
-                };
-            }
-            _export("$debounce", $debounce);
-
-            ;
         }
     };
 });

@@ -4,12 +4,12 @@ import { Modifier,  $createModifier } from '../src/modifier';
 import { Disposing, DisposingMixin, $using } from '../src/dispose';
 import { Interceptor, InterceptorSelector, ProxyBuilder } from '../src/proxy';
 import {
-    Protocol, Metadata,
+    Protocol, Metadata,  $flatten,
     $decorator, $decorate, $decorated,
     $isClass, $isFunction, $isString,
-    $properties, $inferProperties, $inheritStatic
+    $properties,  $inferProperties, $inheritStatic
 } from '../src/meta';
-import { $flatten } from '../src/util';
+
 import '../src/promise';
 
 import { expect } from 'chai';
