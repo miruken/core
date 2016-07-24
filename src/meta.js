@@ -126,6 +126,16 @@ export const MetaStep = Enum({
  */
 export const MetaMacro = Base.extend({
     /**
+     * Determines if macro applied on extension.
+     * @property {boolean} active
+     */
+    get active() { return false; },    
+    /**
+     * Determines if the macro should be inherited
+     * @property {boolean} inherit
+     */
+    get inherit() { return false; },
+    /**
      * Inflates the macro for the given `step`.
      * @method inflate
      * @param  {miruken.MetaStep}  step        -  meta step
@@ -167,18 +177,6 @@ export const MetaMacro = Base.extend({
         delete target[property];            
         return value;
     },        
-    /**
-     * Determines if the macro should be inherited
-     * @method shouldInherit
-     * @returns {boolean} false
-     */
-    shouldInherit: False,
-    /**
-     * Determines if the macro should be applied on extension.
-     * @method isActive
-     * @returns {boolean} false
-     */
-    isActive: False
 }, {
     coerce(...args) { return Reflect.construct(this, args); }
 });
@@ -448,7 +446,7 @@ export const ClassMeta = MetaBase.extend({
                 const active = (step !== MetaStep.Subclass);
                 for (let macro of _macros) {
                     if ($isFunction(macro.inflate) &&
-                        (!active || macro.isActive()) && macro.shouldInherit()) {
+                        (!active || macro.active) && macro.inherit) {
                         macro.inflate(step, metadata, target, definition, expand);
                     }
                 }                    
@@ -461,8 +459,7 @@ export const ClassMeta = MetaBase.extend({
                 const inherit = (this !== metadata),
                       active  = (step !== MetaStep.Subclass);
                 for (let macro of _macros) {
-                    if ((!active  || macro.isActive()) &&
-                        (!inherit || macro.shouldInherit())) {
+                    if ((!active  || macro.active) && (!inherit || macro.inherit)) {
                         macro.execute(step, metadata, target, definition);
                     }
                 }
@@ -637,6 +634,8 @@ defineMetadata(Enum, new ClassMeta(Base[Metadata], Enum));
  * @extends miruken.MetaMacro
  */
 export const $proxyProtocol = MetaMacro.extend({
+    get active() { return true; },
+    get inherit() { return true; },
     inflate(step, metadata, target, definition, expand) {
         let expanded;
         const props = getPropertyDescriptors(definition);
@@ -679,19 +678,7 @@ export const $proxyProtocol = MetaMacro.extend({
                 getPropertyDescriptors(this, key)) return;
             Object.defineProperty(target, key, props[key]);            
         });
-    },
-    /**
-     * Determines if the macro should be inherited
-     * @method shouldInherit
-     * @returns {boolean} true
-     */        
-    shouldInherit: True,
-    /**
-     * Determines if the macro should be applied on extension.
-     * @method isActive
-     * @returns {boolean} true
-     */        
-    isActive: True
+    }
 });
 Protocol.extend    = Base.extend
 Protocol.implement = Base.implement;
@@ -761,6 +748,8 @@ export const $properties = MetaMacro.extend({
         }
         Object.defineProperty(this, PropertiesTag, { value: tag });
     },
+    get active() { return true; },
+    get inherit() { return true; },    
     execute(step, metadata, target, definition) {
         const tag        = this[PropertiesTag],
               properties = this.extractProperty(tag, target, definition); 
@@ -805,19 +794,7 @@ export const $properties = MetaMacro.extend({
     },
     defineProperty(metadata, target, name, spec, descriptor) {
         metadata.defineProperty(target, name, spec, descriptor);
-    },
-    /**
-     * Determines if the macro should be inherited
-     * @method shouldInherit
-     * @returns {boolean} true
-     */                
-    shouldInherit: True,
-    /**
-     * Determines if the macro should be applied on extension.
-     * @method isActive
-     * @returns {boolean} true
-     */                
-    isActive: True
+    }
 }, {
     init() {
         Object.defineProperty(this, 'shared', {
@@ -844,6 +821,8 @@ export const $properties = MetaMacro.extend({
  * @extends miruken.MetaMacro
  */
 export const $inferProperties = MetaMacro.extend({
+    get active() { return true; },
+    get inherit() { return true; },
     inflate(step, metadata, target, definition, expand) {
         let expanded;
         for (let key in definition) {
@@ -884,19 +863,7 @@ export const $inferProperties = MetaMacro.extend({
                 return name.charAt(0).toLowerCase() + name.slice(1);
             }
         }
-    },
-    /**
-     * Determines if the macro should be inherited
-     * @method shouldInherit
-     * @returns {boolean} true
-     */                
-    shouldInherit: True,
-    /**
-     * Determines if the macro should be applied on extension.
-     * @method isActive
-     * @returns {boolean} true
-     */               
-    isActive: True
+    }
 });
 
 function cleanDescriptor(descriptor) {
@@ -936,6 +903,7 @@ export const $inheritStatic = MetaMacro.extend({
         Object.defineProperty(this, 'members', spec);
         delete spec.value;
     },
+    get inherit() { return true; },
     execute(step, metadata, target) {
         if (step === MetaStep.Subclass) {
             const members  = this.members,
@@ -955,13 +923,7 @@ export const $inheritStatic = MetaMacro.extend({
                 }
             }
         }
-    },
-    /**
-     * Determines if the macro should be inherited
-     * @method shouldInherit
-     * @returns {boolean} true
-     */                
-    shouldInherit: True
+    }
 });
 
 /**

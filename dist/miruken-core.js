@@ -1327,6 +1327,16 @@ export const MetaStep = Enum({
  */
 export const MetaMacro = Base.extend({
     /**
+     * Determines if macro applied on extension.
+     * @property {boolean} active
+     */
+    get active() { return false; },    
+    /**
+     * Determines if the macro should be inherited
+     * @property {boolean} inherit
+     */
+    get inherit() { return false; },
+    /**
      * Inflates the macro for the given `step`.
      * @method inflate
      * @param  {miruken.MetaStep}  step        -  meta step
@@ -1368,18 +1378,6 @@ export const MetaMacro = Base.extend({
         delete target[property];            
         return value;
     },        
-    /**
-     * Determines if the macro should be inherited
-     * @method shouldInherit
-     * @returns {boolean} false
-     */
-    shouldInherit: False,
-    /**
-     * Determines if the macro should be applied on extension.
-     * @method isActive
-     * @returns {boolean} false
-     */
-    isActive: False
 }, {
     coerce(...args) { return Reflect.construct(this, args); }
 });
@@ -1429,15 +1427,8 @@ export const MetaBase = MetaMacro.extend({
              * @method addProtocol
              * @param  {Array}  protocols  -  protocols to add
              */
-            addProtocol(protocols) {
-                if ($isNothing(protocols)) {
-                    return;
-                }
-                if (!Array.isArray(protocols)) {
-                    protocols = Array.from(arguments);
-                }
-                for (let i = 0; i < protocols.length; ++i) {
-                    const protocol = protocols[i];
+            addProtocol(...protocols) {
+                for (let protocol of $flatten(protocols, true)) {
                     if ((protocol.prototype instanceof Protocol) 
                         &&  (_protocols.indexOf(protocol) === -1)) {
                         _protocols.push(protocol);
@@ -1457,16 +1448,8 @@ export const MetaBase = MetaMacro.extend({
              * @returns {boolean}  true if the metadata includes the protocol.
              */
             conformsTo(protocol) {
-                if (!(protocol && (protocol.prototype instanceof Protocol))) {
-                    return false;
-                }
-                for (let index = 0; index < _protocols.length; ++index) {
-                    const proto = _protocols[index];
-                    if (protocol === proto || proto.conformsTo(protocol)) {
-                        return true;
-                    }
-                }
-                return false;
+                return protocol && (protocol.prototype instanceof Protocol)
+                    && _protocols.some(p => protocol === p || p.conformsTo(protocol));
             },
             inflate(step, metadata, target, definition, expand) {
                 if (parent) {
@@ -1629,9 +1612,7 @@ export const ClassMeta = MetaBase.extend({
             get allProtocols() {
                 const protocols = this.base();
                 if (!_isProtocol && baseMeta) {
-                    const baseProtocols = baseMeta.allProtocols;
-                    for (let i = 0; i < baseProtocols.length; ++i) {
-                        const protocol = baseProtocols[i];
+                    for (let protocol of baseMeta.allProtocols) {
                         if (protocols.indexOf(protocol) < 0) {
                             protocols.push(protocol);
                         }
@@ -1644,8 +1625,7 @@ export const ClassMeta = MetaBase.extend({
                 if (!_macros || _macros.length == 0) {
                     return;
                 }
-                for (let i = 0; i < _macros.length; ++i) {
-                    const macro = _macros[i];
+                for (let macro of _macros) {
                     if ($isFunction(macro.protocolAdded)) {
                         macro.protocolAdded(metadata, protocol);
                     }
@@ -1657,19 +1637,17 @@ export const ClassMeta = MetaBase.extend({
                 } else if ((protocol === subClass) || (subClass.prototype instanceof protocol)) {
                     return true;
                 }
-                return this.base(protocol) ||
-                    !!(baseMeta && baseMeta.conformsTo(protocol));
+                return this.base(protocol) || !!(baseMeta && baseMeta.conformsTo(protocol));
             },
             inflate(step, metadata, target, definition, expand) {
                 this.base(step, metadata, target, definition, expand);
                 if (!_macros || _macros.length == 0) {
                     return;
                 }
-                const  active = (step !== MetaStep.Subclass);
-                for (let i = 0; i < _macros.length; ++i) {
-                    const macro = _macros[i];
+                const active = (step !== MetaStep.Subclass);
+                for (let macro of _macros) {
                     if ($isFunction(macro.inflate) &&
-                        (!active || macro.isActive()) && macro.shouldInherit()) {
+                        (!active || macro.active) && macro.inherit) {
                         macro.inflate(step, metadata, target, definition, expand);
                     }
                 }                    
@@ -1681,10 +1659,8 @@ export const ClassMeta = MetaBase.extend({
                 }
                 const inherit = (this !== metadata),
                       active  = (step !== MetaStep.Subclass);
-                for (let i = 0; i < _macros.length; ++i) {
-                    const macro = _macros[i];
-                    if ((!active  || macro.isActive()) &&
-                        (!inherit || macro.shouldInherit())) {
+                for (let macro of _macros) {
+                    if ((!active  || macro.active) && (!inherit || macro.inherit)) {
                         macro.execute(step, metadata, target, definition);
                     }
                 }
@@ -1692,11 +1668,11 @@ export const ClassMeta = MetaBase.extend({
             /**
              * Creates a sub-class from the current class metadata.
              * @method createSubclass
+             * @param   {Array}   args  -  arguments
              * @returns  {Function} the newly created class function.
              */                                                                
-            createSubclass() {
-                const args        = Array.from(arguments);
-                let   constraints = args, protocols, mixins, macros;
+            createSubclass(...args) {
+                let constraints = args, protocols, mixins, macros;
                 if (subClass.prototype instanceof Protocol) {
                     (protocols = []).push(subClass);
                 }
@@ -1724,8 +1700,8 @@ export const ClassMeta = MetaBase.extend({
                     staticDef    = args.shift() || {};
                 this.inflate(MetaStep.Subclass, this, subClass.prototype, instanceDef, expand);
                 if (macros) {
-                    for (let i = 0; i < macros.length; ++i) {
-                        macros[i].inflate(MetaStep.Subclass, this, subClass.prototype, instanceDef, expand);
+                    for (let macro of macros) {
+                        macro.inflate(MetaStep.Subclass, this, subClass.prototype, instanceDef, expand);
                     }
                 }
                 instanceDef  = expand.x || instanceDef;
@@ -1740,7 +1716,9 @@ export const ClassMeta = MetaBase.extend({
                 derived.conformsTo = metadata.conformsTo.bind(metadata);
                 metadata.execute(MetaStep.Subclass, metadata, derived.prototype, instanceDef);
                 if (mixins) {
-                    mixins.forEach(mixin => derived.implement(mixin));
+                    for (let mixin of mixins) {
+                        derived.implement(mixin);
+                    }
                 }
                 function expand() {
                     return expand.x || (expand.x = Object.create(instanceDef));
@@ -1857,6 +1835,8 @@ defineMetadata(Enum, new ClassMeta(Base[Metadata], Enum));
  * @extends miruken.MetaMacro
  */
 export const $proxyProtocol = MetaMacro.extend({
+    get active() { return true; },
+    get inherit() { return true; },
     inflate(step, metadata, target, definition, expand) {
         let expanded;
         const props = getPropertyDescriptors(definition);
@@ -1882,12 +1862,11 @@ export const $proxyProtocol = MetaMacro.extend({
             }
             expanded = expanded || expand();            
             Object.defineProperty(expanded, key, member);                
-        });            
+        });
     },
     execute(step, metadata, target, definition) {
         if (step === MetaStep.Subclass) {
-            const type = metadata.type;                
-            type.adoptedBy = Protocol.adoptedBy;
+            metadata.type.adoptedBy = Protocol.adoptedBy;
         }
     },
     protocolAdded(metadata, protocol) {
@@ -1900,23 +1879,11 @@ export const $proxyProtocol = MetaMacro.extend({
                 getPropertyDescriptors(this, key)) return;
             Object.defineProperty(target, key, props[key]);            
         });
-    },
-    /**
-     * Determines if the macro should be inherited
-     * @method shouldInherit
-     * @returns {boolean} true
-     */        
-    shouldInherit: True,
-    /**
-     * Determines if the macro should be applied on extension.
-     * @method isActive
-     * @returns {boolean} true
-     */        
-    isActive: True
+    }
 });
 Protocol.extend    = Base.extend
 Protocol.implement = Base.implement;
-defineMetadata(Protocol, new ClassMeta(Base[Metadata], Protocol, null, [new $proxyProtocol]));
+defineMetadata(Protocol, new ClassMeta(Base[Metadata], Protocol, null, [new $proxyProtocol()]));
 
 /**
  * Protocol base requiring conformance to match methods.
@@ -1982,6 +1949,8 @@ export const $properties = MetaMacro.extend({
         }
         Object.defineProperty(this, PropertiesTag, { value: tag });
     },
+    get active() { return true; },
+    get inherit() { return true; },    
     execute(step, metadata, target, definition) {
         const tag        = this[PropertiesTag],
               properties = this.extractProperty(tag, target, definition); 
@@ -2026,19 +1995,7 @@ export const $properties = MetaMacro.extend({
     },
     defineProperty(metadata, target, name, spec, descriptor) {
         metadata.defineProperty(target, name, spec, descriptor);
-    },
-    /**
-     * Determines if the macro should be inherited
-     * @method shouldInherit
-     * @returns {boolean} true
-     */                
-    shouldInherit: True,
-    /**
-     * Determines if the macro should be applied on extension.
-     * @method isActive
-     * @returns {boolean} true
-     */                
-    isActive: True
+    }
 }, {
     init() {
         Object.defineProperty(this, 'shared', {
@@ -2065,6 +2022,8 @@ export const $properties = MetaMacro.extend({
  * @extends miruken.MetaMacro
  */
 export const $inferProperties = MetaMacro.extend({
+    get active() { return true; },
+    get inherit() { return true; },
     inflate(step, metadata, target, definition, expand) {
         let expanded;
         for (let key in definition) {
@@ -2105,19 +2064,7 @@ export const $inferProperties = MetaMacro.extend({
                 return name.charAt(0).toLowerCase() + name.slice(1);
             }
         }
-    },
-    /**
-     * Determines if the macro should be inherited
-     * @method shouldInherit
-     * @returns {boolean} true
-     */                
-    shouldInherit: True,
-    /**
-     * Determines if the macro should be applied on extension.
-     * @method isActive
-     * @returns {boolean} true
-     */               
-    isActive: True
+    }
 });
 
 function cleanDescriptor(descriptor) {
@@ -2157,14 +2104,14 @@ export const $inheritStatic = MetaMacro.extend({
         Object.defineProperty(this, 'members', spec);
         delete spec.value;
     },
+    get inherit() { return true; },
     execute(step, metadata, target) {
         if (step === MetaStep.Subclass) {
             const members  = this.members,
                   type     = metadata.type,
                   ancestor = $ancestorOf(type);
             if (members.length > 0) {
-                for (let i = 0; i < members.length; ++i) {
-                    const member = members[i];
+                for (let member of members) {
                     if (!(member in type)) {
                         type[member] = ancestor[member];
                     }
@@ -2177,13 +2124,7 @@ export const $inheritStatic = MetaMacro.extend({
                 }
             }
         }
-    },
-    /**
-     * Determines if the macro should be inherited
-     * @method shouldInherit
-     * @returns {boolean} true
-     */                
-    shouldInherit: True
+    }
 });
 
 /**
@@ -2301,15 +2242,12 @@ export function $decorator(decorations) {
         if ($isNothing(decoratee)) {
             throw new TypeError("No decoratee specified.");
         }
-        const decorator = Object.create(decoratee),
-              spec      = $decorator.spec || ($decorator.spec = {});
-        spec.value = decoratee;
-        Object.defineProperty(decorator, 'decoratee', spec);
+        const decorator = Object.create(decoratee);
+        Object.defineProperty(decorator, 'decoratee', { value: decoratee });
         ClassMeta.createInstanceMeta.call(decorator, decoratee[Metadata]);
         if (decorations) {
             decorator.extend(decorations);
         }
-        delete spec.value;
         return decorator;
     }
 }
