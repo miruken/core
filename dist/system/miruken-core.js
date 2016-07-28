@@ -235,13 +235,6 @@ System.register([], function (_export, _context) {
         });
     }
 
-    function cleanDescriptor(descriptor) {
-        delete descriptor.writable;
-        delete descriptor.value;
-        delete descriptor.get;
-        delete descriptor.set;
-    }
-
     function checkCircularity(visited, node) {
         if (visited.indexOf(node) !== -1) {
             throw new Error("Circularity detected for node " + node);
@@ -1136,7 +1129,7 @@ System.register([], function (_export, _context) {
 
             function assignID(object, name) {
                 if (!name) name = object.nodeType == 1 ? "uniqueID" : "base2ID";
-                if (!object[name]) object[name] = "b2_" + _counter++;
+                if (!object.hasOwnProperty(name)) object[name] = "b2_" + _counter++;
                 return object[name];
             }
             _export("assignID", assignID);
@@ -1649,9 +1642,6 @@ System.register([], function (_export, _context) {
                             }
                         },
                         defineProperty: function defineProperty(target, name, spec, descriptor) {
-                            if (descriptor) {
-                                descriptor = Object.assign({}, descriptor);
-                            }
                             if (target) {
                                 Object.defineProperty(target, name, spec);
                             }
@@ -1982,6 +1972,7 @@ System.register([], function (_export, _context) {
                             function expand() {
                                 return expand.x || (expand.x = Object.create(instanceDef));
                             }
+                            Reflect.setPrototypeOf(derived, subClass);
                             return derived;
                         },
                         embellishClass: function embellishClass(source) {
@@ -2217,7 +2208,11 @@ System.register([], function (_export, _context) {
                                 spec.writable = true;
                                 spec.value = property.value;
                             }
-                        cleanDescriptor(property);
+
+                        delete property.get;
+                        delete property.set;
+                        delete property.value;
+                        property = Object.assign({}, property);
                         _this5.defineProperty(metadata, source, key, spec, property);
                     });
                     if (step == MetaStep.Extend) {

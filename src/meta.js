@@ -273,9 +273,6 @@ export const MetaBase = MetaMacro.extend({
              * @param  {Object}   [descriptor]  -  property descriptor
              */
             defineProperty(target, name, spec, descriptor) {
-                if (descriptor) {
-                    descriptor = Object.assign({}, descriptor);
-                }
                 if (target) {
                     Object.defineProperty(target, name, spec);
                 }
@@ -521,7 +518,8 @@ export const ClassMeta = MetaBase.extend({
                 }
                 function expand() {
                     return expand.x || (expand.x = Object.create(instanceDef));
-                }   
+                }
+                Reflect.setPrototypeOf(derived, subClass);                
                 return derived;                    
             },
             /**
@@ -783,7 +781,11 @@ export const $properties = MetaMacro.extend({
                 spec.writable = true;
                 spec.value    = property.value;
             }
-            cleanDescriptor(property);
+
+            delete property.get;
+            delete property.set;
+            delete property.value;
+            property = Object.assign({}, property);
             this.defineProperty(metadata, source, key, spec, property);
         });
         if (step == MetaStep.Extend) {
@@ -865,13 +867,6 @@ export const $inferProperties = MetaMacro.extend({
         }
     }
 });
-
-function cleanDescriptor(descriptor) {
-    delete descriptor.writable;
-    delete descriptor.value;
-    delete descriptor.get;
-    delete descriptor.set;
-}
 
 /**
  * Metamacro to inherit static members in subclasses.

@@ -608,7 +608,7 @@ export function typeOf(object) {
 export function assignID(object, name) {
   // Assign a unique ID to an object.
   if (!name) name = object.nodeType == 1 ? "uniqueID" : "base2ID";
-  if (!object[name]) object[name] = "b2_" + _counter++;
+  if (!object.hasOwnProperty(name)) object[name] = "b2_" + _counter++;
   return object[name];
 };
 

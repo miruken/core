@@ -686,7 +686,7 @@ define(["exports"], function (exports) {
 
     function assignID(object, name) {
         if (!name) name = object.nodeType == 1 ? "uniqueID" : "base2ID";
-        if (!object[name]) object[name] = "b2_" + _counter++;
+        if (!object.hasOwnProperty(name)) object[name] = "b2_" + _counter++;
         return object[name];
     };
 
@@ -1188,9 +1188,6 @@ define(["exports"], function (exports) {
                     }
                 },
                 defineProperty: function defineProperty(target, name, spec, descriptor) {
-                    if (descriptor) {
-                        descriptor = Object.assign({}, descriptor);
-                    }
                     if (target) {
                         Object.defineProperty(target, name, spec);
                     }
@@ -1519,6 +1516,7 @@ define(["exports"], function (exports) {
                     function expand() {
                         return expand.x || (expand.x = Object.create(instanceDef));
                     }
+                    Reflect.setPrototypeOf(derived, subClass);
                     return derived;
                 },
                 embellishClass: function embellishClass(source) {
@@ -1755,7 +1753,11 @@ define(["exports"], function (exports) {
                         spec.writable = true;
                         spec.value = property.value;
                     }
-                cleanDescriptor(property);
+
+                delete property.get;
+                delete property.set;
+                delete property.value;
+                property = Object.assign({}, property);
                 _this5.defineProperty(metadata, source, key, spec, property);
             });
             if (step == MetaStep.Extend) {
@@ -1827,13 +1829,6 @@ define(["exports"], function (exports) {
             }
         }
     });
-
-    function cleanDescriptor(descriptor) {
-        delete descriptor.writable;
-        delete descriptor.value;
-        delete descriptor.get;
-        delete descriptor.set;
-    }
 
     var $inheritStatic = exports.$inheritStatic = MetaMacro.extend({
         constructor: function constructor() {
