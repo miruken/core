@@ -126,12 +126,12 @@ export const MetaStep = Enum({
  */
 export const MetaMacro = Base.extend({
     /**
-     * Determines if macro applied on extension.
+     * Determines if macro applies on extension.
      * @property {boolean} active
      */
     get active() { return false; },    
     /**
-     * Determines if the macro should be inherited
+     * Determines if the macro should be inherited.
      * @property {boolean} inherit
      */
     get inherit() { return false; },
@@ -391,7 +391,7 @@ export const ClassMeta = MetaBase.extend({
     constructor(baseMeta, subClass, protocols, macros)  {
         let _macros     = macros && macros.slice(0),
             _isProtocol = (subClass === Protocol)
-            || (subClass.prototype instanceof Protocol);
+                       || (subClass.prototype instanceof Protocol);
         this.base(baseMeta);
         this.extend({
             /**
