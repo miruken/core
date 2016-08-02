@@ -5,7 +5,10 @@ import {
 
 import { Enum } from './enum';
 
-export const Metadata = Symbol.for('miruken.$meta');
+const baseExtend      = Base.extend,
+      baseImplement   = Base.implement,
+      baseProtoExtend = Base.prototype.extend,      
+      Metadata        = Symbol.for('miruken.$meta');
 
 /**
  * Declares methods and properties independent of a class.
@@ -19,8 +22,8 @@ export const Metadata = Symbol.for('miruken.$meta');
  * </pre>
  * @class Protocol
  * @constructor
- * @param   {miruken.Delegate}  delegate        -  delegate
- * @param   {boolean}           [strict=false]  -  true if strict, false otherwise
+ * @param   {Delegate}  delegate        -  delegate
+ * @param   {boolean}   [strict=false]  -  true if strict, false otherwise
  * @extends Base
  */
 const ProtocolGet      = Symbol(),
@@ -65,7 +68,7 @@ export const Protocol = Base.extend({
 }, {
     conformsTo: False,        
     /**
-     * Determines if the target is a {{#crossLink "miruken.Protocol"}}{{/crossLink}}.
+     * Determines if the target is a {{#crossLink "Protocol"}}{{/crossLink}}.
      * @static
      * @method isProtocol
      * @param   {Any}      target    -  target to test
@@ -138,27 +141,27 @@ export const MetaMacro = Base.extend({
     /**
      * Inflates the macro for the given `step`.
      * @method inflate
-     * @param  {miruken.MetaStep}  step        -  meta step
-     * @param  {miruken.MetaBase}  metadata    -  source metadata
-     * @param  {Object}            target      -  target macro applied to
-     * @param  {Object}            definition  -  updates to apply
-     * @param  {Function}          expand      -  expanded definition
+     * @param  {MetaStep}  step        -  meta step
+     * @param  {MetaBase}  metadata    -  source metadata
+     * @param  {Object}    target      -  target macro applied to
+     * @param  {Object}    definition  -  updates to apply
+     * @param  {Function}  expand      -  expanded definition
      */
     inflate(step, metadata, target, definition, expand) {},
     /**
      * Execite the macro for the given `step`.
      * @method execute
-     * @param  {miruken.MetaStep}  step        -  meta step
-     * @param  {miruken.MetaBase}  metadata    -  effective metadata
-     * @param  {Object}            target      -  target macro applied to
-     * @param  {Object}            definition  -  source to apply
+     * @param  {MetaStep}  step        -  meta step
+     * @param  {MetaBase}  metadata    -  effective metadata
+     * @param  {Object}    target      -  target macro applied to
+     * @param  {Object}    definition  -  source to apply
      */
     execute(step, metadata, target, definition) {},
     /**
      * Triggered when `protocol` is added to `metadata`.
      * @method protocolAdded
-     * @param {miruken.MetaBase}  metadata  -  effective metadata
-     * @param {miruken.Protocol}  protocol  -  protocol added
+     * @param {MetaBase}  metadata  -  effective metadata
+     * @param {Protocol}  protocol  -  protocol added
      */
     protocolAdded(metadata, protocol) {},
     /**
@@ -185,8 +188,8 @@ export const MetaMacro = Base.extend({
  * Base class for all metadata.
  * @class MetaBase
  * @constructor
- * @param  {miruken.MetaBase}  [parent]  - parent meta-data
- * @extends miruken.MetaMacro
+ * @param  {MetaBase}  [parent]  - parent metadata
+ * @extends MetaMacro
  */
 export const MetaBase = MetaMacro.extend({
     constructor(parent)  {
@@ -194,7 +197,7 @@ export const MetaBase = MetaMacro.extend({
         this.extend({
             /**
              * Gets the parent metadata.
-             * @property {miruken.Metabase} parent
+             * @property {Metabase} parent
              */
             get parent() { return parent; },
             /**
@@ -208,14 +211,12 @@ export const MetaBase = MetaMacro.extend({
              * @property {Array} allProtocols
              */
             get allProtocols() {
-                const protocols = this.protocols,
-                      inner     = protocols.slice(0);
-                for (let i = 0; i < inner.length; ++i) {
-                    const innerProtocols = inner[i][Metadata].allProtocols;
-                    for (let ii = 0; ii < innerProtocols.length; ++ii) {
-                        const protocol = innerProtocols[ii];
-                        if (protocols.indexOf(protocol) < 0) {
-                            protocols.push(protocol);
+                const protocols = this.protocols;
+                for (let protocol of protocols.slice(0)) {
+                    const innerProtocols = $meta(protocol).allProtocols;
+                    for (let innerProtocol of innerProtocols) {
+                        if (protocols.indexOf(innerProtocol) < 0) {
+                            protocols.push(innerProtocol);
                         }
                     } 
                 }
@@ -228,8 +229,8 @@ export const MetaBase = MetaMacro.extend({
              */
             addProtocol(...protocols) {
                 for (let protocol of $flatten(protocols, true)) {
-                    if ((protocol.prototype instanceof Protocol) 
-                        &&  (_protocols.indexOf(protocol) === -1)) {
+                    if ((protocol.prototype instanceof Protocol) &&
+                        (_protocols.indexOf(protocol) < 0)) {
                         _protocols.push(protocol);
                         this.protocolAdded(this, protocol);
                     }
@@ -243,7 +244,7 @@ export const MetaBase = MetaMacro.extend({
             /**
              * Determines if the metadata conforms to the `protocol`.
              * @method conformsTo
-             * @param  {miruken.Protocol}   protocol -  protocols to test
+             * @param   {Protocol} protocol -  protocols to test
              * @returns {boolean}  true if the metadata includes the protocol.
              */
             conformsTo(protocol) {
@@ -316,7 +317,7 @@ export const MetaBase = MetaMacro.extend({
              * @method addDescriptor
              * @param    {string}   name        -  property name
              * @param    {Object}   descriptor  -  property descriptor
-             * @returns  {miruken.MetaBase} current metadata.
+             * @returns  {MetaBase} current metadata.
              * @chainable
              */
             addDescriptor(name, descriptor) {
@@ -326,8 +327,8 @@ export const MetaBase = MetaMacro.extend({
             /**
              * Determines if the property `descriptor` matches the `filter`.
              * @method matchDescriptor
-             * @param    {Object}   descriptor  -  property descriptor
-             * @param    {Object}   filter      -  matching filter
+             * @param    {Object}  descriptor  -  property descriptor
+             * @param    {Object}  filter      -  matching filter
              * @returns  {boolean} true if the descriptor matches, false otherwise.
              */
             matchDescriptor(descriptor, filter) {
@@ -362,7 +363,7 @@ export const MetaBase = MetaMacro.extend({
              * Binds `method` to the parent if not present.
              * @method linkBase
              * @param    {Function}  method  -  method name
-             * @returns  {miruken.MetaBase} current metadata.
+             * @returns  {MetaBase} current metadata.
              * @chainable
              */
             linkBase(method) {
@@ -381,34 +382,34 @@ export const MetaBase = MetaMacro.extend({
  * Represents metadata describing a class.
  * @class ClassMeta
  * @constructor
- * @param   {miruken.MetaBase}  baseMeta   -  base meta data
- * @param   {Function}          subClass   -  associated class
- * @param   {Array}             protocols  -  conforming protocols
- * @param   {Array}             macros     -  class macros
- * @extends miruken.MetaBase
+ * @param   {MetaBase}  parent     -  parent metadata
+ * @param   {Function}  type       -  associated type
+ * @param   {Array}     protocols  -  conforming protocols
+ * @param   {Array}     macros     -  class macros
+ * @extends MetaBase
  */
 export const ClassMeta = MetaBase.extend({
-    constructor(baseMeta, subClass, protocols, macros)  {
+    constructor(parent, type, protocols, macros)  {
         let _macros     = macros && macros.slice(0),
-            _isProtocol = (subClass === Protocol)
-                       || (subClass.prototype instanceof Protocol);
-        this.base(baseMeta);
+            _isProtocol = (type === Protocol)
+                       || (type.prototype instanceof Protocol);
+        this.base(parent);
         this.extend({
             /**
              * Gets the associated type.
              * @property {Function} type
              */                                
-            get type() { return subClass; },
+            get type() { return type; },
             /**
-             * Determines if the meta-data represents a protocol.
+             * Determines if the metadata represents a protocol.
              * @method isProtocol
              * @returns  {boolean} true if a protocol, false otherwise.
              */                                
             isProtocol() { return _isProtocol; },
             get allProtocols() {
                 const protocols = this.base();
-                if (!_isProtocol && baseMeta) {
-                    for (let protocol of baseMeta.allProtocols) {
+                if (!_isProtocol && parent) {
+                    for (let protocol of parent.allProtocols) {
                         if (protocols.indexOf(protocol) < 0) {
                             protocols.push(protocol);
                         }
@@ -430,10 +431,10 @@ export const ClassMeta = MetaBase.extend({
             conformsTo(protocol) {
                 if (!(protocol && (protocol.prototype instanceof Protocol))) {
                     return false;
-                } else if ((protocol === subClass) || (subClass.prototype instanceof protocol)) {
+                } else if ((protocol === type) || (type.prototype instanceof protocol)) {
                     return true;
                 }
-                return this.base(protocol) || !!(baseMeta && baseMeta.conformsTo(protocol));
+                return this.base(protocol) || !!(parent && parent.conformsTo(protocol));
             },
             inflate(step, metadata, target, definition, expand) {
                 this.base(step, metadata, target, definition, expand);
@@ -464,13 +465,13 @@ export const ClassMeta = MetaBase.extend({
             /**
              * Creates a sub-class from the current class metadata.
              * @method createSubclass
-             * @param   {Array}   args  -  arguments
-             * @returns  {Function} the newly created class function.
+             * @param   {Array}    args  -  arguments
+             * @returns {Function} the newly created class function.
              */                                                                
             createSubclass(...args) {
                 let constraints = args, protocols, mixins, macros;
-                if (subClass.prototype instanceof Protocol) {
-                    (protocols = []).push(subClass);
+                if (type.prototype instanceof Protocol) {
+                    (protocols = []).push(type);
                 }
                 if (args.length > 0 && Array.isArray(args[0])) {
                     constraints = args.shift();
@@ -494,21 +495,16 @@ export const ClassMeta = MetaBase.extend({
                 }
                 let instanceDef  = args.shift() || {},
                     staticDef    = args.shift() || {};
-                this.inflate(MetaStep.Subclass, this, subClass.prototype, instanceDef, expand);
+                this.inflate(MetaStep.Subclass, this, type.prototype, instanceDef, expand);
                 if (macros) {
                     for (let macro of macros) {
-                        macro.inflate(MetaStep.Subclass, this, subClass.prototype, instanceDef, expand);
+                        macro.inflate(MetaStep.Subclass, this, type.prototype, instanceDef, expand);
                     }
                 }
                 instanceDef  = expand.x || instanceDef;
-                const derived  = ClassMeta.baseExtend.call(subClass, instanceDef, staticDef),
+                const derived  = baseExtend.call(type, instanceDef, staticDef),
                       metadata = new ClassMeta(this, derived, protocols, macros);
-                defineMetadata(derived, metadata);
-                Object.defineProperty(derived.prototype, Metadata, {
-                    enumerable:   false,
-                    configurable: false,
-                    get:          ClassMeta.createInstanceMeta
-                });
+                defineMetadata(derived.prototype, metadata);
                 derived.conformsTo = metadata.conformsTo.bind(metadata);
                 metadata.execute(MetaStep.Subclass, metadata, derived.prototype, instanceDef);
                 if (mixins) {
@@ -519,7 +515,7 @@ export const ClassMeta = MetaBase.extend({
                 function expand() {
                     return expand.x || (expand.x = Object.create(instanceDef));
                 }
-                Reflect.setPrototypeOf(derived, subClass);                
+                Reflect.setPrototypeOf(derived, type);                
                 return derived;                    
             },
             /**
@@ -533,39 +529,18 @@ export const ClassMeta = MetaBase.extend({
                     source = source.prototype; 
                 }
                 if ($isSomething(source)) {
-                    this.inflate(MetaStep.Implement, this, subClass.prototype, source, expand);
+                    this.inflate(MetaStep.Implement, this, type.prototype, source, expand);
                     source = expand.x || source;
-                    ClassMeta.baseImplement.call(subClass, source);
-                    this.execute(MetaStep.Implement, this, subClass.prototype, source);
+                    baseImplement.call(type, source);
+                    this.execute(MetaStep.Implement, this, type.prototype, source);
                     function expand() {
                         return expand.x || (expand.x = Object.create(source));
                     };                    
                 }
-                return subClass;
+                return type;
             }
         });
         this.addProtocol(protocols);
-    }
-}, {
-    init() {
-        this.baseExtend    = Base.extend;
-        this.baseImplement = Base.implement;
-        defineMetadata(Base, new this(undefined, Base));
-        defineMetadata(Abstract, new this(Base[Metadata], Abstract));
-        Base.extend = Abstract.extend = function () {
-            return this[Metadata].createSubclass(...arguments);
-        };
-        Base.implement = Abstract.implement = function () {
-            return this[Metadata].embellishClass(...arguments);                
-        }
-        Base.prototype.conformsTo = function (protocol) {
-            return this.constructor[Metadata].conformsTo(protocol);
-        };
-    },
-    createInstanceMeta(parent) {
-        const metadata = new InstanceMeta(parent || this.constructor[Metadata]);
-        defineMetadata(this, metadata);
-        return metadata;            
     }
 });
 
@@ -573,63 +548,79 @@ export const ClassMeta = MetaBase.extend({
  * Represents metadata describing an instance.
  * @class InstanceMeta
  * @constructor
- * @param   {miruken.ClassMeta}  classMeta  -  class meta-data
- * @extends miruken.MetaBase
+ * @param   {MetaBase}  parent  -  parent metadata
+ * @extends MetaBase
  */
 export const InstanceMeta = MetaBase.extend({
-    constructor(classMeta) {
-        this.base(classMeta);
+    constructor(parent) {
+        this.base(parent);
         this.extend({
             /**
              * Gets the associated type.
              * @property {Function} type
              */                                              
-            get type() { return classMeta.type; },
+            get type() { return parent.type; },
             /**
-             * Determines if the meta-data represents a protocol.
+             * Determines if the metadata represents a protocol.
              * @method isProtocol
              * @returns  {boolean} true if a protocol, false otherwise.
              */                                                
-            isProtocol() { return classMeta.isProtocol(); }
+            isProtocol() { return parent.isProtocol(); }
         });
-    }
-}, {
-    init() {
-        const baseExtend = Base.prototype.extend;
-        Base.prototype.extend = function (key, value) {
-            let numArgs    = arguments.length,
-                definition = (numArgs === 1) ? key : {};
-            if (numArgs >= 2) {
-                definition[key] = value;
-            } else if (numArgs === 0) {
-                return this;
-            }
-            const metadata = this[Metadata];
-            if (metadata) {
-                metadata.inflate(MetaStep.Extend, metadata, this, definition, expand);
-                definition = expand.x || definition;
-                function expand() {
-                    return expand.x || (expand.x = Object.create(definition));
-                };                    
-            }
-            baseExtend.call(this, definition);                
-            if (metadata) {
-                metadata.execute(MetaStep.Extend, metadata, this, definition);
-            }
-            return this;
-        }
     }
 });
 
+const baseMetadata     = new ClassMeta(undefined, Base),
+      abstractMetadata = new ClassMeta(baseMetadata, Abstract);
+
+defineMetadata(Base.prototype, baseMetadata);
+defineMetadata(Abstract.prototype, abstractMetadata);
+
+Base.extend = Abstract.extend = function () {
+    return $meta(this).createSubclass(...arguments);
+};
+Base.implement = Abstract.implement = function () {
+    return $meta(this).embellishClass(...arguments);                
+}
+Base.prototype.conformsTo = function (protocol) {
+    return $meta(this.constructor).conformsTo(protocol);
+};
+
+Base.prototype.extend = function (key, value) {
+    let numArgs    = arguments.length,
+        definition = (numArgs === 1) ? key : {};
+    if (numArgs >= 2) {
+        definition[key] = value;
+    } else if (numArgs === 0) {
+        return this;
+    }
+    let metadata;
+    if (!(this instanceof MetaBase)) {
+        metadata = $meta(this);
+        if (metadata) {
+            metadata.inflate(MetaStep.Extend, metadata, this, definition, expand);
+            definition = expand.x || definition;
+            function expand() {
+                return expand.x || (expand.x = Object.create(definition));
+            };                    
+        }
+    }
+    baseProtoExtend.call(this, definition);                
+    if (metadata) {
+        metadata.execute(MetaStep.Extend, metadata, this, definition);
+    }
+    return this;
+}
+
 Enum.extend     = Base.extend
 Enum.implement  = Base.implement;
-defineMetadata(Enum, new ClassMeta(Base[Metadata], Enum));
+defineMetadata(Enum.prototype, new ClassMeta(baseMetadata, Enum));
 
 /**
  * Metamacro to proxy protocol members through a delegate.<br/>
- * See {{#crossLink "miruken.Protocol"}}{{/crossLink}}
+ * See {{#crossLink "Protocol"}}{{/crossLink}}
  * @class $proxyProtocol
- * @extends miruken.MetaMacro
+ * @extends MetaMacro
  */
 export const $proxyProtocol = MetaMacro.extend({
     get active() { return true; },
@@ -680,14 +671,15 @@ export const $proxyProtocol = MetaMacro.extend({
 });
 Protocol.extend    = Base.extend
 Protocol.implement = Base.implement;
-defineMetadata(Protocol, new ClassMeta(Base[Metadata], Protocol, null, [new $proxyProtocol()]));
+defineMetadata(Protocol.prototype, new ClassMeta(baseMetadata,
+               Protocol, null, [new $proxyProtocol()]));
 
 /**
  * Protocol base requiring conformance to match methods.
  * @class StrictProtocol
  * @constructor
- * @param   {miruken.Delegate}  delegate       -  delegate
- * @param   {boolean}           [strict=true]  -  true ifstrict, false otherwise
+ * @param   {Delegate}  delegate       -  delegate
+ * @param   {boolean}   [strict=true]  -  true ifstrict, false otherwise
  * @extends miruekn.Protocol     
  */
 export const StrictProtocol = Protocol.extend({
@@ -735,7 +727,7 @@ const GETTER_CONVENTIONS = ['get', 'is'];
  * @class $properties
  * @constructor
  * @param   {string}  [tag='$properties']  - properties tag
- * @extends miruken.MetaMacro
+ * @extends MetaMacro
  */
 const PropertiesTag = Symbol();
       
@@ -820,7 +812,7 @@ export const $properties = MetaMacro.extend({
  * would create a Person.name property bound to getName and setName 
  * @class $inferProperties
  * @constructor
- * @extends miruken.MetaMacro
+ * @extends MetaMacro
  */
 export const $inferProperties = MetaMacro.extend({
     get active() { return true; },
@@ -869,61 +861,8 @@ export const $inferProperties = MetaMacro.extend({
 });
 
 /**
- * Metamacro to inherit static members in subclasses.
- * <pre>
- * const Math = Base.extend(
- *     **$inheritStatic**, null, {
- *         PI:  3.14159265359,
- *         add(a, b) {
- *             return a + b;
- *          }
- *     }),
- *     Geometry = Math.extend(null, {
- *         area(length, width) {
- *             return length * width;
- *         }
- *     });
- * </pre>
- * would make Math.PI and Math.add available on the Geometry class.
- * @class $inhertStatic
- * @constructor
- * @param  {string}  [...members]  -  members to inherit
- * @extends miruken.MetaMacro
- */
-export const $inheritStatic = MetaMacro.extend({
-    constructor(/*members*/) {
-        const spec = {
-            value: Array.from(arguments)
-        };
-        Object.defineProperty(this, 'members', spec);
-        delete spec.value;
-    },
-    get inherit() { return true; },
-    execute(step, metadata, target) {
-        if (step === MetaStep.Subclass) {
-            const members  = this.members,
-                  type     = metadata.type,
-                  ancestor = $ancestorOf(type);
-            if (members.length > 0) {
-                for (let member of members) {
-                    if (!(member in type)) {
-                        type[member] = ancestor[member];
-                    }
-                }
-            } else if (ancestor !== Base && ancestor !== Object) {
-                for (let key in ancestor) {
-                    if (ancestor.hasOwnProperty(key) && !(key in type)) {
-                        type[key] = ancestor[key];
-                    }
-                }
-            }
-        }
-    }
-});
-
-/**
  * Delegates properties and methods to another object.<br/>
- * See {{#crossLink "miruken.Protocol"}}{{/crossLink}}
+ * See {{#crossLink "Protocol"}}{{/crossLink}}
  * @class Delegate
  * @extends Base
  */
@@ -931,28 +870,28 @@ export const Delegate = Base.extend({
     /**
      * Delegates the property get on `protocol`.
      * @method get
-     * @param   {miruken.Protocol} protocol  - receiving protocol
-     * @param   {string}           key       - key of the property
-     * @param   {boolean}          strict    - true if target must adopt protocol
+     * @param   {Protocol} protocol  - receiving protocol
+     * @param   {string}   key       - key of the property
+     * @param   {boolean}  strict    - true if target must adopt protocol
      * @returns {Any} result of the proxied get.
      */
     get(protocol, key, strict) {},
     /**
      * Delegates the property set on `protocol`.
      * @method set
-     * @param   {miruken.Protocol} protocol  - receiving protocol
-     * @param   {string}           key       - key of the property
-     * @param   {Object}           value     - value of the property
-     * @param   {boolean}          strict    - true if target must adopt protocol
+     * @param   {Protocol} protocol  - receiving protocol
+     * @param   {string}   key       - key of the property
+     * @param   {Object}   value     - value of the property
+     * @param   {boolean}  strict    - true if target must adopt protocol
      */
     set(protocol, key, value, strict) {},
     /**
      * Delegates the method invocation on `protocol`.
      * @method invoke
-     * @param   {miruken.Protocol} protocol    - receiving protocol
-     * @param   {string}           methodName  - name of the method
-     * @param   {Array}            args        - method arguments
-     * @param   {boolean}          strict      - true if target must adopt protocol
+     * @param   {Protocol} protocol    - receiving protocol
+     * @param   {string}   methodName  - name of the method
+     * @param   {Array}    args        - method arguments
+     * @param   {boolean}  strict      - true if target must adopt protocol
      * @returns {Any} result of the proxied invocation.
      */
     invoke(protocol, methodName, args, strict) {}
@@ -963,7 +902,7 @@ export const Delegate = Base.extend({
  * @class ObjectDelegate
  * @constructor
  * @param   {Object}  object  - receiving object
- * @extends miruken.Delegate
+ * @extends Delegate
  */
 export const ObjectDelegate = Delegate.extend({
     constructor(object) {
@@ -995,7 +934,7 @@ export const ObjectDelegate = Delegate.extend({
  * @class ArrayDelegate
  * @constructor
  * @param   {Array}  array  - receiving array
- * @extends miruken.Delegate
+ * @extends Delegate
  */
 export const ArrayDelegate = Delegate.extend({
     constructor(array) {
@@ -1025,6 +964,38 @@ export const ArrayDelegate = Delegate.extend({
 });
 
 /**
+ * Gets the metadata associated with `target`.
+ * @method
+ * @erturns {MetaBase} target metadata.
+ */
+export function $meta(target) {
+    if (target == null ||
+        target === Object || target === Object.prototype ||
+        target === Function || target == Function.prototype) {
+        return;
+    }
+    if (target.hasOwnProperty(Metadata)) {
+        return target[Metadata];
+    }
+    if ($isFunction(target)) {
+        return $meta(target.prototype);
+    }    
+    if ($isObject(target)) {
+        let meta;
+        if (target.hasOwnProperty('constructor')) {
+            const type   = target['constructor'],
+                  parent = Object.getPrototypeOf(type);
+            meta = new ClassMeta($meta(parent), type);
+        } else {
+            const parent = Object.getPrototypeOf(target);
+            meta = new InstanceMeta($meta(parent));
+        }
+        defineMetadata(target, meta);
+        return meta;
+    }
+}
+
+/**
  * Creates a decorator builder.<br/>
  * See [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern)
  * @method
@@ -1037,8 +1008,10 @@ export function $decorator(decorations) {
             throw new TypeError("No decoratee specified.");
         }
         const decorator = Object.create(decoratee);
-        Object.defineProperty(decorator, 'decoratee', { value: decoratee });
-        ClassMeta.createInstanceMeta.call(decorator, decoratee[Metadata]);
+        Object.defineProperty(decorator, 'decoratee', {
+            configurable: false,
+            value:        decoratee
+        });
         if (decorations) {
             decorator.extend(decorations);
         }
@@ -1082,7 +1055,7 @@ export function $decorated(decorator, deepest) {
  * @method $isProtocol
  * @param    {Any}     protocol  - target to test
  * @returns  {boolean} true if a protocol.
- * @for miruken.$
+ * @for miruken-core.$
  */
 export const $isProtocol = Protocol.isProtocol;
 
@@ -1093,7 +1066,14 @@ export const $isProtocol = Protocol.isProtocol;
  * @returns  {boolean} true if a class (and not a protocol).
  */
 export function $isClass(clazz) {
-    return clazz && (clazz.prototype instanceof Base) && !$isProtocol(clazz);
+    if (!clazz || $isProtocol(clazz)) return false;    
+    if (clazz.prototype instanceof Base) return true;
+    const name = clazz.name;  // use Capital name convention
+    return name && $isFunction(clazz) && isUpperCase(name.charAt(0));
+}
+
+function isUpperCase(char) {
+    return char.toUpperCase() === char;
 }
 
 /**
@@ -1104,16 +1084,6 @@ export function $isClass(clazz) {
  */
 export function $classOf(instance) {
     return instance && instance.constructor;
-}
-
-/**
- * Gets `clazz` superclass.
- * @method $ancestorOf
- * @param    {Function} clazz  - class
- * @returns  {Function} ancestor of class. 
- */
-export function $ancestorOf(clazz) {
-    return clazz && clazz.ancestor;
 }
 
 /**
@@ -1189,7 +1159,7 @@ export function $lift(value) {
 /**
  * Recursively flattens and optionally prune an array.
  * @method $flatten
- * @param    {Array}   arr     -  array to flatten
+ * @param    {Array}   arr    -  array to flatten
  * @param    {boolean} prune  -  true if prune null items
  * @returns  {Array}   flattend/pruned array or `arr`
  */

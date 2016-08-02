@@ -392,7 +392,7 @@ export function extend(object, source) { // or extend(object, key, value)
       var i = _HIDDEN.length, key;
       while ((key = _HIDDEN[--i])) {
         var desc = getPropertyDescriptors(source, key);
-        if (!desc || desc.value != proto[key]) {
+        if (!desc || (desc.enumerable &&  desc.value != proto[key])) {
           desc = _override(object, key, desc);
           if (desc) Object.defineProperty(object, key, desc);
         }
@@ -402,8 +402,11 @@ export function extend(object, source) { // or extend(object, key, value)
     var props = getPropertyDescriptors(source);
     Reflect.ownKeys(props).forEach(function (key) {
       if (typeof proto[key] == "undefined" && key !== "base") {
-        var desc = _override(object, key, props[key]);
-        if (desc) Object.defineProperty(object, key, desc);
+        var desc = props[key];
+        if (desc.enumerable) {  
+          desc = _override(object, key, desc);
+          if (desc) Object.defineProperty(object, key, desc);
+        }
       }
     });
   }

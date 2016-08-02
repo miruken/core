@@ -4,10 +4,10 @@ import { Modifier,  $createModifier } from '../src/modifier';
 import { Disposing, DisposingMixin, $using } from '../src/dispose';
 import { Interceptor, InterceptorSelector, ProxyBuilder } from '../src/proxy';
 import {
-    Protocol, Metadata,  $flatten,
+    Protocol, $meta, $flatten,
     $decorator, $decorate, $decorated,
     $isClass, $isFunction, $isString,
-    $properties,  $inferProperties, $inheritStatic
+    $properties, $inferProperties, $inheritStatic
 } from '../src/meta';
 
 import '../src/promise';
@@ -278,39 +278,19 @@ describe("Flags", () => {
 
 describe("$meta", () => {
     it("should have class metadata", () => {
-        expect(Dog[Metadata]).to.be.ok;
-    });
-
-    it("should not be able to delete class metadata", () => {
-        expect(Dog[Metadata]).to.be.ok;
-        expect(() => {
-            delete Dog[Metadata];            
-        }).to.throw(Error, /Cannot delete property/);
+        expect($meta(Dog)).to.be.ok;
     });
 
     it("should have instance metadata", () => {
-        const dog = new Dog;
-        expect(dog[Metadata]).to.be.ok;
-        expect(dog[Metadata]).to.not.equal(Dog[Metadata]);
-    });
-
-    it("should not be able to delete instance metadata", () => {
-        const dog = new Dog;
-        expect(Dog[Metadata]).to.be.ok;
-        expect(() => {
-            delete dog[Metadata];            
-        }).to.throw(Error, /Cannot delete property/);
+        const dog = new Dog();
+        expect($meta(dog)).to.be.ok;
+        expect($meta(dog)).to.not.equal($meta(Dog));
     });
 });
 
 describe("$isClass", () => {
     it("should identify miruken classes", () => {
         expect($isClass(Dog)).to.be.true;
-    });
-
-    it("should reject non-miruken classes", () => {
-        const SomeClass = () => {};
-        expect($isClass(SomeClass)).to.be.false;
     });
 });
 
@@ -364,8 +344,8 @@ describe("$properties", () => {
     });
 
     it("should synthesize properties", () => {
-        const person = new Person,
-              friend = new Person;
+        const person = new Person(),
+              friend = new Person();
         expect(person.firstName).to.equal('');
         expect(person.lastName).to.equal('');
         person.firstName = 'John';
@@ -378,34 +358,34 @@ describe("$properties", () => {
     });
 
     it("should synthesize value properties", () => {
-        const person       = new Person;
+        const person       = new Person();
         person.firstName = 'Mickey';
         person.lastName  = 'Mouse';
         expect(person.fullName).to.equal('Mickey Mouse');
     });
 
     it("should synthesize property setters ", () => {
-        const person       = new Person;
+        const person       = new Person();
         person.fullName  = 'Harry Potter';
         expect(person.firstName).to.equal('Harry');
         expect(person.lastName).to.equal('Potter');
     });
 
     it("should accept standard properties", () => {
-        const person = new Person;
+        const person = new Person();
         person.dob = new Date(2003, 4, 9);
         expect(person.dob).to.eql(new Date(2003, 4, 9));
         expect(person.age).to.be.at.least(12);
     });
 
     it("should override standard properties", () => {
-        const doctor = new Doctor;
-        doctor.dob = new Date;
+        const doctor = new Doctor();
+        doctor.dob = new Date();
         expect(doctor.age).to.be.at.least(10);
     });
 
     it("should retrieve property descriptor", () => {
-        const descriptor = Doctor[Metadata].getDescriptor('patient');
+        const descriptor = $meta(Doctor).getDescriptor('patient');
         expect(descriptor.map).to.equal(Person);
     });
 
@@ -418,19 +398,19 @@ describe("$properties", () => {
                     return new Doctor({firstName: "Phil"});
                 }
             }),
-            descriptor = Hospital[Metadata].getDescriptor('chiefDoctor'),
-            hospital = new Hospital;
+            descriptor = $meta(Hospital).getDescriptor('chiefDoctor'),
+            hospital = new Hospital();
         expect(hospital.chiefDoctor.firstName).to.equal("Phil");
         expect(descriptor.map).to.equal(Doctor);        
     });
 
     it("should retrieve inherited property descriptor", () => {
-        const descriptor = Doctor[Metadata].getDescriptor('pet');
+        const descriptor = $meta(Doctor).getDescriptor('pet');
         expect(descriptor.map).to.equal(Animal);
     });
 
     it("should retrieve all property descriptors", () => {
-        const descriptors = Doctor[Metadata].getDescriptor();
+        const descriptors = $meta(Doctor).getDescriptor();
         expect(descriptors['pet'].map).to.equal(Animal);
         expect(descriptors['patient'].map).to.equal(Person);
     });
@@ -451,21 +431,21 @@ describe("$properties", () => {
             }
         });
 
-        let descriptors = Something[Metadata].getDescriptor({ val: false });
+        let descriptors = $meta(Something).getDescriptor({ val: false });
         expect(descriptors).to.be.undefined;
-        descriptors = Something[Metadata].getDescriptor({ val: true });
+        descriptors = $meta(Something).getDescriptor({ val: true });
         expect(descriptors).to.eql({ matchBool: { val: true } });
-        descriptors = Something[Metadata].getDescriptor({ val: 22 });
+        descriptors = $meta(Something).getDescriptor({ val: 22 });
         expect(descriptors).to.eql({ matchNumber: { val: 22 } });
-        descriptors = Something[Metadata].getDescriptor({ val: 22 });
+        descriptors = $meta(Something).getDescriptor({ val: 22 });
         expect(descriptors).to.eql({ matchNumber: { val: 22 } });
-        descriptors = Something[Metadata].getDescriptor({ val: "Hello" });
+        descriptors = $meta(Something).getDescriptor({ val: "Hello" });
         expect(descriptors).to.eql({ matchString: { val: "Hello" } });
-        descriptors = Something[Metadata].getDescriptor({ val: ["z"] });
+        descriptors = $meta(Something).getDescriptor({ val: ["z"] });
         expect(descriptors).to.be.undefined;
-        descriptors = Something[Metadata].getDescriptor({ val: ["b"] });
+        descriptors = $meta(Something).getDescriptor({ val: ["b"] });
         expect(descriptors).to.eql({ matchArray: { val: ["a", "b", "c" ] } });
-        descriptors = Something[Metadata].getDescriptor({ nestedBool: { val: false } });
+        descriptors = $meta(Something).getDescriptor({ nestedBool: { val: false } });
         expect(descriptors).to.eql({  
               matchNested: {
                     nestedBool: { val: false },
@@ -473,7 +453,7 @@ describe("$properties", () => {
                     nestedString: { val: "Goodbye" },
                     nestedArray:  { val: ["x", "y", "z"] }
                 }});
-        descriptors = Something[Metadata].getDescriptor({ nestedBool: undefined });
+        descriptors = $meta(Something).getDescriptor({ nestedBool: undefined });
         expect(descriptors).to.eql({  
               matchNested: {
                     nestedBool: { val: false },
@@ -502,9 +482,9 @@ describe("$properties", () => {
                 friend: { map: Person }
             }
         });
-        const descriptor = person[Metadata].getDescriptor('friend');
+        const descriptor = $meta(person).getDescriptor('friend');
         expect(descriptor.map).to.equal(Person);
-        expect(Person[Metadata].getDescriptor('friend')).to.be.undefined;
+        expect($meta(Person).getDescriptor('friend')).to.be.undefined;
     });
 
     it("should synthesize protocol properties", () => {
@@ -594,15 +574,15 @@ describe("$inferProperties", () => {
             getMother() { return this._mother; },
             setMother(value) { this._mother = value; } 
         });
-        const mom = new Person,
-              son = new Person;
+        const mom = new Person(),
+              son = new Person();
         son.mother = mom;
         expect(son.mother).to.equals(mom);
         expect(son.getMother()).to.equal(mom);
     });
 
     it("should infer extended instance properties", () => {
-        const person = new Person;
+        const person = new Person();
         person.extend({
             getAge() { return this._age; },
             setAge(value) { this._age = value; }
@@ -649,7 +629,7 @@ describe("$inheritStatic", () => {
 describe("DisposingMixin", () => {
     describe("dispose", () => {
         it("should provide dispose", () => {
-            const shoppingCart = new ShoppingCart;
+            const shoppingCart = new ShoppingCart();
             shoppingCart.addItem("Sneakers");
             shoppingCart.addItem("Milk");
             expect(shoppingCart.getItems()).to.eql(["Sneakers", "Milk"]);
@@ -662,7 +642,7 @@ describe("DisposingMixin", () => {
             const DisposeCounter = Base.extend(Disposing, DisposingMixin, {
                 _dispose() { ++counter; }
             });
-            const disposeCounter = new DisposeCounter;
+            const disposeCounter = new DisposeCounter();
             expect(counter).to.equal(0);
             disposeCounter.dispose();
             expect(counter).to.equal(1);
@@ -674,7 +654,7 @@ describe("DisposingMixin", () => {
 
 describe("$using", () => {
     it("should call block then dispose", () => {
-        const shoppingCart = new ShoppingCart;
+        const shoppingCart = new ShoppingCart();
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
         $using(shoppingCart, function (cart) {
@@ -684,7 +664,7 @@ describe("$using", () => {
     });
     
     it("should call block then dispose if exeception", () => {
-        const shoppingCart = new ShoppingCart;
+        const shoppingCart = new ShoppingCart();
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
         expect(() => { 
@@ -696,7 +676,7 @@ describe("$using", () => {
     });
 
     it("should wait for promise to fulfill then dispose", function (done) {
-        const shoppingCart = new ShoppingCart;
+        const shoppingCart = new ShoppingCart();
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
         $using(shoppingCart, delay(100).then(() => {
@@ -710,7 +690,7 @@ describe("$using", () => {
     });
 
     it("should wait for promise fromm block to fulfill then dispose", function (done) {
-        const shoppingCart = new ShoppingCart;
+        const shoppingCart = new ShoppingCart();
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
         $using(shoppingCart, function (cart) {
@@ -725,7 +705,7 @@ describe("$using", () => {
     });
     
     it("should wait for promise to fail then dispose", function (done) {
-        const shoppingCart = new ShoppingCart;
+        const shoppingCart = new ShoppingCart();
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
         $using(shoppingCart, delay(100).then(() => {
@@ -738,7 +718,7 @@ describe("$using", () => {
     });
 
     it("should return block result", () => {
-        const shoppingCart = new ShoppingCart;
+        const shoppingCart = new ShoppingCart();
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
         expect($using(shoppingCart, function (cart) {
@@ -747,7 +727,7 @@ describe("$using", () => {
     });
 
     it("should return block promise result", function (done) {
-        const shoppingCart = new ShoppingCart;
+        const shoppingCart = new ShoppingCart();
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
         $using(shoppingCart, function (cart) {
@@ -912,7 +892,7 @@ describe("Modifier", () => {
 
 describe("Protocol", () => {
     it("should proxy calls to normal objects", () => {
-        const dog = Animal(new Dog);
+        const dog = Animal(new Dog());
         expect(dog.talk()).to.equal('Ruff Ruff');
     });
     
@@ -922,20 +902,20 @@ describe("Protocol", () => {
     });
     
     it("should ignore missing methods", () => {
-        const dog = Animal(new Dog);
+        const dog = Animal(new Dog());
         dog.eat('bug');
     });
     
     it("should support specialization", () => {
-        expect(CircusAnimal(new Dog).fetch("bone")).to.equal('Fetched bone');
+        expect(CircusAnimal(new Dog()).fetch("bone")).to.equal('Fetched bone');
     });
     
     it("should ignore if strict and protocol not adopted", () => {
         const Toy = Base.extend({
             talk() { return 'To infinity and beyond'; }
         });
-        expect(Animal(new Toy).talk()).to.equal('To infinity and beyond');
-        expect(Animal(new Toy, true).talk()).to.be.undefined;
+        expect(Animal(new Toy()).talk()).to.equal('To infinity and beyond');
+        expect(Animal(new Toy(), true).talk()).to.be.undefined;
     });
     
     describe("#isProtocol", () => {
@@ -953,17 +933,17 @@ describe("Protocol", () => {
 
     describe("#protocols", () => {
         it("should retrieve declaring protocols", () => {
-            expect(Dog[Metadata].protocols).to.eql([Animal, Tricks]);
+            expect($meta(Dog).protocols).to.eql([Animal, Tricks]);
         });
     });
 
     describe("#allProtocols", () => {
         it("should retrieve all protocol protocols", () => {
-            expect(CircusAnimal[Metadata].allProtocols).to.eql([Animal, Tricks]);
+            expect($meta(CircusAnimal).allProtocols).to.eql([Animal, Tricks]);
         });
 
         it("should retrieve all class protocols", () => {
-            expect(AsianElephant[Metadata].allProtocols).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
+            expect($meta(AsianElephant).allProtocols).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
         });
     });
 
@@ -972,7 +952,7 @@ describe("Protocol", () => {
             Animal.implement({
                reproduce() {}
             });
-            const dog = new Dog;
+            const dog = new Dog();
             expect(Animal(dog).reproduce()).to.be.undefined;
             dog.extend({
                 reproduce() {
@@ -998,7 +978,7 @@ describe("Protocol", () => {
         });
 
         it("should conform to protocols by object", () => {
-            const dog = new Dog;
+            const dog = new Dog();
             expect(dog.conformsTo(Animal)).to.be.true;
             expect(dog.conformsTo(Tricks)).to.be.true;
         });
@@ -1006,18 +986,18 @@ describe("Protocol", () => {
         it("should only list protocol once", () => {
             const Cat = Base.extend(Animal, Animal);
             expect(Cat.conformsTo(Animal)).to.be.true;
-            expect(Cat[Metadata].protocols).to.eql([Animal]);
+            expect($meta(Cat).protocols).to.eql([Animal]);
         });
 
         it("should only list protocol once if extended", () => {
             const Cat = Animal.extend(Animal);
             expect(Cat.conformsTo(Animal)).to.be.true;
-            expect(Cat[Metadata].protocols).to.eql([Animal]);
+            expect($meta(Cat).protocols).to.eql([Animal]);
         });
 
         it("should support protocol inheritance", () => {
             expect(Elephant.conformsTo(Animal)).to.be.true;
-            expect(CircusAnimal[Metadata].protocols).to.eql([Animal, Tricks]);
+            expect($meta(CircusAnimal).protocols).to.eql([Animal, Tricks]);
         });
 
         it("should inherit protocol conformance", () => {
@@ -1029,7 +1009,7 @@ describe("Protocol", () => {
             const EndangeredAnimal = Base.extend([Animal, Tracked]);
             expect(EndangeredAnimal.conformsTo(Animal)).to.be.true;
             expect(EndangeredAnimal.conformsTo(Tracked)).to.be.true;
-            expect(EndangeredAnimal[Metadata].protocols).to.eql([Animal, Tracked]);
+            expect($meta(EndangeredAnimal).protocols).to.eql([Animal, Tracked]);
         });
 
         it("should allow redefining method", () => {
@@ -1039,7 +1019,7 @@ describe("Protocol", () => {
                 SmartDog = Dog.extend({
                     fetch: function (item) { return 'Buried ' + item; }
                 }),
-                dog = new SmartDog;
+                dog = new SmartDog();
             expect(SmartTricks(dog).fetch('bone')).to.equal('Buried bone');
         });
 
@@ -1053,7 +1033,7 @@ describe("Protocol", () => {
                 SmartDog = Dog.extend({
                     fetch: function (item) { return 'Buried ' + item; }
                 }),
-                dog = new SmartDog;
+                dog = new SmartDog();
             expect(Tricks(dog).fetch('bone')).to.equal('Buried bone');
             expect(SmartTricks(dog).fetch('bone')).to.be.undefined;
         });
@@ -1071,27 +1051,27 @@ describe("Protocol", () => {
         });
 
         it("should determine if protocol adopted by object", () => {
-            expect(Animal.adoptedBy(new Dog)).to.be.true;
+            expect(Animal.adoptedBy(new Dog())).to.be.true;
         });
     });
 
     describe("#addProtocol", () => {
         it("should add protocol to class", () => {
             const Bird  = Base.extend(Animal),
-                  eagle = (new Bird).extend({
+                  eagle = (new Bird()).extend({
                    getTag() { return "Eagle"; }
 				});
-            Bird[Metadata].addProtocol(Tracked);
+            $meta(Bird).addProtocol(Tracked);
             expect(Bird.conformsTo(Tracked)).to.be.true;
 			expect(eagle.getTag()).to.equal("Eagle");
         });
 
         it("should add protocol to protocol", () => {
             const Bear      = Base.extend(Animal),
-                  polarBear = (new Bear).extend({
+                  polarBear = (new Bear()).extend({
                   getTag() { return "Polar Bear"; }
             });
-			Animal[Metadata].addProtocol(Tracked);
+			$meta(Animal).addProtocol(Tracked);
             expect(polarBear.conformsTo(Tracked)).to.be.true;
 			expect(polarBear.getTag()).to.equal("Polar Bear");
 			expect(Animal(polarBear).getTag()).to.equal("Polar Bear");
@@ -1209,11 +1189,11 @@ describe("ProxyBuilder", () => {
         
     describe("#buildProxy", () => {
         it("should proxy class", () => {
-            const proxyBuilder = new ProxyBuilder,
+            const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
                                      parameters:   ['Patches'],
-                                     interceptors: [new LogInterceptor]
+                                     interceptors: [new LogInterceptor()]
                   });
             expect(dog.name).to.equal('Patches');
             expect(dog.getName()).to.equal('Patches');
@@ -1222,7 +1202,7 @@ describe("ProxyBuilder", () => {
         });
 
         it("should proxy protocol", () => {
-            const proxyBuilder = new ProxyBuilder,
+            const proxyBuilder = new ProxyBuilder(),
                   AnimalProxy  = proxyBuilder.buildProxy([Animal]),
                   AnimalInterceptor = Interceptor.extend({
                       name : '',
@@ -1242,7 +1222,7 @@ describe("ProxyBuilder", () => {
                       }
                   }),
                   animal = new AnimalProxy({
-                      interceptors: [new AnimalInterceptor]
+                      interceptors: [new AnimalInterceptor()]
                   });
             animal.name = "Pluto";
             expect(animal.name).to.equal("Pluto");
@@ -1251,7 +1231,7 @@ describe("ProxyBuilder", () => {
         });
 
         it("should proxy classes and protocols", () => {
-            const proxyBuilder   = new ProxyBuilder,
+            const proxyBuilder   = new ProxyBuilder(),
                   Flying         = Protocol.extend({ fly() {} }),
                   FlyingInterceptor = Interceptor.extend({
                       intercept: function (invocation) {
@@ -1263,7 +1243,7 @@ describe("ProxyBuilder", () => {
                   FlyingDogProxy = proxyBuilder.buildProxy([Dog, Flying, DisposingMixin]);
             $using(new FlyingDogProxy({
                        parameters:   ['Wonder Dog'],
-                       interceptors: [new FlyingInterceptor, new LogInterceptor]
+                       interceptors: [new FlyingInterceptor(), new LogInterceptor()]
                    }), function (wonderDog) {
                 expect(wonderDog.getName()).to.equal('Wonder Dog');
                 expect(wonderDog.talk()).to.equal('Ruff Ruff');
@@ -1274,11 +1254,11 @@ describe("ProxyBuilder", () => {
         });
 
         it("should modify arguments and return value", () => {
-            const proxyBuilder = new ProxyBuilder,
+            const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
                                      parameters:   ['Patches'],
-                                     interceptors: [new ToUpperInterceptor]
+                                     interceptors: [new ToUpperInterceptor()]
                                  });
             expect(dog.getName()).to.equal('PATCHES');
             expect(dog.talk()).to.equal('RUFF RUFF');
@@ -1286,15 +1266,15 @@ describe("ProxyBuilder", () => {
         });
 
         it("should restrict proxied method with interceptor selector options", () => {
-            const proxyBuilder = new ProxyBuilder,
-                  selector     =  (new InterceptorSelector).extend({
+            const proxyBuilder = new ProxyBuilder(),
+                  selector     =  (new InterceptorSelector()).extend({
                       selectInterceptors: function (type, method, interceptors) {
                           return method === 'getName' ? interceptors : [];
                   }}),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
                                      parameters:           ['Patches'],
-                                     interceptors:         [new ToUpperInterceptor],
+                                     interceptors:         [new ToUpperInterceptor()],
                                      interceptorSelectors: [selector]
                                  });
             expect(dog.getName()).to.equal('PATCHES');
@@ -1303,14 +1283,14 @@ describe("ProxyBuilder", () => {
         });
 
         it("should fail if no types array provided", () => {
-            const proxyBuilder = new ProxyBuilder;
+            const proxyBuilder = new ProxyBuilder();
             expect(() => {
                 proxyBuilder.buildProxy();
             }).to.throw(Error, "ProxyBuilder requires an array of types to proxy.");
         });
 
         it("should fail if no method to proceed too", () => {
-            const proxyBuilder = new ProxyBuilder,
+            const proxyBuilder = new ProxyBuilder(),
                   AnimalProxy  = proxyBuilder.buildProxy([Animal]),
                   animal       = new AnimalProxy([]);
             expect(() => {
@@ -1321,7 +1301,7 @@ describe("ProxyBuilder", () => {
 
     describe("#extend", () => {
         it("should reject extending  proxy classes.", () => {
-            const proxyBuilder = new ProxyBuilder,
+            const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]);
             expect(() => {
                 DogProxy.extend();
@@ -1329,11 +1309,11 @@ describe("ProxyBuilder", () => {
         });
 
         it("should proxy new method", () => {
-            const proxyBuilder = new ProxyBuilder,
+            const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
                                     parameters:  ['Patches'],
-                                    interceptors:[new ToUpperInterceptor]
+                                    interceptors:[new ToUpperInterceptor()]
                                  });
             dog.extend("getColor", () => { return "white with brown spots"; });
             dog.extend({
@@ -1344,11 +1324,11 @@ describe("ProxyBuilder", () => {
         });
 
         it("should proxy existing methods", () => {
-            const proxyBuilder = new ProxyBuilder,
+            const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
                                     parameters:  ['Patches'],
-                                    interceptors:[new ToUpperInterceptor]
+                                    interceptors:[new ToUpperInterceptor()]
                                  });
             expect(dog.getName()).to.equal("PATCHES");
             dog.extend({
@@ -1360,7 +1340,7 @@ describe("ProxyBuilder", () => {
 
     describe("#implement", () => {
         it("should reject extending  proxy classes.", () => {
-            const proxyBuilder = new ProxyBuilder,
+            const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]);
             expect(() => {
                 DogProxy.implement(DisposingMixin);
