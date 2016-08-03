@@ -17,71 +17,71 @@ if (Promise.delay === undefined)
 /**
  * Annotates invariance.
  * @attribute $eq
- * @for miruken.Modifier
+ * @for Modifier
  */
 export const $eq = $createModifier();
 
 /**
  * Annotates use value as is.
  * @attribute $use
- * @for miruken.Modifier
+ * @for Modifier
  */    
 export const $use = $createModifier();
 
 /**
  * Annotates copy semantics.
  * @attribute $copy
- * @for miruken.Modifier
+ * @for Modifier
  */        
 export const $copy = $createModifier();
 
 /**
  * Annotates lazy semantics.
  * @attribute $lazy
- * @for miruken.Modifier
+ * @for Modifier
  */            
 export const $lazy = $createModifier();
 
 /**
  * Annotates function to be evaluated.
  * @attribute $eval
- * @for miruken.Modifier
+ * @for Modifier
  */                
 export const $eval = $createModifier();
 
 /**
  * Annotates zero or more semantics.
  * @attribute $every
- * @for miruken.Modifier
+ * @for Modifier
  */                    
 export const $every = $createModifier();
 
 /**
  * Annotates 
- * @attribute use {{#crossLink "miruken.Parenting"}}{{/crossLink}} protocol.
+ * @attribute use {{#crossLink "Parenting"}}{{/crossLink}} protocol.
  * @attribute $child
- * @for miruken.Modifier
+ * @for Modifier
  */                        
 export const $child = $createModifier();
 
 /**
  * Annotates optional semantics.
  * @attribute $optional
- * @for miruken.Modifier
+ * @for Modifier
  */                        
 export const $optional = $createModifier();
 
 /**
  * Annotates Promise expectation.
  * @attribute $promise
- * @for miruken.Modifier
+ * @for Modifier
  */                            
 export const $promise = $createModifier();
 
 /**
  * Annotates synchronous.
  * @attribute $instant
- * @for miruken.Modifier
+ * @for Modifier
  */                                
 export const $instant = $createModifier();
 
@@ -129,6 +129,58 @@ export function $createModifier() {
         return false;
     }
     return modifier;
+}
+
+
+export function isDescriptor(desc) {
+    if (!desc || !desc.hasOwnProperty) {
+        return false;
+    }
+
+    const keys = ['value', 'initializer', 'get', 'set'];
+
+    for (let i = 0, l = keys.length; i < l; i++) {
+        if (desc.hasOwnProperty(keys[i])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+export function decorate(decorator, args) {
+    if (isDescriptor(args[args.length - 1])) {
+        return decorator(...args, []);
+    }
+    return function () {
+        return decorator(...arguments, args);
+    };
+}
+
+export function copy(target, key, descriptor) {
+    const { get, set, value  } = descriptor;
+    if ($isFunction(value)) {
+        descriptor.value = function () {
+            return copyOf(value.apply(this, arguments));
+        }
+    }
+    if ($isFunction(get)) {
+        descriptor.get = function () {
+            return copyOf(get.apply(this));
+        }
+    }
+    if ($isFunction(set)) {
+        descriptor.set = function (value) {
+            return set.call(this, copyOf(value));
+        }
+    }    
+}
+
+function copyOf(value) {
+    if (value != null && $isFunction(value.copy)) {
+        value = value.copy();
+    }
+    return value;
 }
 
 /*
@@ -486,18 +538,6 @@ function _createModuleMethod(module, name) {
   };
 };
 
-// =========================================================================
-// lang/copy.js
-// =========================================================================
-
-export function copy(object) { // A quick copy.
-  var copy = {};
-  for (var i in object) {
-    copy[i] = object[i];
-  }
-  return copy;
-};
-
 export function pcopy(object) { // Prototype-base copy.
   // Doug Crockford / Richard Cornford
   _dummy.prototype = object;
@@ -814,7 +854,7 @@ function K(k) {
 /**
  * Defines an enumeration.
  * <pre>
- *    var Color = Enum({
+ *    const Color = Enum({
  *        red:   1,
  *        green: 2,
  *        blue:  3
@@ -892,7 +932,7 @@ Enum.prototype.valueOf = function () {
 /**
  * Defines a flags enumeration.
  * <pre>
- *    var DayOfWeek = Flags({
+ *    const DayOfWeek = Flags({
  *        Monday:     1 << 0,
  *        Tuesday:    1 << 1,
  *        Wednesday:  1 << 2,
@@ -1289,9 +1329,8 @@ export const Protocol = Base.extend({
      * @returns {boolean}  true if the target conforms to this protocol.
      */
     adoptedBy(target) {
-        return target && $isFunction(target.conformsTo)
-            ? target.conformsTo(this)
-            : false;
+        const meta = $meta(target);
+        return !!(meta && meta.conformsTo(this));
     },
     /**
      * Creates a protocol binding over the object.
@@ -1452,8 +1491,10 @@ export const MetaBase = MetaMacro.extend({
              * @returns {boolean}  true if the metadata includes the protocol.
              */
             conformsTo(protocol) {
-                return protocol && (protocol.prototype instanceof Protocol)
-                    && _protocols.some(p => protocol === p || p.conformsTo(protocol));
+                return (protocol && (protocol.prototype instanceof Protocol)
+                        && _protocols.some(p => protocol === p || p.conformsTo(protocol)))
+                    || !!(parent && parent.conformsTo(protocol));
+                
             },
             inflate(step, metadata, target, definition, expand) {
                 if (parent) {
@@ -1638,7 +1679,7 @@ export const ClassMeta = MetaBase.extend({
                 } else if ((protocol === type) || (type.prototype instanceof protocol)) {
                     return true;
                 }
-                return this.base(protocol) || !!(parent && parent.conformsTo(protocol));
+                return this.base(protocol);
             },
             inflate(step, metadata, target, definition, expand) {
                 this.base(step, metadata, target, definition, expand);
@@ -1787,7 +1828,7 @@ Base.implement = Abstract.implement = function () {
     return $meta(this).embellishClass(...arguments);                
 }
 Base.prototype.conformsTo = function (protocol) {
-    return $meta(this.constructor).conformsTo(protocol);
+    return $meta(this).conformsTo(protocol);
 };
 
 Base.prototype.extend = function (key, value) {
@@ -1816,9 +1857,12 @@ Base.prototype.extend = function (key, value) {
     return this;
 }
 
-Enum.extend     = Base.extend
-Enum.implement  = Base.implement;
-defineMetadata(Enum.prototype, new ClassMeta(baseMetadata, Enum));
+Enum.extend    = Base.extend
+Enum.implement = Base.implement;
+const enumMetadata  = new ClassMeta(baseMetadata, Enum),
+      flagsMetadata = new ClassMeta(enumMetadata, Flags);
+      defineMetadata(Enum.prototype, enumMetadata);
+defineMetadata(Flags.prototype, flagsMetadata);
 
 /**
  * Metamacro to proxy protocol members through a delegate.<br/>
@@ -1856,11 +1900,6 @@ export const $proxyProtocol = MetaMacro.extend({
             Object.defineProperty(expanded, key, member);                
         });
     },
-    execute(step, metadata, target, definition) {
-        if (step === MetaStep.Subclass) {
-            metadata.type.adoptedBy = Protocol.adoptedBy;
-        }
-    },
     protocolAdded(metadata, protocol) {
         const source        = protocol.prototype,
               target        = metadata.type.prototype,
@@ -1875,8 +1914,8 @@ export const $proxyProtocol = MetaMacro.extend({
 });
 Protocol.extend    = Base.extend
 Protocol.implement = Base.implement;
-defineMetadata(Protocol.prototype, new ClassMeta(baseMetadata,
-               Protocol, null, [new $proxyProtocol()]));
+const protocolMetadata = new ClassMeta(baseMetadata, Protocol, null, [new $proxyProtocol()]);
+defineMetadata(Protocol.prototype, protocolMetadata);
 
 /**
  * Protocol base requiring conformance to match methods.
@@ -2173,17 +2212,17 @@ export const ArrayDelegate = Delegate.extend({
  * @erturns {MetaBase} target metadata.
  */
 export function $meta(target) {
-    if (target == null ||
-        target === Object || target === Object.prototype ||
-        target === Function || target == Function.prototype) {
-        return;
-    }
+    if (target == null) return;
     if (target.hasOwnProperty(Metadata)) {
         return target[Metadata];
     }
+    if (target === Object || target === Object.prototype ||
+        target === Function || target == Function.prototype) {
+        return;
+    }
     if ($isFunction(target)) {
         return $meta(target.prototype);
-    }    
+    }
     if ($isObject(target)) {
         let meta;
         if (target.hasOwnProperty('constructor')) {
@@ -2398,17 +2437,9 @@ export function $equals(obj1, obj2) {
 }
 
 /**
- * Package containing enhancements to the javascript language.
- * @module miruken
- * @namespace miruken
- * @main miruken
- * @class $
- */
-
-/**
  * Variance enum
  * @class Variance
- * @extends miruken.Enum
+ * @extends Enum
  */
 export const Variance = Enum({
     /**
@@ -2431,7 +2462,7 @@ export const Variance = Enum({
 /**
  * Protocol for targets that manage initialization.
  * @class Initializing
- * @extends miruken.Protocol
+ * @extends Protocol
  */
 export const Initializing = Protocol.extend({
     /**
@@ -2443,14 +2474,14 @@ export const Initializing = Protocol.extend({
 /**
  * Protocol marking resolve semantics.
  * @class Resolving
- * @extends miruken.Protocol
+ * @extends Protocol
  */
 export const Resolving = Protocol.extend();
 
 /**
  * Protocol for targets that can execute functions.
  * @class Invoking
- * @extends miruken.StrictProtocol
+ * @extends StrictProtocol
  */
 export const Invoking = StrictProtocol.extend({
     /**
@@ -2467,13 +2498,13 @@ export const Invoking = StrictProtocol.extend({
 /**
  * Protocol for targets that have parent/child relationships.
  * @class Parenting
- * @extends miruken.Protocol
+ * @extends Protocol
  */
 export const Parenting = Protocol.extend({
     /**
      * Creates a new child of the parent.
      * @method newChild
-     * @returns  {Object} the new child.
+     * @returns {Object} the new child.
      */
     newChild() {}
 });
@@ -2481,7 +2512,7 @@ export const Parenting = Protocol.extend({
 /**
  * Protocol for targets that can be started.
  * @class Starting
- * @extends miruken.Protocol
+ * @extends Protocol
  */
 export const Starting = Protocol.extend({
     /**
@@ -2494,7 +2525,7 @@ export const Starting = Protocol.extend({
 /**
  * Base class for startable targets.
  * @class Startup
- * @uses miruken.Starting
+ * @uses Starting
  * @extends Base
  */
 export const Startup = Base.extend(Starting, {
@@ -2504,7 +2535,7 @@ export const Startup = Base.extend(Starting, {
 /**
  * Protocol for targets that manage disposal lifecycle.
  * @class Disposing
- * @extends miruken.Protocol
+ * @extends Protocol
  */
 export const Disposing = Protocol.extend({
     /**
@@ -2515,9 +2546,9 @@ export const Disposing = Protocol.extend({
 });
 
 /**
- * Mixin for {{#crossLink "miruken.Disposing"}}{{/crossLink}} implementation.
+ * Mixin for {{#crossLink "Disposing"}}{{/crossLink}} implementation.
  * @class DisposingMixin
- * @uses miruken.Disposing
+ * @uses Disposing
  * @extends Module
  */
 export const DisposingMixin = Module.extend({
@@ -2532,9 +2563,8 @@ export const DisposingMixin = Module.extend({
 
 /**
  * Convenience function for disposing resources.
- * @for miruken.$
  * @method $using
- * @param    {miruken.Disposing}   disposing  - object to dispose
+ * @param    {Disposing}           disposing  - object to dispose
  * @param    {Function | Promise}  action     - block or Promise
  * @param    {Object}              [context]  - block context
  * @returns  {Any} result of executing the action in context.
@@ -2574,7 +2604,7 @@ export function $using(disposing, action, context) {
 /**
  * TraversingAxis enum
  * @class TraversingAxis
- * @extends miruken.Enum
+ * @extends Enum
  */
 export const TraversingAxis = Enum({
     /**
@@ -2647,15 +2677,15 @@ export const TraversingAxis = Enum({
 /**
  * Protocol for traversing an abitrary graph of objects.
  * @class Traversing
- * @extends miruken.Protocol
+ * @extends Protocol
  */
 export const Traversing = Protocol.extend({
     /**
      * Traverse a graph of objects.
      * @method traverse
-     * @param {miruken.graph.TraversingAxis} axis        -  axis of traversal
-     * @param {Function}                     visitor     -  receives visited nodes
-     * @param {Object}                       [context]   -  visitor callback context
+     * @param {TraversingAxis}  axis       -  axis of traversal
+     * @param {Function}        visitor    -  receives visited nodes
+     * @param {Object}          [context]  -  visitor callback context
      */
     traverse(axis, visitor, context) {}
 });
@@ -2663,7 +2693,7 @@ export const Traversing = Protocol.extend({
 /**
  * Mixin for Traversing functionality.
  * @class TraversingMixin
- * @uses miruken.graph.Traversing
+ * @uses Traversing
  * @extends Module
  */
 export const TraversingMixin = Module.extend({
@@ -2823,9 +2853,9 @@ export const Traversal = Abstract.extend({}, {
      * Performs a pre-order graph traversal.
      * @static
      * @method preOrder
-     * @param  {miruken.graph.Traversing}  node       -  node to traverse
-     * @param  {Function}                  visitor    -  receives visited nodes
-     * @param  {Object}                    [context]  -  visitor calling context
+     * @param  {Traversing}  node       -  node to traverse
+     * @param  {Function}    visitor    -  receives visited nodes
+     * @param  {Object}      [context]  -  visitor calling context
      */
     preOrder(node, visitor, context) {
         return preOrder(node, visitor, context);
@@ -2834,9 +2864,9 @@ export const Traversal = Abstract.extend({}, {
      * Performs a post-order graph traversal.
      * @static
      * @method postOrder
-     * @param  {miruken.graph.Traversing}  node       -  node to traverse
-     * @param  {Function}                  visitor    -  receives visited nodes
-     * @param  {Object}                    [context]  -  visitor calling context
+     * @param  {Traversing}  node       -  node to traverse
+     * @param  {Function}    visitor    -  receives visited nodes
+     * @param  {Object}      [context]  -  visitor calling context
      */
     postOrder(node, visitor, context) {
         return postOrder(node, visitor, context);
@@ -2845,9 +2875,9 @@ export const Traversal = Abstract.extend({}, {
      * Performs a level-order graph traversal.
      * @static
      * @method levelOrder
-     * @param  {miruken.graph.Traversing}  node       -  node to traverse
-     * @param  {Function}                  visitor    -  receives visited nodes
-     * @param  {Object}                    [context]  -  visitor calling context
+     * @param  {Traversing}  node       -  node to traverse
+     * @param  {Function}    visitor    -  receives visited nodes
+     * @param  {Object}      [context]  -  visitor calling context
      */
     levelOrder(node, visitor, context) {
         return levelOrder(node, visitor, context);
@@ -2856,9 +2886,9 @@ export const Traversal = Abstract.extend({}, {
      * Performs a reverse level-order graph traversal.
      * @static
      * @method levelOrder
-     * @param  {miruken.graph.Traversing}  node       -  node to traverse
-     * @param  {Function}                  visitor    -  receives visited nodes
-     * @param  {Object}                    [context]  -  visitor calling context
+     * @param  {Traversing}  node       -  node to traverse
+     * @param  {Function}    visitor    -  receives visited nodes
+     * @param  {Object}      [context]  -  visitor calling context
      */
     reverseLevelOrder(node, visitor, context) {
         return reverseLevelOrder(node, visitor, context);

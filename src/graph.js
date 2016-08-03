@@ -5,7 +5,7 @@ import { Enum } from './enum';
 /**
  * TraversingAxis enum
  * @class TraversingAxis
- * @extends miruken.Enum
+ * @extends Enum
  */
 export const TraversingAxis = Enum({
     /**
@@ -78,15 +78,15 @@ export const TraversingAxis = Enum({
 /**
  * Protocol for traversing an abitrary graph of objects.
  * @class Traversing
- * @extends miruken.Protocol
+ * @extends Protocol
  */
 export const Traversing = Protocol.extend({
     /**
      * Traverse a graph of objects.
      * @method traverse
-     * @param {miruken.graph.TraversingAxis} axis        -  axis of traversal
-     * @param {Function}                     visitor     -  receives visited nodes
-     * @param {Object}                       [context]   -  visitor callback context
+     * @param {TraversingAxis}  axis       -  axis of traversal
+     * @param {Function}        visitor    -  receives visited nodes
+     * @param {Object}          [context]  -  visitor callback context
      */
     traverse(axis, visitor, context) {}
 });
@@ -94,7 +94,7 @@ export const Traversing = Protocol.extend({
 /**
  * Mixin for Traversing functionality.
  * @class TraversingMixin
- * @uses miruken.graph.Traversing
+ * @uses Traversing
  * @extends Module
  */
 export const TraversingMixin = Module.extend({
@@ -254,9 +254,9 @@ export const Traversal = Abstract.extend({}, {
      * Performs a pre-order graph traversal.
      * @static
      * @method preOrder
-     * @param  {miruken.graph.Traversing}  node       -  node to traverse
-     * @param  {Function}                  visitor    -  receives visited nodes
-     * @param  {Object}                    [context]  -  visitor calling context
+     * @param  {Traversing}  node       -  node to traverse
+     * @param  {Function}    visitor    -  receives visited nodes
+     * @param  {Object}      [context]  -  visitor calling context
      */
     preOrder(node, visitor, context) {
         return preOrder(node, visitor, context);
@@ -265,9 +265,9 @@ export const Traversal = Abstract.extend({}, {
      * Performs a post-order graph traversal.
      * @static
      * @method postOrder
-     * @param  {miruken.graph.Traversing}  node       -  node to traverse
-     * @param  {Function}                  visitor    -  receives visited nodes
-     * @param  {Object}                    [context]  -  visitor calling context
+     * @param  {Traversing}  node       -  node to traverse
+     * @param  {Function}    visitor    -  receives visited nodes
+     * @param  {Object}      [context]  -  visitor calling context
      */
     postOrder(node, visitor, context) {
         return postOrder(node, visitor, context);
@@ -276,9 +276,9 @@ export const Traversal = Abstract.extend({}, {
      * Performs a level-order graph traversal.
      * @static
      * @method levelOrder
-     * @param  {miruken.graph.Traversing}  node       -  node to traverse
-     * @param  {Function}                  visitor    -  receives visited nodes
-     * @param  {Object}                    [context]  -  visitor calling context
+     * @param  {Traversing}  node       -  node to traverse
+     * @param  {Function}    visitor    -  receives visited nodes
+     * @param  {Object}      [context]  -  visitor calling context
      */
     levelOrder(node, visitor, context) {
         return levelOrder(node, visitor, context);
@@ -287,9 +287,9 @@ export const Traversal = Abstract.extend({}, {
      * Performs a reverse level-order graph traversal.
      * @static
      * @method levelOrder
-     * @param  {miruken.graph.Traversing}  node       -  node to traverse
-     * @param  {Function}                  visitor    -  receives visited nodes
-     * @param  {Object}                    [context]  -  visitor calling context
+     * @param  {Traversing}  node       -  node to traverse
+     * @param  {Function}    visitor    -  receives visited nodes
+     * @param  {Object}      [context]  -  visitor calling context
      */
     reverseLevelOrder(node, visitor, context) {
         return reverseLevelOrder(node, visitor, context);

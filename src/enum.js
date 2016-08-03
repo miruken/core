@@ -3,7 +3,7 @@ import { Base } from './base2';
 /**
  * Defines an enumeration.
  * <pre>
- *    var Color = Enum({
+ *    const Color = Enum({
  *        red:   1,
  *        green: 2,
  *        blue:  3
@@ -81,7 +81,7 @@ Enum.prototype.valueOf = function () {
 /**
  * Defines a flags enumeration.
  * <pre>
- *    var DayOfWeek = Flags({
+ *    const DayOfWeek = Flags({
  *        Monday:     1 << 0,
  *        Tuesday:    1 << 1,
  *        Wednesday:  1 << 2,

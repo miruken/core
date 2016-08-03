@@ -1,21 +1,9 @@
-"use strict";
+'use strict';
 
 System.register([], function (_export, _context) {
     "use strict";
 
-    var _Base$extend, _typeof, $eq, $use, $copy, $lazy, $eval, $every, $child, $optional, $promise, $instant, Undefined, Null, True, False, __prototyping, _counter, _IGNORE, _BASE, _HIDDEN, _slice, _subclass, Base, Package, Abstract, _moduleCount, Module, _toString, Defining, Enum, Flags, ArrayManager, IndexedList, baseExtend, baseImplement, baseProtoExtend, Metadata, ProtocolGet, ProtocolSet, ProtocolInvoke, ProtocolDelegate, ProtocolStrict, Protocol, MetaStep, MetaMacro, MetaBase, ClassMeta, InstanceMeta, baseMetadata, abstractMetadata, $proxyProtocol, StrictProtocol, GETTER_CONVENTIONS, PropertiesTag, $properties, $inferProperties, Delegate, ObjectDelegate, ArrayDelegate, $isProtocol, Variance, Initializing, Resolving, Invoking, Parenting, Starting, Startup, Disposing, DisposingMixin, TraversingAxis, Traversing, TraversingMixin, Traversal, Facet, Interceptor, InterceptorSelector, ProxyBuilder, noProxyMethods;
-
-    function _toConsumableArray(arr) {
-        if (Array.isArray(arr)) {
-            for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
-                arr2[i] = arr[i];
-            }
-
-            return arr2;
-        } else {
-            return Array.from(arr);
-        }
-    }
+    var _Base$extend, _typeof, $eq, $use, $copy, $lazy, $eval, $every, $child, $optional, $promise, $instant, Undefined, Null, True, False, __prototyping, _counter, _IGNORE, _BASE, _HIDDEN, _slice, _subclass, Base, Package, Abstract, _moduleCount, Module, _toString, Defining, Enum, Flags, ArrayManager, IndexedList, baseExtend, baseImplement, baseProtoExtend, Metadata, ProtocolGet, ProtocolSet, ProtocolInvoke, ProtocolDelegate, ProtocolStrict, Protocol, MetaStep, MetaMacro, MetaBase, ClassMeta, InstanceMeta, baseMetadata, abstractMetadata, enumMetadata, flagsMetadata, $proxyProtocol, protocolMetadata, StrictProtocol, GETTER_CONVENTIONS, PropertiesTag, $properties, $inferProperties, Delegate, ObjectDelegate, ArrayDelegate, $isProtocol, Variance, Initializing, Resolving, Invoking, Parenting, Starting, Startup, Disposing, DisposingMixin, TraversingAxis, Traversing, TraversingMixin, Traversal, Facet, Interceptor, InterceptorSelector, ProxyBuilder, noProxyMethods;
 
     function _defineProperty(obj, key, value) {
         if (key in obj) {
@@ -30,6 +18,25 @@ System.register([], function (_export, _context) {
         }
 
         return obj;
+    }
+
+    function _toConsumableArray(arr) {
+        if (Array.isArray(arr)) {
+            for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+                arr2[i] = arr[i];
+            }
+
+            return arr2;
+        } else {
+            return Array.from(arr);
+        }
+    }
+
+    function copyOf(value) {
+        if (value != null && $isFunction(value.copy)) {
+            value = value.copy();
+        }
+        return value;
     }
 
     function _extendModule(module, _interface) {
@@ -244,7 +251,7 @@ System.register([], function (_export, _context) {
 
     function checkCircularity(visited, node) {
         if (visited.indexOf(node) !== -1) {
-            throw new Error("Circularity detected for node " + node);
+            throw new Error('Circularity detected for node ' + node);
         }
         visited.push(node);
         return node;
@@ -577,7 +584,7 @@ System.register([], function (_export, _context) {
                     } else if (method) {
                         return method.apply(_this, this.args);
                     }
-                    throw new Error("Interceptor cannot proceed without a class or delegate method '" + key + "'.");
+                    throw new Error('Interceptor cannot proceed without a class or delegate method \'' + key + '\'.');
                 }
             };
             spec.value = key;
@@ -651,49 +658,49 @@ System.register([], function (_export, _context) {
                 });
             };
 
-            _export("$eq", $eq = $createModifier());
+            _export('$eq', $eq = $createModifier());
 
-            _export("$eq", $eq);
+            _export('$eq', $eq);
 
-            _export("$use", $use = $createModifier());
+            _export('$use', $use = $createModifier());
 
-            _export("$use", $use);
+            _export('$use', $use);
 
-            _export("$copy", $copy = $createModifier());
+            _export('$copy', $copy = $createModifier());
 
-            _export("$copy", $copy);
+            _export('$copy', $copy);
 
-            _export("$lazy", $lazy = $createModifier());
+            _export('$lazy', $lazy = $createModifier());
 
-            _export("$lazy", $lazy);
+            _export('$lazy', $lazy);
 
-            _export("$eval", $eval = $createModifier());
+            _export('$eval', $eval = $createModifier());
 
-            _export("$eval", $eval);
+            _export('$eval', $eval);
 
-            _export("$every", $every = $createModifier());
+            _export('$every', $every = $createModifier());
 
-            _export("$every", $every);
+            _export('$every', $every);
 
-            _export("$child", $child = $createModifier());
+            _export('$child', $child = $createModifier());
 
-            _export("$child", $child);
+            _export('$child', $child);
 
-            _export("$optional", $optional = $createModifier());
+            _export('$optional', $optional = $createModifier());
 
-            _export("$optional", $optional);
+            _export('$optional', $optional);
 
-            _export("$promise", $promise = $createModifier());
+            _export('$promise', $promise = $createModifier());
 
-            _export("$promise", $promise);
+            _export('$promise', $promise);
 
-            _export("$instant", $instant = $createModifier());
+            _export('$instant', $instant = $createModifier());
 
-            _export("$instant", $instant);
+            _export('$instant', $instant);
 
             function Modifier() {}
 
-            _export("Modifier", Modifier);
+            _export('Modifier', Modifier);
 
             Modifier.isModified = function (source) {
                 return source instanceof Modifier;
@@ -733,23 +740,75 @@ System.register([], function (_export, _context) {
                 return modifier;
             }
 
-            _export("$createModifier", $createModifier);
+            _export('$createModifier', $createModifier);
 
-            _export("Undefined", Undefined = K());
+            function isDescriptor(desc) {
+                if (!desc || !desc.hasOwnProperty) {
+                    return false;
+                }
 
-            _export("Null", Null = K(null));
+                var keys = ['value', 'initializer', 'get', 'set'];
 
-            _export("True", True = K(true));
+                for (var i = 0, l = keys.length; i < l; i++) {
+                    if (desc.hasOwnProperty(keys[i])) {
+                        return true;
+                    }
+                }
 
-            _export("False", False = K(false));
+                return false;
+            }
 
-            _export("Undefined", Undefined);
+            _export('isDescriptor', isDescriptor);
 
-            _export("Null", Null);
+            function decorate(decorator, args) {
+                if (isDescriptor(args[args.length - 1])) {
+                    return decorator.apply(undefined, _toConsumableArray(args).concat([[]]));
+                }
+                return function () {
+                    return decorator.apply(undefined, Array.prototype.slice.call(arguments).concat([args]));
+                };
+            }
 
-            _export("True", True);
+            _export('decorate', decorate);
 
-            _export("False", False);
+            function copy(target, key, descriptor) {
+                var get = descriptor.get;
+                var set = descriptor.set;
+                var value = descriptor.value;
+
+                if ($isFunction(value)) {
+                    descriptor.value = function () {
+                        return copyOf(value.apply(this, arguments));
+                    };
+                }
+                if ($isFunction(get)) {
+                    descriptor.get = function () {
+                        return copyOf(get.apply(this));
+                    };
+                }
+                if ($isFunction(set)) {
+                    descriptor.set = function (value) {
+                        return set.call(this, copyOf(value));
+                    };
+                }
+            }
+            _export('copy', copy);
+
+            _export('Undefined', Undefined = K());
+
+            _export('Null', Null = K(null));
+
+            _export('True', True = K(true));
+
+            _export('False', False = K(false));
+
+            _export('Undefined', Undefined);
+
+            _export('Null', Null);
+
+            _export('True', True);
+
+            _export('False', False);
 
             _counter = 1;
             _IGNORE = K();
@@ -801,7 +860,7 @@ System.register([], function (_export, _context) {
                 return _class;
             };
 
-            _export("Base", Base = _subclass.call(Object, {
+            _export('Base', Base = _subclass.call(Object, {
                 constructor: function constructor() {
                     if (arguments.length > 0) {
                         this.extend(arguments[0]);
@@ -817,7 +876,7 @@ System.register([], function (_export, _context) {
                         return "[object " + this.constructor.toString().slice(1, -1) + "]";
                     }
                 }
-            }, _export("Base", Base = {
+            }, _export('Base', Base = {
                 ancestorOf: function ancestorOf(klass) {
                     return _ancestorOf(this, klass);
                 },
@@ -834,9 +893,9 @@ System.register([], function (_export, _context) {
                 }
             })));
 
-            _export("Base", Base);
+            _export('Base', Base);
 
-            _export("Package", Package = Base.extend({
+            _export('Package', Package = Base.extend({
                 constructor: function constructor(_private, _public) {
                     var pkg = this,
                         openPkg;
@@ -956,19 +1015,19 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("Package", Package);
+            _export('Package', Package);
 
-            _export("Abstract", Abstract = Base.extend({
+            _export('Abstract', Abstract = Base.extend({
                 constructor: function constructor() {
                     throw new TypeError("Abstract class cannot be instantiated.");
                 }
             }));
 
-            _export("Abstract", Abstract);
+            _export('Abstract', Abstract);
 
             _moduleCount = 0;
 
-            _export("Module", Module = Abstract.extend(null, {
+            _export('Module', Module = Abstract.extend(null, {
                 namespace: "",
 
                 extend: function extend(_interface, _static) {
@@ -1029,30 +1088,19 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("Module", Module);
+            _export('Module', Module);
 
             Module.prototype.base = Module.prototype.extend = _IGNORE;;;;
-
-            function copy(object) {
-                var copy = {};
-                for (var i in object) {
-                    copy[i] = object[i];
-                }
-                return copy;
-            }
-            _export("copy", copy);
-
-            ;
 
             function pcopy(object) {
                 _dummy.prototype = object;
                 return new _dummy();
             }
-            _export("pcopy", pcopy);
+            _export('pcopy', pcopy);
 
             ;;
 
-            _export("extend", _extend);
+            _export('extend', _extend);
 
             ;;;
 
@@ -1076,7 +1124,7 @@ System.register([], function (_export, _context) {
                 return props;
             }
 
-            _export("getPropertyDescriptors", getPropertyDescriptors);
+            _export('getPropertyDescriptors', getPropertyDescriptors);
 
             function instanceOf(object, klass) {
 
@@ -1114,13 +1162,13 @@ System.register([], function (_export, _context) {
 
                 return false;
             }
-            _export("instanceOf", instanceOf);
+            _export('instanceOf', instanceOf);
 
             ;
 
             _toString = Object.prototype.toString;
             function typeOf(object) {
-                var type = typeof object === "undefined" ? "undefined" : _typeof(object);
+                var type = typeof object === 'undefined' ? 'undefined' : _typeof(object);
                 switch (type) {
                     case "object":
                         return object == null ? "null" : typeof object.constructor == "function" && _toString.call(object) != "[object Date]" ? _typeof(object.constructor.prototype.valueOf()) : type;
@@ -1130,7 +1178,7 @@ System.register([], function (_export, _context) {
                         return type;
                 }
             }
-            _export("typeOf", typeOf);
+            _export('typeOf', typeOf);
 
             ;
 
@@ -1139,7 +1187,7 @@ System.register([], function (_export, _context) {
                 if (!object.hasOwnProperty(name)) object[name] = "b2_" + _counter++;
                 return object[name];
             }
-            _export("assignID", assignID);
+            _export('assignID', assignID);
 
             ;
 
@@ -1150,14 +1198,14 @@ System.register([], function (_export, _context) {
                     return args[index];
                 });
             }
-            _export("format", format);
+            _export('format', format);
 
             ;
 
             function csv(string) {
                 return string ? (string + "").split(/\s*,\s*/) : [];
             }
-            _export("csv", csv);
+            _export('csv', csv);
 
             ;
 
@@ -1174,11 +1222,11 @@ System.register([], function (_export, _context) {
                     };
                 }
             }
-            _export("bind", bind);
+            _export('bind', bind);
 
             ;
 
-            _export("partial", _partial);
+            _export('partial', _partial);
 
             ;
 
@@ -1189,13 +1237,13 @@ System.register([], function (_export, _context) {
                     return fn.apply(context, args);
                 };
             }
-            _export("delegate", delegate);
+            _export('delegate', delegate);
 
             ;;
 
             Defining = Symbol();
 
-            _export("Enum", Enum = Base.extend({
+            _export('Enum', Enum = Base.extend({
                 constructor: function constructor(value, name, ordinal) {
                     this.constructing(value, name);
                     Object.defineProperties(this, {
@@ -1251,20 +1299,20 @@ System.register([], function (_export, _context) {
                         return item.value == value;
                     });
                     if (!match) {
-                        throw new TypeError(value + " is not a valid value for this Enum.");
+                        throw new TypeError(value + ' is not a valid value for this Enum.');
                     }
                     return match;
                 }
             }));
 
-            _export("Enum", Enum);
+            _export('Enum', Enum);
 
             Enum.prototype.valueOf = function () {
                 var value = +this.value;
                 return isNaN(value) ? this.ordinal : value;
             };
 
-            _export("Flags", Flags = Enum.extend({
+            _export('Flags', Flags = Enum.extend({
                 hasFlag: function hasFlag(flag) {
                     flag = +flag;
                     return (this & flag) === flag;
@@ -1294,9 +1342,9 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("Flags", Flags);
+            _export('Flags', Flags);
 
-            _export("ArrayManager", ArrayManager = Base.extend({
+            _export('ArrayManager', ArrayManager = Base.extend({
                 constructor: function constructor(items) {
                     var _items = [];
                     this.extend({
@@ -1361,9 +1409,9 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("ArrayManager", ArrayManager);
+            _export('ArrayManager', ArrayManager);
 
-            _export("IndexedList", IndexedList = Base.extend({
+            _export('IndexedList', IndexedList = Base.extend({
                 constructor: function constructor(order) {
                     var _index = {};
                     this.extend({
@@ -1443,7 +1491,7 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("IndexedList", IndexedList);
+            _export('IndexedList', IndexedList);
 
             function $debounce(fn, wait, immediate, defaultReturnValue) {
                 var timeout = void 0;
@@ -1465,7 +1513,7 @@ System.register([], function (_export, _context) {
                     return defaultReturnValue;
                 };
             }
-            _export("$debounce", $debounce);
+            _export('$debounce', $debounce);
 
             ;
 
@@ -1479,7 +1527,7 @@ System.register([], function (_export, _context) {
             ProtocolDelegate = Symbol();
             ProtocolStrict = Symbol();
 
-            _export("Protocol", Protocol = Base.extend((_Base$extend = {
+            _export('Protocol', Protocol = Base.extend((_Base$extend = {
                 constructor: function constructor(delegate, strict) {
                     var _Object$definePropert;
 
@@ -1514,16 +1562,17 @@ System.register([], function (_export, _context) {
                     return target && target.prototype instanceof Protocol;
                 },
                 adoptedBy: function adoptedBy(target) {
-                    return target && $isFunction(target.conformsTo) ? target.conformsTo(this) : false;
+                    var meta = $meta(target);
+                    return !!(meta && meta.conformsTo(this));
                 },
                 coerce: function coerce(object, strict) {
                     return new this(object, strict);
                 }
             }));
 
-            _export("Protocol", Protocol);
+            _export('Protocol', Protocol);
 
-            _export("MetaStep", MetaStep = Enum({
+            _export('MetaStep', MetaStep = Enum({
                 Subclass: 1,
 
                 Implement: 2,
@@ -1531,9 +1580,9 @@ System.register([], function (_export, _context) {
                 Extend: 3
             }));
 
-            _export("MetaStep", MetaStep);
+            _export('MetaStep', MetaStep);
 
-            _export("MetaMacro", MetaMacro = Base.extend({
+            _export('MetaMacro', MetaMacro = Base.extend({
                 get active() {
                     return false;
                 },
@@ -1562,9 +1611,9 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("MetaMacro", MetaMacro);
+            _export('MetaMacro', MetaMacro);
 
-            _export("MetaBase", MetaBase = MetaMacro.extend({
+            _export('MetaBase', MetaBase = MetaMacro.extend({
                 constructor: function constructor(parent) {
                     var _protocols = [],
                         _descriptors = void 0;
@@ -1673,7 +1722,7 @@ System.register([], function (_export, _context) {
                         conformsTo: function conformsTo(protocol) {
                             return protocol && protocol.prototype instanceof Protocol && _protocols.some(function (p) {
                                 return protocol === p || p.conformsTo(protocol);
-                            });
+                            }) || !!(parent && parent.conformsTo(protocol));
                         },
                         inflate: function inflate(step, metadata, target, definition, expand) {
                             if (parent) {
@@ -1765,9 +1814,9 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("MetaBase", MetaBase);
+            _export('MetaBase', MetaBase);
 
-            _export("ClassMeta", ClassMeta = MetaBase.extend({
+            _export('ClassMeta', ClassMeta = MetaBase.extend({
                 constructor: function constructor(parent, type, protocols, macros) {
                     var _macros = macros && macros.slice(0),
                         _isProtocol = type === Protocol || type.prototype instanceof Protocol;
@@ -1850,7 +1899,7 @@ System.register([], function (_export, _context) {
                             } else if (protocol === type || type.prototype instanceof protocol) {
                                 return true;
                             }
-                            return this.base(protocol) || !!(parent && parent.conformsTo(protocol));
+                            return this.base(protocol);
                         },
                         inflate: function inflate(step, metadata, target, definition, expand) {
                             this.base(step, metadata, target, definition, expand);
@@ -2044,9 +2093,9 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("ClassMeta", ClassMeta);
+            _export('ClassMeta', ClassMeta);
 
-            _export("InstanceMeta", InstanceMeta = MetaBase.extend({
+            _export('InstanceMeta', InstanceMeta = MetaBase.extend({
                 constructor: function constructor(parent) {
                     this.base(parent);
                     this.extend({
@@ -2060,7 +2109,7 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("InstanceMeta", InstanceMeta);
+            _export('InstanceMeta', InstanceMeta);
 
             baseMetadata = new ClassMeta(undefined, Base);
             abstractMetadata = new ClassMeta(baseMetadata, Abstract);
@@ -2080,7 +2129,7 @@ System.register([], function (_export, _context) {
                 return (_$meta2 = $meta(this)).embellishClass.apply(_$meta2, arguments);
             };
             Base.prototype.conformsTo = function (protocol) {
-                return $meta(this.constructor).conformsTo(protocol);
+                return $meta(this).conformsTo(protocol);
             };
 
             Base.prototype.extend = function (key, value) {
@@ -2117,9 +2166,13 @@ System.register([], function (_export, _context) {
 
             Enum.extend = Base.extend;
             Enum.implement = Base.implement;
-            defineMetadata(Enum.prototype, new ClassMeta(baseMetadata, Enum));
+            enumMetadata = new ClassMeta(baseMetadata, Enum);
+            flagsMetadata = new ClassMeta(enumMetadata, Flags);
 
-            _export("$proxyProtocol", $proxyProtocol = MetaMacro.extend({
+            defineMetadata(Enum.prototype, enumMetadata);
+            defineMetadata(Flags.prototype, flagsMetadata);
+
+            _export('$proxyProtocol', $proxyProtocol = MetaMacro.extend({
                 get active() {
                     return true;
                 },
@@ -2157,11 +2210,6 @@ System.register([], function (_export, _context) {
                         Object.defineProperty(expanded, key, member);
                     });
                 },
-                execute: function execute(step, metadata, target, definition) {
-                    if (step === MetaStep.Subclass) {
-                        metadata.type.adoptedBy = Protocol.adoptedBy;
-                    }
-                },
                 protocolAdded: function protocolAdded(metadata, protocol) {
                     var _this4 = this;
 
@@ -2176,24 +2224,26 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("$proxyProtocol", $proxyProtocol);
+            _export('$proxyProtocol', $proxyProtocol);
 
             Protocol.extend = Base.extend;
             Protocol.implement = Base.implement;
-            defineMetadata(Protocol.prototype, new ClassMeta(baseMetadata, Protocol, null, [new $proxyProtocol()]));
+            protocolMetadata = new ClassMeta(baseMetadata, Protocol, null, [new $proxyProtocol()]);
 
-            _export("StrictProtocol", StrictProtocol = Protocol.extend({
+            defineMetadata(Protocol.prototype, protocolMetadata);
+
+            _export('StrictProtocol', StrictProtocol = Protocol.extend({
                 constructor: function constructor(proxy, strict) {
                     this.base(proxy, strict === undefined || strict);
                 }
             }));
 
-            _export("StrictProtocol", StrictProtocol);
+            _export('StrictProtocol', StrictProtocol);
 
             GETTER_CONVENTIONS = ['get', 'is'];
             PropertiesTag = Symbol();
 
-            _export("$properties", $properties = MetaMacro.extend({
+            _export('$properties', $properties = MetaMacro.extend({
                 constructor: function constructor(tag) {
                     if ($isNothing(tag)) {
                         throw new Error("$properties requires a tag name");
@@ -2274,9 +2324,9 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("$properties", $properties);
+            _export('$properties', $properties);
 
-            _export("$inferProperties", $inferProperties = MetaMacro.extend({
+            _export('$inferProperties', $inferProperties = MetaMacro.extend({
                 get active() {
                     return true;
                 },
@@ -2326,17 +2376,17 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("$inferProperties", $inferProperties);
+            _export('$inferProperties', $inferProperties);
 
-            _export("Delegate", Delegate = Base.extend({
+            _export('Delegate', Delegate = Base.extend({
                 get: function get(protocol, key, strict) {},
                 set: function set(protocol, key, value, strict) {},
                 invoke: function invoke(protocol, methodName, args, strict) {}
             }));
 
-            _export("Delegate", Delegate);
+            _export('Delegate', Delegate);
 
-            _export("ObjectDelegate", ObjectDelegate = Delegate.extend({
+            _export('ObjectDelegate', ObjectDelegate = Delegate.extend({
                 constructor: function constructor(object) {
                     Object.defineProperty(this, 'object', { value: object });
                 },
@@ -2361,9 +2411,9 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("ObjectDelegate", ObjectDelegate);
+            _export('ObjectDelegate', ObjectDelegate);
 
-            _export("ArrayDelegate", ArrayDelegate = Delegate.extend({
+            _export('ArrayDelegate', ArrayDelegate = Delegate.extend({
                 constructor: function constructor(array) {
                     Object.defineProperty(this, 'array', { value: array });
                 },
@@ -2388,14 +2438,15 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("ArrayDelegate", ArrayDelegate);
+            _export('ArrayDelegate', ArrayDelegate);
 
             function $meta(target) {
-                if (target == null || target === Object || target === Object.prototype || target === Function || target == Function.prototype) {
-                    return;
-                }
+                if (target == null) return;
                 if (target.hasOwnProperty(Metadata)) {
                     return target[Metadata];
+                }
+                if (target === Object || target === Object.prototype || target === Function || target == Function.prototype) {
+                    return;
                 }
                 if ($isFunction(target)) {
                     return $meta(target.prototype);
@@ -2415,7 +2466,7 @@ System.register([], function (_export, _context) {
                 }
             }
 
-            _export("$meta", $meta);
+            _export('$meta', $meta);
 
             function $decorator(decorations) {
                 return function (decoratee) {
@@ -2434,13 +2485,13 @@ System.register([], function (_export, _context) {
                 };
             }
 
-            _export("$decorator", $decorator);
+            _export('$decorator', $decorator);
 
             function $decorate(decoratee, decorations) {
                 return $decorator(decorations)(decoratee);
             }
 
-            _export("$decorate", $decorate);
+            _export('$decorate', $decorate);
 
             function $decorated(decorator, deepest) {
                 var decoratee = void 0;
@@ -2453,11 +2504,11 @@ System.register([], function (_export, _context) {
                 return decorator;
             }
 
-            _export("$decorated", $decorated);
+            _export('$decorated', $decorated);
 
-            _export("$isProtocol", $isProtocol = Protocol.isProtocol);
+            _export('$isProtocol', $isProtocol = Protocol.isProtocol);
 
-            _export("$isProtocol", $isProtocol);
+            _export('$isProtocol', $isProtocol);
 
             function $isClass(clazz) {
                 if (!clazz || $isProtocol(clazz)) return false;
@@ -2465,49 +2516,49 @@ System.register([], function (_export, _context) {
                 var name = clazz.name;
                 return name && $isFunction(clazz) && isUpperCase(name.charAt(0));
             }
-            _export("$isClass", $isClass);
+            _export('$isClass', $isClass);
 
             function $classOf(instance) {
                 return instance && instance.constructor;
             }
 
-            _export("$classOf", $classOf);
+            _export('$classOf', $classOf);
 
             function $isString(str) {
                 return typeOf(str) === 'string';
             }
 
-            _export("$isString", $isString);
+            _export('$isString', $isString);
 
             function $isFunction(fn) {
                 return fn instanceof Function;
             }
 
-            _export("$isFunction", $isFunction);
+            _export('$isFunction', $isFunction);
 
             function $isObject(obj) {
                 return obj === Object(obj);
             }
 
-            _export("$isObject", $isObject);
+            _export('$isObject', $isObject);
 
             function $isPromise(promise) {
                 return promise && $isFunction(promise.then);
             }
 
-            _export("$isPromise", $isPromise);
+            _export('$isPromise', $isPromise);
 
             function $isNothing(value) {
                 return value == null;
             }
 
-            _export("$isNothing", $isNothing);
+            _export('$isNothing', $isNothing);
 
             function $isSomething(value) {
                 return value != null;
             }
 
-            _export("$isSomething", $isSomething);
+            _export('$isSomething', $isSomething);
 
             function $lift(value) {
                 return function () {
@@ -2515,7 +2566,7 @@ System.register([], function (_export, _context) {
                 };
             }
 
-            _export("$lift", $lift);
+            _export('$lift', $lift);
 
             function $flatten(arr, prune) {
                 var _ref;
@@ -2528,7 +2579,7 @@ System.register([], function (_export, _context) {
                 return (_ref = []).concat.apply(_ref, _toConsumableArray(items));
             }
 
-            _export("$flatten", $flatten);
+            _export('$flatten', $flatten);
 
             function $equals(obj1, obj2) {
                 if (obj1 === obj2) {
@@ -2542,9 +2593,9 @@ System.register([], function (_export, _context) {
                 return false;
             }
 
-            _export("$equals", $equals);
+            _export('$equals', $equals);
 
-            _export("Variance", Variance = Enum({
+            _export('Variance', Variance = Enum({
                 Covariant: 1,
 
                 Contravariant: 2,
@@ -2552,49 +2603,49 @@ System.register([], function (_export, _context) {
                 Invariant: 3
             }));
 
-            _export("Variance", Variance);
+            _export('Variance', Variance);
 
-            _export("Initializing", Initializing = Protocol.extend({
+            _export('Initializing', Initializing = Protocol.extend({
                 initialize: function initialize() {}
             }));
 
-            _export("Initializing", Initializing);
+            _export('Initializing', Initializing);
 
-            _export("Resolving", Resolving = Protocol.extend());
+            _export('Resolving', Resolving = Protocol.extend());
 
-            _export("Resolving", Resolving);
+            _export('Resolving', Resolving);
 
-            _export("Invoking", Invoking = StrictProtocol.extend({
+            _export('Invoking', Invoking = StrictProtocol.extend({
                 invoke: function invoke(fn, dependencies, ctx) {}
             }));
 
-            _export("Invoking", Invoking);
+            _export('Invoking', Invoking);
 
-            _export("Parenting", Parenting = Protocol.extend({
+            _export('Parenting', Parenting = Protocol.extend({
                 newChild: function newChild() {}
             }));
 
-            _export("Parenting", Parenting);
+            _export('Parenting', Parenting);
 
-            _export("Starting", Starting = Protocol.extend({
+            _export('Starting', Starting = Protocol.extend({
                 start: function start() {}
             }));
 
-            _export("Starting", Starting);
+            _export('Starting', Starting);
 
-            _export("Startup", Startup = Base.extend(Starting, {
+            _export('Startup', Startup = Base.extend(Starting, {
                 start: function start() {}
             }));
 
-            _export("Startup", Startup);
+            _export('Startup', Startup);
 
-            _export("Disposing", Disposing = Protocol.extend({
+            _export('Disposing', Disposing = Protocol.extend({
                 dispose: function dispose() {}
             }));
 
-            _export("Disposing", Disposing);
+            _export('Disposing', Disposing);
 
-            _export("DisposingMixin", DisposingMixin = Module.extend({
+            _export('DisposingMixin', DisposingMixin = Module.extend({
                 dispose: function dispose(object) {
                     if ($isFunction(object._dispose)) {
                         var result = object._dispose();
@@ -2604,7 +2655,7 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("DisposingMixin", DisposingMixin);
+            _export('DisposingMixin', DisposingMixin);
 
             function $using(disposing, action, context) {
                 if (disposing && $isFunction(disposing.dispose)) {
@@ -2636,9 +2687,9 @@ System.register([], function (_export, _context) {
                 }
             }
 
-            _export("$using", $using);
+            _export('$using', $using);
 
-            _export("TraversingAxis", TraversingAxis = Enum({
+            _export('TraversingAxis', TraversingAxis = Enum({
                 Self: 1,
 
                 Root: 2,
@@ -2666,15 +2717,15 @@ System.register([], function (_export, _context) {
                 AncestorSiblingOrSelf: 13
             }));
 
-            _export("TraversingAxis", TraversingAxis);
+            _export('TraversingAxis', TraversingAxis);
 
-            _export("Traversing", Traversing = Protocol.extend({
+            _export('Traversing', Traversing = Protocol.extend({
                 traverse: function traverse(axis, visitor, context) {}
             }));
 
-            _export("Traversing", Traversing);
+            _export('Traversing', Traversing);
 
-            _export("TraversingMixin", TraversingMixin = Module.extend({
+            _export('TraversingMixin', TraversingMixin = Module.extend({
                 traverse: function traverse(object, axis, visitor, context) {
                     if ($isFunction(axis)) {
                         context = visitor;
@@ -2736,14 +2787,14 @@ System.register([], function (_export, _context) {
                             break;
 
                         default:
-                            throw new Error("Unrecognized TraversingAxis " + axis + ".");
+                            throw new Error('Unrecognized TraversingAxis ' + axis + '.');
                     }
                 }
             }));
 
-            _export("TraversingMixin", TraversingMixin);
+            _export('TraversingMixin', TraversingMixin);
 
-            _export("Traversal", Traversal = Abstract.extend({}, {
+            _export('Traversal', Traversal = Abstract.extend({}, {
                 preOrder: function preOrder(node, visitor, context) {
                     return _preOrder(node, visitor, context);
                 },
@@ -2758,9 +2809,9 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("Traversal", Traversal);
+            _export('Traversal', Traversal);
 
-            _export("Facet", Facet = Object.freeze({
+            _export('Facet', Facet = Object.freeze({
                 Parameters: 'parameters',
 
                 Interceptors: 'interceptors',
@@ -2770,25 +2821,25 @@ System.register([], function (_export, _context) {
                 Delegate: 'delegate'
             }));
 
-            _export("Facet", Facet);
+            _export('Facet', Facet);
 
-            _export("Interceptor", Interceptor = Base.extend({
+            _export('Interceptor', Interceptor = Base.extend({
                 intercept: function intercept(invocation) {
                     return invocation.proceed();
                 }
             }));
 
-            _export("Interceptor", Interceptor);
+            _export('Interceptor', Interceptor);
 
-            _export("InterceptorSelector", InterceptorSelector = Base.extend({
+            _export('InterceptorSelector', InterceptorSelector = Base.extend({
                 selectInterceptors: function selectInterceptors(type, method, interceptors) {
                     return interceptors;
                 }
             }));
 
-            _export("InterceptorSelector", InterceptorSelector);
+            _export('InterceptorSelector', InterceptorSelector);
 
-            _export("ProxyBuilder", ProxyBuilder = Base.extend({
+            _export('ProxyBuilder', ProxyBuilder = Base.extend({
                 buildProxy: function buildProxy(types, options) {
                     if (!Array.isArray(types)) {
                         throw new TypeError("ProxyBuilder requires an array of types to proxy.");
@@ -2799,7 +2850,7 @@ System.register([], function (_export, _context) {
                 }
             }));
 
-            _export("ProxyBuilder", ProxyBuilder);
+            _export('ProxyBuilder', ProxyBuilder);
 
             noProxyMethods = {
                 base: true, extend: true, constructor: true, conformsTo: true,

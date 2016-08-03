@@ -9,7 +9,7 @@ import {
 /**
  * Protocol for targets that manage disposal lifecycle.
  * @class Disposing
- * @extends miruken.Protocol
+ * @extends Protocol
  */
 export const Disposing = Protocol.extend({
     /**
@@ -20,9 +20,9 @@ export const Disposing = Protocol.extend({
 });
 
 /**
- * Mixin for {{#crossLink "miruken.Disposing"}}{{/crossLink}} implementation.
+ * Mixin for {{#crossLink "Disposing"}}{{/crossLink}} implementation.
  * @class DisposingMixin
- * @uses miruken.Disposing
+ * @uses Disposing
  * @extends Module
  */
 export const DisposingMixin = Module.extend({
@@ -37,9 +37,8 @@ export const DisposingMixin = Module.extend({
 
 /**
  * Convenience function for disposing resources.
- * @for miruken.$
  * @method $using
- * @param    {miruken.Disposing}   disposing  - object to dispose
+ * @param    {Disposing}           disposing  - object to dispose
  * @param    {Function | Promise}  action     - block or Promise
  * @param    {Object}              [context]  - block context
  * @returns  {Any} result of executing the action in context.

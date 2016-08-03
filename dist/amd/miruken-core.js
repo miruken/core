@@ -1,11 +1,13 @@
-define(["exports"], function (exports) {
-    "use strict";
+define(['exports'], function (exports) {
+    'use strict';
 
     Object.defineProperty(exports, "__esModule", {
         value: true
     });
     exports.Modifier = Modifier;
     exports.$createModifier = $createModifier;
+    exports.isDescriptor = isDescriptor;
+    exports.decorate = decorate;
     exports.copy = copy;
     exports.pcopy = pcopy;
     exports.getPropertyDescriptors = getPropertyDescriptors;
@@ -34,18 +36,6 @@ define(["exports"], function (exports) {
     exports.$equals = $equals;
     exports.$using = $using;
 
-    function _toConsumableArray(arr) {
-        if (Array.isArray(arr)) {
-            for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
-                arr2[i] = arr[i];
-            }
-
-            return arr2;
-        } else {
-            return Array.from(arr);
-        }
-    }
-
     var _Base$extend;
 
     function _defineProperty(obj, key, value) {
@@ -68,6 +58,18 @@ define(["exports"], function (exports) {
     } : function (obj) {
         return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
     };
+
+    function _toConsumableArray(arr) {
+        if (Array.isArray(arr)) {
+            for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+                arr2[i] = arr[i];
+            }
+
+            return arr2;
+        } else {
+            return Array.from(arr);
+        }
+    }
 
     if (Promise.prototype.finally === undefined) Promise.prototype.finally = function (callback) {
         var p = this.constructor;
@@ -145,6 +147,60 @@ define(["exports"], function (exports) {
             return false;
         };
         return modifier;
+    }
+
+    function isDescriptor(desc) {
+        if (!desc || !desc.hasOwnProperty) {
+            return false;
+        }
+
+        var keys = ['value', 'initializer', 'get', 'set'];
+
+        for (var i = 0, l = keys.length; i < l; i++) {
+            if (desc.hasOwnProperty(keys[i])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function decorate(decorator, args) {
+        if (isDescriptor(args[args.length - 1])) {
+            return decorator.apply(undefined, _toConsumableArray(args).concat([[]]));
+        }
+        return function () {
+            return decorator.apply(undefined, Array.prototype.slice.call(arguments).concat([args]));
+        };
+    }
+
+    function copy(target, key, descriptor) {
+        var get = descriptor.get;
+        var set = descriptor.set;
+        var value = descriptor.value;
+
+        if ($isFunction(value)) {
+            descriptor.value = function () {
+                return copyOf(value.apply(this, arguments));
+            };
+        }
+        if ($isFunction(get)) {
+            descriptor.get = function () {
+                return copyOf(get.apply(this));
+            };
+        }
+        if ($isFunction(set)) {
+            descriptor.set = function (value) {
+                return set.call(this, copyOf(value));
+            };
+        }
+    }
+
+    function copyOf(value) {
+        if (value != null && $isFunction(value.copy)) {
+            value = value.copy();
+        }
+        return value;
     }
 
     var Undefined = exports.Undefined = K(),
@@ -462,14 +518,6 @@ define(["exports"], function (exports) {
         };
     };
 
-    function copy(object) {
-        var copy = {};
-        for (var i in object) {
-            copy[i] = object[i];
-        }
-        return copy;
-    };
-
     function pcopy(object) {
         _dummy.prototype = object;
         return new _dummy();
@@ -676,7 +724,7 @@ define(["exports"], function (exports) {
     var _toString = Object.prototype.toString;
 
     function typeOf(object) {
-        var type = typeof object === "undefined" ? "undefined" : _typeof(object);
+        var type = typeof object === 'undefined' ? 'undefined' : _typeof(object);
         switch (type) {
             case "object":
                 return object == null ? "null" : typeof object.constructor == "function" && _toString.call(object) != "[object Date]" ? _typeof(object.constructor.prototype.valueOf()) : type;
@@ -813,7 +861,7 @@ define(["exports"], function (exports) {
                 return item.value == value;
             });
             if (!match) {
-                throw new TypeError(value + " is not a valid value for this Enum.");
+                throw new TypeError(value + ' is not a valid value for this Enum.');
             }
             return match;
         }
@@ -1065,7 +1113,8 @@ define(["exports"], function (exports) {
             return target && target.prototype instanceof Protocol;
         },
         adoptedBy: function adoptedBy(target) {
-            return target && $isFunction(target.conformsTo) ? target.conformsTo(this) : false;
+            var meta = $meta(target);
+            return !!(meta && meta.conformsTo(this));
         },
         coerce: function coerce(object, strict) {
             return new this(object, strict);
@@ -1218,7 +1267,7 @@ define(["exports"], function (exports) {
                 conformsTo: function conformsTo(protocol) {
                     return protocol && protocol.prototype instanceof Protocol && _protocols.some(function (p) {
                         return protocol === p || p.conformsTo(protocol);
-                    });
+                    }) || !!(parent && parent.conformsTo(protocol));
                 },
                 inflate: function inflate(step, metadata, target, definition, expand) {
                     if (parent) {
@@ -1393,7 +1442,7 @@ define(["exports"], function (exports) {
                     } else if (protocol === type || type.prototype instanceof protocol) {
                         return true;
                     }
-                    return this.base(protocol) || !!(parent && parent.conformsTo(protocol));
+                    return this.base(protocol);
                 },
                 inflate: function inflate(step, metadata, target, definition, expand) {
                     this.base(step, metadata, target, definition, expand);
@@ -1618,7 +1667,7 @@ define(["exports"], function (exports) {
         return (_$meta2 = $meta(this)).embellishClass.apply(_$meta2, arguments);
     };
     Base.prototype.conformsTo = function (protocol) {
-        return $meta(this.constructor).conformsTo(protocol);
+        return $meta(this).conformsTo(protocol);
     };
 
     Base.prototype.extend = function (key, value) {
@@ -1655,7 +1704,10 @@ define(["exports"], function (exports) {
 
     Enum.extend = Base.extend;
     Enum.implement = Base.implement;
-    defineMetadata(Enum.prototype, new ClassMeta(baseMetadata, Enum));
+    var enumMetadata = new ClassMeta(baseMetadata, Enum),
+        flagsMetadata = new ClassMeta(enumMetadata, Flags);
+    defineMetadata(Enum.prototype, enumMetadata);
+    defineMetadata(Flags.prototype, flagsMetadata);
 
     var $proxyProtocol = exports.$proxyProtocol = MetaMacro.extend({
         get active() {
@@ -1695,11 +1747,6 @@ define(["exports"], function (exports) {
                 Object.defineProperty(expanded, key, member);
             });
         },
-        execute: function execute(step, metadata, target, definition) {
-            if (step === MetaStep.Subclass) {
-                metadata.type.adoptedBy = Protocol.adoptedBy;
-            }
-        },
         protocolAdded: function protocolAdded(metadata, protocol) {
             var _this4 = this;
 
@@ -1715,7 +1762,8 @@ define(["exports"], function (exports) {
     });
     Protocol.extend = Base.extend;
     Protocol.implement = Base.implement;
-    defineMetadata(Protocol.prototype, new ClassMeta(baseMetadata, Protocol, null, [new $proxyProtocol()]));
+    var protocolMetadata = new ClassMeta(baseMetadata, Protocol, null, [new $proxyProtocol()]);
+    defineMetadata(Protocol.prototype, protocolMetadata);
 
     var StrictProtocol = exports.StrictProtocol = Protocol.extend({
         constructor: function constructor(proxy, strict) {
@@ -1924,11 +1972,12 @@ define(["exports"], function (exports) {
     });
 
     function $meta(target) {
-        if (target == null || target === Object || target === Object.prototype || target === Function || target == Function.prototype) {
-            return;
-        }
+        if (target == null) return;
         if (target.hasOwnProperty(Metadata)) {
             return target[Metadata];
+        }
+        if (target === Object || target === Object.prototype || target === Function || target == Function.prototype) {
+            return;
         }
         if ($isFunction(target)) {
             return $meta(target.prototype);
@@ -2218,14 +2267,14 @@ define(["exports"], function (exports) {
                     break;
 
                 default:
-                    throw new Error("Unrecognized TraversingAxis " + axis + ".");
+                    throw new Error('Unrecognized TraversingAxis ' + axis + '.');
             }
         }
     });
 
     function checkCircularity(visited, node) {
         if (visited.indexOf(node) !== -1) {
-            throw new Error("Circularity detected for node " + node);
+            throw new Error('Circularity detected for node ' + node);
         }
         visited.push(node);
         return node;
@@ -2606,7 +2655,7 @@ define(["exports"], function (exports) {
                     } else if (method) {
                         return method.apply(_this, this.args);
                     }
-                    throw new Error("Interceptor cannot proceed without a class or delegate method '" + key + "'.");
+                    throw new Error('Interceptor cannot proceed without a class or delegate method \'' + key + '\'.');
                 }
             };
             spec.value = key;

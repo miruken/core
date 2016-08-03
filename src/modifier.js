@@ -1,71 +1,71 @@
 /**
  * Annotates invariance.
  * @attribute $eq
- * @for miruken.Modifier
+ * @for Modifier
  */
 export const $eq = $createModifier();
 
 /**
  * Annotates use value as is.
  * @attribute $use
- * @for miruken.Modifier
+ * @for Modifier
  */    
 export const $use = $createModifier();
 
 /**
  * Annotates copy semantics.
  * @attribute $copy
- * @for miruken.Modifier
+ * @for Modifier
  */        
 export const $copy = $createModifier();
 
 /**
  * Annotates lazy semantics.
  * @attribute $lazy
- * @for miruken.Modifier
+ * @for Modifier
  */            
 export const $lazy = $createModifier();
 
 /**
  * Annotates function to be evaluated.
  * @attribute $eval
- * @for miruken.Modifier
+ * @for Modifier
  */                
 export const $eval = $createModifier();
 
 /**
  * Annotates zero or more semantics.
  * @attribute $every
- * @for miruken.Modifier
+ * @for Modifier
  */                    
 export const $every = $createModifier();
 
 /**
  * Annotates 
- * @attribute use {{#crossLink "miruken.Parenting"}}{{/crossLink}} protocol.
+ * @attribute use {{#crossLink "Parenting"}}{{/crossLink}} protocol.
  * @attribute $child
- * @for miruken.Modifier
+ * @for Modifier
  */                        
 export const $child = $createModifier();
 
 /**
  * Annotates optional semantics.
  * @attribute $optional
- * @for miruken.Modifier
+ * @for Modifier
  */                        
 export const $optional = $createModifier();
 
 /**
  * Annotates Promise expectation.
  * @attribute $promise
- * @for miruken.Modifier
+ * @for Modifier
  */                            
 export const $promise = $createModifier();
 
 /**
  * Annotates synchronous.
  * @attribute $instant
- * @for miruken.Modifier
+ * @for Modifier
  */                                
 export const $instant = $createModifier();
 

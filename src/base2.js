@@ -353,18 +353,6 @@ function _createModuleMethod(module, name) {
   };
 };
 
-// =========================================================================
-// lang/copy.js
-// =========================================================================
-
-export function copy(object) { // A quick copy.
-  var copy = {};
-  for (var i in object) {
-    copy[i] = object[i];
-  }
-  return copy;
-};
-
 export function pcopy(object) { // Prototype-base copy.
   // Doug Crockford / Richard Cornford
   _dummy.prototype = object;

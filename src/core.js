@@ -3,17 +3,9 @@ import { Protocol, StrictProtocol } from './meta';
 import { Enum } from './enum';
 
 /**
- * Package containing enhancements to the javascript language.
- * @module miruken
- * @namespace miruken
- * @main miruken
- * @class $
- */
-
-/**
  * Variance enum
  * @class Variance
- * @extends miruken.Enum
+ * @extends Enum
  */
 export const Variance = Enum({
     /**
@@ -36,7 +28,7 @@ export const Variance = Enum({
 /**
  * Protocol for targets that manage initialization.
  * @class Initializing
- * @extends miruken.Protocol
+ * @extends Protocol
  */
 export const Initializing = Protocol.extend({
     /**
@@ -48,14 +40,14 @@ export const Initializing = Protocol.extend({
 /**
  * Protocol marking resolve semantics.
  * @class Resolving
- * @extends miruken.Protocol
+ * @extends Protocol
  */
 export const Resolving = Protocol.extend();
 
 /**
  * Protocol for targets that can execute functions.
  * @class Invoking
- * @extends miruken.StrictProtocol
+ * @extends StrictProtocol
  */
 export const Invoking = StrictProtocol.extend({
     /**
@@ -72,13 +64,13 @@ export const Invoking = StrictProtocol.extend({
 /**
  * Protocol for targets that have parent/child relationships.
  * @class Parenting
- * @extends miruken.Protocol
+ * @extends Protocol
  */
 export const Parenting = Protocol.extend({
     /**
      * Creates a new child of the parent.
      * @method newChild
-     * @returns  {Object} the new child.
+     * @returns {Object} the new child.
      */
     newChild() {}
 });
@@ -86,7 +78,7 @@ export const Parenting = Protocol.extend({
 /**
  * Protocol for targets that can be started.
  * @class Starting
- * @extends miruken.Protocol
+ * @extends Protocol
  */
 export const Starting = Protocol.extend({
     /**
@@ -99,7 +91,7 @@ export const Starting = Protocol.extend({
 /**
  * Base class for startable targets.
  * @class Startup
- * @uses miruken.Starting
+ * @uses Starting
  * @extends Base
  */
 export const Startup = Base.extend(Starting, {

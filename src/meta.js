@@ -3,7 +3,7 @@ import {
     extend, typeOf, getPropertyDescriptors
 } from './base2';
 
-import { Enum } from './enum';
+import { Enum, Flags } from './enum';
 
 const baseExtend      = Base.extend,
       baseImplement   = Base.implement,
@@ -85,9 +85,8 @@ export const Protocol = Base.extend({
      * @returns {boolean}  true if the target conforms to this protocol.
      */
     adoptedBy(target) {
-        return target && $isFunction(target.conformsTo)
-            ? target.conformsTo(this)
-            : false;
+        const meta = $meta(target);
+        return !!(meta && meta.conformsTo(this));
     },
     /**
      * Creates a protocol binding over the object.
@@ -248,8 +247,10 @@ export const MetaBase = MetaMacro.extend({
              * @returns {boolean}  true if the metadata includes the protocol.
              */
             conformsTo(protocol) {
-                return protocol && (protocol.prototype instanceof Protocol)
-                    && _protocols.some(p => protocol === p || p.conformsTo(protocol));
+                return (protocol && (protocol.prototype instanceof Protocol)
+                        && _protocols.some(p => protocol === p || p.conformsTo(protocol)))
+                    || !!(parent && parent.conformsTo(protocol));
+                
             },
             inflate(step, metadata, target, definition, expand) {
                 if (parent) {
@@ -434,7 +435,7 @@ export const ClassMeta = MetaBase.extend({
                 } else if ((protocol === type) || (type.prototype instanceof protocol)) {
                     return true;
                 }
-                return this.base(protocol) || !!(parent && parent.conformsTo(protocol));
+                return this.base(protocol);
             },
             inflate(step, metadata, target, definition, expand) {
                 this.base(step, metadata, target, definition, expand);
@@ -583,7 +584,7 @@ Base.implement = Abstract.implement = function () {
     return $meta(this).embellishClass(...arguments);                
 }
 Base.prototype.conformsTo = function (protocol) {
-    return $meta(this.constructor).conformsTo(protocol);
+    return $meta(this).conformsTo(protocol);
 };
 
 Base.prototype.extend = function (key, value) {
@@ -612,9 +613,12 @@ Base.prototype.extend = function (key, value) {
     return this;
 }
 
-Enum.extend     = Base.extend
-Enum.implement  = Base.implement;
-defineMetadata(Enum.prototype, new ClassMeta(baseMetadata, Enum));
+Enum.extend    = Base.extend
+Enum.implement = Base.implement;
+const enumMetadata  = new ClassMeta(baseMetadata, Enum),
+      flagsMetadata = new ClassMeta(enumMetadata, Flags);
+      defineMetadata(Enum.prototype, enumMetadata);
+defineMetadata(Flags.prototype, flagsMetadata);
 
 /**
  * Metamacro to proxy protocol members through a delegate.<br/>
@@ -652,11 +656,6 @@ export const $proxyProtocol = MetaMacro.extend({
             Object.defineProperty(expanded, key, member);                
         });
     },
-    execute(step, metadata, target, definition) {
-        if (step === MetaStep.Subclass) {
-            metadata.type.adoptedBy = Protocol.adoptedBy;
-        }
-    },
     protocolAdded(metadata, protocol) {
         const source        = protocol.prototype,
               target        = metadata.type.prototype,
@@ -671,8 +670,8 @@ export const $proxyProtocol = MetaMacro.extend({
 });
 Protocol.extend    = Base.extend
 Protocol.implement = Base.implement;
-defineMetadata(Protocol.prototype, new ClassMeta(baseMetadata,
-               Protocol, null, [new $proxyProtocol()]));
+const protocolMetadata = new ClassMeta(baseMetadata, Protocol, null, [new $proxyProtocol()]);
+defineMetadata(Protocol.prototype, protocolMetadata);
 
 /**
  * Protocol base requiring conformance to match methods.
@@ -969,17 +968,17 @@ export const ArrayDelegate = Delegate.extend({
  * @erturns {MetaBase} target metadata.
  */
 export function $meta(target) {
-    if (target == null ||
-        target === Object || target === Object.prototype ||
-        target === Function || target == Function.prototype) {
-        return;
-    }
+    if (target == null) return;
     if (target.hasOwnProperty(Metadata)) {
         return target[Metadata];
     }
+    if (target === Object || target === Object.prototype ||
+        target === Function || target == Function.prototype) {
+        return;
+    }
     if ($isFunction(target)) {
         return $meta(target.prototype);
-    }    
+    }
     if ($isObject(target)) {
         let meta;
         if (target.hasOwnProperty('constructor')) {
