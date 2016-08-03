@@ -23,7 +23,8 @@ export function copy(target, key, descriptor) {
         descriptor.set = function (value) {
             return set.call(this, copyOf(value));
         }
-    }    
+    }
+    return descriptor;
 }
 
 function copyOf(value) {

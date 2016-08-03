@@ -156,7 +156,8 @@ export function copy(target, key, descriptor) {
         descriptor.set = function (value) {
             return set.call(this, copyOf(value));
         }
-    }    
+    }
+    return descriptor;
 }
 
 function copyOf(value) {
@@ -1435,7 +1436,7 @@ export const MetaMacro = Base.extend({
  */
 export const MetaBase = MetaMacro.extend({
     constructor(parent)  {
-        let _protocols = [], _descriptors;
+        let _protocols = [], _metadata;
         this.extend({
             /**
              * Gets the parent metadata.
@@ -1512,81 +1513,85 @@ export const MetaBase = MetaMacro.extend({
             /**
              * Defines a property on the metadata.
              * @method defineProperty
-             * @param  {Object}   target        -  target receiving property
-             * @param  {string}   name          -  name of the property
-             * @param  {Object}   spec          -  property specification
-             * @param  {Object}   [descriptor]  -  property descriptor
+             * @param  {Object}   target   -  target receiving property
+             * @param  {string}   key      -  property key
+             * @param  {Object}   spec     -  property specification
+             * @param  {Object}   [meta]   -  property metadata
              */
-            defineProperty(target, name, spec, descriptor) {
+            defineProperty(target, key, spec, meta) {
                 if (target) {
-                    Object.defineProperty(target, name, spec);
+                    Object.defineProperty(target, key, spec);
                 }
-                if (descriptor) {
-                    this.addDescriptor(name, descriptor);
+                if (meta) {
+                    this.addMetadata(key, meta);
                 }
             },
             /**
-             * Gets the descriptor for one or more properties.
-             * @method getDescriptor
-             * @param    {Object|string}  filter  -  property selector
-             * @returns  {Object} aggregated property descriptor.
+             * Gets the metadata for one or more keys.
+             * @method getMetadata
+             * @param    {Object|string|Symbol}  filter  -  key selector
+             * @returns  {Object} aggregated metadata.
              */
-            getDescriptor(filter) {
-                let descriptors;
+            getMetadata(filter) {
+                let metadata;
                 if ($isNothing(filter)) {
                     if (parent) {
-                        descriptors = parent.getDescriptor(filter);
+                        metadata = parent.getMetadata(filter);
                     }
-                    if (_descriptors) {
-                        descriptors = extend(descriptors || {}, _descriptors);
+                    if (_metadata) {
+                        metadata = Object.assign(metadata || {}, _metadata);
                     }
-                } else if ($isString(filter)) {
-                    return (_descriptors && _descriptors[filter])
-                        || (parent && parent.getDescriptor(filter));
+                } else if ($isString(filter) || $isSymbol(filter)) {
+                    return (_metadata && _metadata[filter])
+                        || (parent && parent.getMetadata(filter));
                 } else {
                     if (parent) {
-                        descriptors = parent.getDescriptor(filter);
+                        metadata = parent.getMetadata(filter);
                     }
-                    for (let key in _descriptors) {
-                        let descriptor = _descriptors[key];
-                        if (this.matchDescriptor(descriptor, filter)) {
-                            descriptors = extend(descriptors || {}, key, descriptor);
-                        }
+                    if (_metadata) {
+                        Reflect.ownKeys(_metadata).forEach(key => {
+                            let meta = _metadata[key];
+                            if (this.matchMetadata(meta, filter)) {
+                                metadata = Object.assign(metadata || {}, {[key]: meta});
+                            }                            
+                        });
                     }
                 }
-                return descriptors;
+                return metadata;
             },
             /**
-             * Sets the descriptor for a property.
-             * @method addDescriptor
-             * @param    {string}   name        -  property name
-             * @param    {Object}   descriptor  -  property descriptor
+             * Adds metadata to a property `key`.
+             * @method addMetadata
+             * @param    {string | Symbol}  key       -  property key
+             * @param    {Object}           metadata  -  metadata
              * @returns  {MetaBase} current metadata.
              * @chainable
              */
-            addDescriptor(name, descriptor) {
-                _descriptors = extend(_descriptors || {}, name, descriptor);
+            addMetadata(key, metadata) {
+                Object.assign(_metadata || (_metadata = {}), {
+                    [key]: Object.assign(_metadata[key] || {}, metadata)
+                });
                 return this;
             },
             /**
-             * Determines if the property `descriptor` matches the `filter`.
-             * @method matchDescriptor
-             * @param    {Object}  descriptor  -  property descriptor
-             * @param    {Object}  filter      -  matching filter
-             * @returns  {boolean} true if the descriptor matches, false otherwise.
+             * Determines if the `metadata` matches the `filter`.
+             * @method matchMetadata
+             * @param    {Object}  metadata  -  metadata
+             * @param    {Object}  filter    -  matching filter
+             * @returns  {boolean} true if the metadata matches, false otherwise.
              */
-            matchDescriptor(descriptor, filter) {
-                if (typeOf(descriptor) !== 'object' || typeOf(filter) !== 'object') {
+            matchMetadata(metadata, filter) {
+                if (typeOf(metadata) !== 'object' || typeOf(filter) !== 'object') {
                     return false;
                 }
-                for (let key in filter) {
+                for (let key of Reflect.ownKeys(filter)) {
                     const match = filter[key];
                     if (match === undefined) {
-                        if (!(key in descriptor)) {
+                        if (!metadata.hasOwnProperty(key)) {
                             return false;
                         }
                     } else {
-                        const value = descriptor[key];
+                        const value = metadata[key];
                         if (Array.isArray(match)) {
                             if (!(Array.isArray(value))) {
                                 return false;
@@ -1596,7 +1601,7 @@ export const MetaBase = MetaMacro.extend({
                                     return false;
                                 }
                             }
-                        } else if (!(value === match || this.matchDescriptor(value, match))) {
+                        } else if (!(value === match || this.matchMetadata(value, match))) {
                             return false;
                         }
                     }
@@ -2019,7 +2024,6 @@ export const $properties = MetaMacro.extend({
             delete property.get;
             delete property.set;
             delete property.value;
-            property = Object.assign({}, property);
             this.defineProperty(metadata, source, key, spec, property);
         });
         if (step == MetaStep.Extend) {
@@ -2028,8 +2032,8 @@ export const $properties = MetaMacro.extend({
             metadata.type.implement(expanded);
         }
     },
-    defineProperty(metadata, target, name, spec, descriptor) {
-        metadata.defineProperty(target, name, spec, descriptor);
+    defineProperty(metadata, target, key, spec, meta) {
+        metadata.defineProperty(target, key, spec, meta);
     }
 }, {
     init() {
@@ -2336,6 +2340,16 @@ export function $classOf(instance) {
  */
 export function $isString(str) {
     return typeOf(str) === 'string';
+}
+
+/**
+ * Determines if `sym` is a symbol.
+ * @method $isSymbol
+ * @param    {Symbole} sym  - symbol to test
+ * @returns  {boolean} true if a symbol.
+ */
+export function $isSymbol(str) {
+    return Object(str) instanceof Symbol;
 }
 
 /**

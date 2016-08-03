@@ -26,6 +26,7 @@ define(['exports'], function (exports) {
     exports.$isClass = $isClass;
     exports.$classOf = $classOf;
     exports.$isString = $isString;
+    exports.$isSymbol = $isSymbol;
     exports.$isFunction = $isFunction;
     exports.$isObject = $isObject;
     exports.$isPromise = $isPromise;
@@ -178,6 +179,7 @@ define(['exports'], function (exports) {
                 return set.call(this, copyOf(value));
             };
         }
+        return descriptor;
     }
 
     function copyOf(value) {
@@ -1161,7 +1163,7 @@ define(['exports'], function (exports) {
     var MetaBase = exports.MetaBase = MetaMacro.extend({
         constructor: function constructor(parent) {
             var _protocols = [],
-                _descriptors = void 0;
+                _metadata = void 0;
             this.extend({
                 get parent() {
                     return parent;
@@ -1283,68 +1285,94 @@ define(['exports'], function (exports) {
                         $properties.shared.execute(step, metadata, target, definition);
                     }
                 },
-                defineProperty: function defineProperty(target, name, spec, descriptor) {
+                defineProperty: function defineProperty(target, key, spec, meta) {
                     if (target) {
-                        Object.defineProperty(target, name, spec);
+                        Object.defineProperty(target, key, spec);
                     }
-                    if (descriptor) {
-                        this.addDescriptor(name, descriptor);
+                    if (meta) {
+                        this.addMetadata(key, meta);
                     }
                 },
-                getDescriptor: function getDescriptor(filter) {
-                    var descriptors = void 0;
+                getMetadata: function getMetadata(filter) {
+                    var _this2 = this;
+
+                    var metadata = void 0;
                     if ($isNothing(filter)) {
                         if (parent) {
-                            descriptors = parent.getDescriptor(filter);
+                            metadata = parent.getMetadata(filter);
                         }
-                        if (_descriptors) {
-                            descriptors = _extend(descriptors || {}, _descriptors);
+                        if (_metadata) {
+                            metadata = Object.assign(metadata || {}, _metadata);
                         }
-                    } else if ($isString(filter)) {
-                        return _descriptors && _descriptors[filter] || parent && parent.getDescriptor(filter);
+                    } else if ($isString(filter) || $isSymbol(filter)) {
+                        return _metadata && _metadata[filter] || parent && parent.getMetadata(filter);
                     } else {
                         if (parent) {
-                            descriptors = parent.getDescriptor(filter);
+                            metadata = parent.getMetadata(filter);
                         }
-                        for (var key in _descriptors) {
-                            var descriptor = _descriptors[key];
-                            if (this.matchDescriptor(descriptor, filter)) {
-                                descriptors = _extend(descriptors || {}, key, descriptor);
-                            }
+                        if (_metadata) {
+                            Reflect.ownKeys(_metadata).forEach(function (key) {
+                                var meta = _metadata[key];
+                                if (_this2.matchMetadata(meta, filter)) {
+                                    metadata = Object.assign(metadata || {}, _defineProperty({}, key, meta));
+                                }
+                            });
                         }
                     }
-                    return descriptors;
+                    return metadata;
                 },
-                addDescriptor: function addDescriptor(name, descriptor) {
-                    _descriptors = _extend(_descriptors || {}, name, descriptor);
+                addMetadata: function addMetadata(key, metadata) {
+                    Object.assign(_metadata || (_metadata = {}), _defineProperty({}, key, Object.assign(_metadata[key] || {}, metadata)));
                     return this;
                 },
-                matchDescriptor: function matchDescriptor(descriptor, filter) {
-                    if (typeOf(descriptor) !== 'object' || typeOf(filter) !== 'object') {
+                matchMetadata: function matchMetadata(metadata, filter) {
+                    if (typeOf(metadata) !== 'object' || typeOf(filter) !== 'object') {
                         return false;
                     }
-                    for (var key in filter) {
-                        var match = filter[key];
-                        if (match === undefined) {
-                            if (!(key in descriptor)) {
-                                return false;
-                            }
-                        } else {
-                            var value = descriptor[key];
-                            if (Array.isArray(match)) {
-                                if (!Array.isArray(value)) {
+                    var _iteratorNormalCompletion4 = true;
+                    var _didIteratorError4 = false;
+                    var _iteratorError4 = undefined;
+
+                    try {
+                        for (var _iterator4 = Reflect.ownKeys(filter)[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+                            var key = _step4.value;
+
+                            var match = filter[key];
+                            if (match === undefined) {
+                                if (!metadata.hasOwnProperty(key)) {
                                     return false;
                                 }
-                                for (var i = 0; i < match.length; ++i) {
-                                    if (value.indexOf(match[i]) < 0) {
+                            } else {
+                                var value = metadata[key];
+                                if (Array.isArray(match)) {
+                                    if (!Array.isArray(value)) {
                                         return false;
                                     }
+                                    for (var i = 0; i < match.length; ++i) {
+                                        if (value.indexOf(match[i]) < 0) {
+                                            return false;
+                                        }
+                                    }
+                                } else if (!(value === match || this.matchMetadata(value, match))) {
+                                    return false;
                                 }
-                            } else if (!(value === match || this.matchDescriptor(value, match))) {
-                                return false;
+                            }
+                        }
+                    } catch (err) {
+                        _didIteratorError4 = true;
+                        _iteratorError4 = err;
+                    } finally {
+                        try {
+                            if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                                _iterator4.return();
+                            }
+                        } finally {
+                            if (_didIteratorError4) {
+                                throw _iteratorError4;
                             }
                         }
                     }
+
                     return true;
                 },
                 linkBase: function linkBase(method) {
@@ -1375,29 +1403,29 @@ define(['exports'], function (exports) {
                 get allProtocols() {
                     var protocols = this.base();
                     if (!_isProtocol && parent) {
-                        var _iteratorNormalCompletion4 = true;
-                        var _didIteratorError4 = false;
-                        var _iteratorError4 = undefined;
+                        var _iteratorNormalCompletion5 = true;
+                        var _didIteratorError5 = false;
+                        var _iteratorError5 = undefined;
 
                         try {
-                            for (var _iterator4 = parent.allProtocols[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-                                var protocol = _step4.value;
+                            for (var _iterator5 = parent.allProtocols[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                                var protocol = _step5.value;
 
                                 if (protocols.indexOf(protocol) < 0) {
                                     protocols.push(protocol);
                                 }
                             }
                         } catch (err) {
-                            _didIteratorError4 = true;
-                            _iteratorError4 = err;
+                            _didIteratorError5 = true;
+                            _iteratorError5 = err;
                         } finally {
                             try {
-                                if (!_iteratorNormalCompletion4 && _iterator4.return) {
-                                    _iterator4.return();
+                                if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                                    _iterator5.return();
                                 }
                             } finally {
-                                if (_didIteratorError4) {
-                                    throw _iteratorError4;
+                                if (_didIteratorError5) {
+                                    throw _iteratorError5;
                                 }
                             }
                         }
@@ -1409,29 +1437,29 @@ define(['exports'], function (exports) {
                     if (!_macros || _macros.length == 0) {
                         return;
                     }
-                    var _iteratorNormalCompletion5 = true;
-                    var _didIteratorError5 = false;
-                    var _iteratorError5 = undefined;
+                    var _iteratorNormalCompletion6 = true;
+                    var _didIteratorError6 = false;
+                    var _iteratorError6 = undefined;
 
                     try {
-                        for (var _iterator5 = _macros[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-                            var macro = _step5.value;
+                        for (var _iterator6 = _macros[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                            var macro = _step6.value;
 
                             if ($isFunction(macro.protocolAdopted)) {
                                 macro.protocolAdopted(metadata, protocol);
                             }
                         }
                     } catch (err) {
-                        _didIteratorError5 = true;
-                        _iteratorError5 = err;
+                        _didIteratorError6 = true;
+                        _iteratorError6 = err;
                     } finally {
                         try {
-                            if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                                _iterator5.return();
+                            if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                                _iterator6.return();
                             }
                         } finally {
-                            if (_didIteratorError5) {
-                                throw _iteratorError5;
+                            if (_didIteratorError6) {
+                                throw _iteratorError6;
                             }
                         }
                     }
@@ -1450,40 +1478,6 @@ define(['exports'], function (exports) {
                         return;
                     }
                     var active = step !== MetaStep.Subclass;
-                    var _iteratorNormalCompletion6 = true;
-                    var _didIteratorError6 = false;
-                    var _iteratorError6 = undefined;
-
-                    try {
-                        for (var _iterator6 = _macros[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-                            var macro = _step6.value;
-
-                            if ($isFunction(macro.inflate) && (!active || macro.active) && macro.inherit) {
-                                macro.inflate(step, metadata, target, definition, expand);
-                            }
-                        }
-                    } catch (err) {
-                        _didIteratorError6 = true;
-                        _iteratorError6 = err;
-                    } finally {
-                        try {
-                            if (!_iteratorNormalCompletion6 && _iterator6.return) {
-                                _iterator6.return();
-                            }
-                        } finally {
-                            if (_didIteratorError6) {
-                                throw _iteratorError6;
-                            }
-                        }
-                    }
-                },
-                execute: function execute(step, metadata, target, definition) {
-                    this.base(step, metadata, target, definition);
-                    if (!_macros || _macros.length == 0) {
-                        return;
-                    }
-                    var inherit = this !== metadata,
-                        active = step !== MetaStep.Subclass;
                     var _iteratorNormalCompletion7 = true;
                     var _didIteratorError7 = false;
                     var _iteratorError7 = undefined;
@@ -1492,8 +1486,8 @@ define(['exports'], function (exports) {
                         for (var _iterator7 = _macros[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
                             var macro = _step7.value;
 
-                            if ((!active || macro.active) && (!inherit || macro.inherit)) {
-                                macro.execute(step, metadata, target, definition);
+                            if ($isFunction(macro.inflate) && (!active || macro.active) && macro.inherit) {
+                                macro.inflate(step, metadata, target, definition, expand);
                             }
                         }
                     } catch (err) {
@@ -1507,6 +1501,40 @@ define(['exports'], function (exports) {
                         } finally {
                             if (_didIteratorError7) {
                                 throw _iteratorError7;
+                            }
+                        }
+                    }
+                },
+                execute: function execute(step, metadata, target, definition) {
+                    this.base(step, metadata, target, definition);
+                    if (!_macros || _macros.length == 0) {
+                        return;
+                    }
+                    var inherit = this !== metadata,
+                        active = step !== MetaStep.Subclass;
+                    var _iteratorNormalCompletion8 = true;
+                    var _didIteratorError8 = false;
+                    var _iteratorError8 = undefined;
+
+                    try {
+                        for (var _iterator8 = _macros[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+                            var macro = _step8.value;
+
+                            if ((!active || macro.active) && (!inherit || macro.inherit)) {
+                                macro.execute(step, metadata, target, definition);
+                            }
+                        }
+                    } catch (err) {
+                        _didIteratorError8 = true;
+                        _iteratorError8 = err;
+                    } finally {
+                        try {
+                            if (!_iteratorNormalCompletion8 && _iterator8.return) {
+                                _iterator8.return();
+                            }
+                        } finally {
+                            if (_didIteratorError8) {
+                                throw _iteratorError8;
                             }
                         }
                     }
@@ -1547,47 +1575,15 @@ define(['exports'], function (exports) {
                         staticDef = args.shift() || {};
                     this.inflate(MetaStep.Subclass, this, type.prototype, instanceDef, expand);
                     if (macros) {
-                        var _iteratorNormalCompletion8 = true;
-                        var _didIteratorError8 = false;
-                        var _iteratorError8 = undefined;
-
-                        try {
-                            for (var _iterator8 = macros[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-                                var macro = _step8.value;
-
-                                macro.inflate(MetaStep.Subclass, this, type.prototype, instanceDef, expand);
-                            }
-                        } catch (err) {
-                            _didIteratorError8 = true;
-                            _iteratorError8 = err;
-                        } finally {
-                            try {
-                                if (!_iteratorNormalCompletion8 && _iterator8.return) {
-                                    _iterator8.return();
-                                }
-                            } finally {
-                                if (_didIteratorError8) {
-                                    throw _iteratorError8;
-                                }
-                            }
-                        }
-                    }
-                    instanceDef = expand.x || instanceDef;
-                    var derived = baseExtend.call(type, instanceDef, staticDef),
-                        metadata = new ClassMeta(this, derived, protocols, macros);
-                    defineMetadata(derived.prototype, metadata);
-                    derived.conformsTo = metadata.conformsTo.bind(metadata);
-                    metadata.execute(MetaStep.Subclass, metadata, derived.prototype, instanceDef);
-                    if (mixins) {
                         var _iteratorNormalCompletion9 = true;
                         var _didIteratorError9 = false;
                         var _iteratorError9 = undefined;
 
                         try {
-                            for (var _iterator9 = mixins[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
-                                var mixin = _step9.value;
+                            for (var _iterator9 = macros[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+                                var macro = _step9.value;
 
-                                derived.implement(mixin);
+                                macro.inflate(MetaStep.Subclass, this, type.prototype, instanceDef, expand);
                             }
                         } catch (err) {
                             _didIteratorError9 = true;
@@ -1604,6 +1600,38 @@ define(['exports'], function (exports) {
                             }
                         }
                     }
+                    instanceDef = expand.x || instanceDef;
+                    var derived = baseExtend.call(type, instanceDef, staticDef),
+                        metadata = new ClassMeta(this, derived, protocols, macros);
+                    defineMetadata(derived.prototype, metadata);
+                    derived.conformsTo = metadata.conformsTo.bind(metadata);
+                    metadata.execute(MetaStep.Subclass, metadata, derived.prototype, instanceDef);
+                    if (mixins) {
+                        var _iteratorNormalCompletion10 = true;
+                        var _didIteratorError10 = false;
+                        var _iteratorError10 = undefined;
+
+                        try {
+                            for (var _iterator10 = mixins[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
+                                var mixin = _step10.value;
+
+                                derived.implement(mixin);
+                            }
+                        } catch (err) {
+                            _didIteratorError10 = true;
+                            _iteratorError10 = err;
+                        } finally {
+                            try {
+                                if (!_iteratorNormalCompletion10 && _iterator10.return) {
+                                    _iterator10.return();
+                                }
+                            } finally {
+                                if (_didIteratorError10) {
+                                    throw _iteratorError10;
+                                }
+                            }
+                        }
+                    }
                     function expand() {
                         return expand.x || (expand.x = Object.create(instanceDef));
                     }
@@ -1611,7 +1639,7 @@ define(['exports'], function (exports) {
                     return derived;
                 },
                 embellishClass: function embellishClass(source) {
-                    var _this2 = this;
+                    var _this3 = this;
 
                     if ($isFunction(source)) {
                         source = source.prototype;
@@ -1622,10 +1650,10 @@ define(['exports'], function (exports) {
                                 return expand.x || (expand.x = Object.create(source));
                             };
 
-                            _this2.inflate(MetaStep.Implement, _this2, type.prototype, source, expand);
+                            _this3.inflate(MetaStep.Implement, _this3, type.prototype, source, expand);
                             source = expand.x || source;
                             baseImplement.call(type, source);
-                            _this2.execute(MetaStep.Implement, _this2, type.prototype, source);
+                            _this3.execute(MetaStep.Implement, _this3, type.prototype, source);
                             ;
                         })();
                     }
@@ -1671,7 +1699,7 @@ define(['exports'], function (exports) {
     };
 
     Base.prototype.extend = function (key, value) {
-        var _this3 = this;
+        var _this4 = this;
 
         var numArgs = arguments.length,
             definition = numArgs === 1 ? key : {};
@@ -1689,7 +1717,7 @@ define(['exports'], function (exports) {
                         return expand.x || (expand.x = Object.create(definition));
                     };
 
-                    metadata.inflate(MetaStep.Extend, metadata, _this3, definition, expand);
+                    metadata.inflate(MetaStep.Extend, metadata, _this4, definition, expand);
                     definition = expand.x || definition;
                     ;
                 })();
@@ -1748,14 +1776,14 @@ define(['exports'], function (exports) {
             });
         },
         protocolAdopted: function protocolAdopted(metadata, protocol) {
-            var _this4 = this;
+            var _this5 = this;
 
             var source = protocol.prototype,
                 target = metadata.type.prototype,
                 protocolProto = Protocol.prototype,
                 props = getPropertyDescriptors(source);
             Reflect.ownKeys(props).forEach(function (key) {
-                if (getPropertyDescriptors(protocolProto, key) || getPropertyDescriptors(_this4, key)) return;
+                if (getPropertyDescriptors(protocolProto, key) || getPropertyDescriptors(_this5, key)) return;
                 Object.defineProperty(target, key, props[key]);
             });
         }
@@ -1799,7 +1827,7 @@ define(['exports'], function (exports) {
             return true;
         },
         execute: function execute(step, metadata, target, definition) {
-            var _this5 = this;
+            var _this6 = this;
 
             var tag = this[PropertiesTag],
                 properties = this.extractProperty(tag, target, definition);
@@ -1842,8 +1870,7 @@ define(['exports'], function (exports) {
                 delete property.get;
                 delete property.set;
                 delete property.value;
-                property = Object.assign({}, property);
-                _this5.defineProperty(metadata, source, key, spec, property);
+                _this6.defineProperty(metadata, source, key, spec, property);
             });
             if (step == MetaStep.Extend) {
                 target.extend(expanded);
@@ -1851,8 +1878,8 @@ define(['exports'], function (exports) {
                 metadata.type.implement(expanded);
             }
         },
-        defineProperty: function defineProperty(metadata, target, name, spec, descriptor) {
-            metadata.defineProperty(target, name, spec, descriptor);
+        defineProperty: function defineProperty(metadata, target, key, spec, meta) {
+            metadata.defineProperty(target, key, spec, meta);
         }
     }, {
         init: function init() {
@@ -2048,6 +2075,10 @@ define(['exports'], function (exports) {
 
     function $isString(str) {
         return typeOf(str) === 'string';
+    }
+
+    function $isSymbol(str) {
+        return Object(str) instanceof Symbol;
     }
 
     function $isFunction(fn) {
@@ -2299,29 +2330,29 @@ define(['exports'], function (exports) {
         if (withSelf && visitor.call(context, this)) {
             return;
         }
-        var _iteratorNormalCompletion10 = true;
-        var _didIteratorError10 = false;
-        var _iteratorError10 = undefined;
+        var _iteratorNormalCompletion11 = true;
+        var _didIteratorError11 = false;
+        var _iteratorError11 = undefined;
 
         try {
-            for (var _iterator10 = this.children[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
-                var child = _step10.value;
+            for (var _iterator11 = this.children[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
+                var child = _step11.value;
 
                 if (visitor.call(context, child)) {
                     return;
                 }
             }
         } catch (err) {
-            _didIteratorError10 = true;
-            _iteratorError10 = err;
+            _didIteratorError11 = true;
+            _iteratorError11 = err;
         } finally {
             try {
-                if (!_iteratorNormalCompletion10 && _iterator10.return) {
-                    _iterator10.return();
+                if (!_iteratorNormalCompletion11 && _iterator11.return) {
+                    _iterator11.return();
                 }
             } finally {
-                if (_didIteratorError10) {
-                    throw _iteratorError10;
+                if (_didIteratorError11) {
+                    throw _iteratorError11;
                 }
             }
         }
@@ -2339,25 +2370,25 @@ define(['exports'], function (exports) {
     }
 
     function traverseDescendants(visitor, withSelf, context) {
-        var _this6 = this;
+        var _this7 = this;
 
         if (withSelf) {
             Traversal.levelOrder(this, visitor, context);
         } else {
             Traversal.levelOrder(this, function (node) {
-                return !$equals(_this6, node) && visitor.call(context, node);
+                return !$equals(_this7, node) && visitor.call(context, node);
             }, context);
         }
     }
 
     function traverseDescendantsReverse(visitor, withSelf, context) {
-        var _this7 = this;
+        var _this8 = this;
 
         if (withSelf) {
             Traversal.reverseLevelOrder(this, visitor, context);
         } else {
             Traversal.reverseLevelOrder(this, function (node) {
-                return !$equals(_this7, node) && visitor.call(context, node);
+                return !$equals(_this8, node) && visitor.call(context, node);
             }, context);
         }
     }
@@ -2368,29 +2399,29 @@ define(['exports'], function (exports) {
         }
         var parent = this.parent;
         if (parent) {
-            var _iteratorNormalCompletion11 = true;
-            var _didIteratorError11 = false;
-            var _iteratorError11 = undefined;
+            var _iteratorNormalCompletion12 = true;
+            var _didIteratorError12 = false;
+            var _iteratorError12 = undefined;
 
             try {
-                for (var _iterator11 = parent.children[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
-                    var sibling = _step11.value;
+                for (var _iterator12 = parent.children[Symbol.iterator](), _step12; !(_iteratorNormalCompletion12 = (_step12 = _iterator12.next()).done); _iteratorNormalCompletion12 = true) {
+                    var sibling = _step12.value;
 
                     if (!$equals(this, sibling) && visitor.call(context, sibling)) {
                         return;
                     }
                 }
             } catch (err) {
-                _didIteratorError11 = true;
-                _iteratorError11 = err;
+                _didIteratorError12 = true;
+                _iteratorError12 = err;
             } finally {
                 try {
-                    if (!_iteratorNormalCompletion11 && _iterator11.return) {
-                        _iterator11.return();
+                    if (!_iteratorNormalCompletion12 && _iterator12.return) {
+                        _iterator12.return();
                     }
                 } finally {
-                    if (_didIteratorError11) {
-                        throw _iteratorError11;
+                    if (_didIteratorError12) {
+                        throw _iteratorError12;
                     }
                 }
             }

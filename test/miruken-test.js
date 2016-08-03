@@ -384,12 +384,25 @@ describe("$properties", () => {
         expect(doctor.age).to.be.at.least(10);
     });
 
-    it("should retrieve property descriptor", () => {
-        const descriptor = $meta(Doctor).getDescriptor('patient');
-        expect(descriptor.map).to.equal(Person);
+    it("should retrieve property metadata", () => {
+        const metadata = $meta(Doctor).getMetadata('patient');
+        expect(metadata.map).to.equal(Person);
     });
 
-    it("should merge property descriptor with getter/setter", () => {
+    it("should merge property metadata", () => {
+        const meta = $meta(Base.extend({
+            $properties: {
+                age: { required: true }
+            }
+        }));
+        let metadata = meta.getMetadata("age");
+        expect(metadata).to.eql({required: true});
+        meta.addMetadata("age", {length: 1});
+        metadata = meta.getMetadata("age");        
+        expect(metadata).to.eql({required: true, length: 1});        
+    });
+
+    it("should merge property metadata with getter/setter", () => {
         const Hospital = Base.extend({
                 $properties: {
                     chiefDoctor: { map: Doctor }
@@ -398,24 +411,24 @@ describe("$properties", () => {
                     return new Doctor({firstName: "Phil"});
                 }
             }),
-            descriptor = $meta(Hospital).getDescriptor('chiefDoctor'),
+            metadata = $meta(Hospital).getMetadata('chiefDoctor'),
             hospital = new Hospital();
         expect(hospital.chiefDoctor.firstName).to.equal("Phil");
-        expect(descriptor.map).to.equal(Doctor);        
+        expect(metadata.map).to.equal(Doctor);        
     });
 
-    it("should retrieve inherited property descriptor", () => {
-        const descriptor = $meta(Doctor).getDescriptor('pet');
-        expect(descriptor.map).to.equal(Animal);
+    it("should retrieve inherited property metadata", () => {
+        const metadata = $meta(Doctor).getMetadata('pet');
+        expect(metadata.map).to.equal(Animal);
     });
 
-    it("should retrieve all property descriptors", () => {
-        const descriptors = $meta(Doctor).getDescriptor();
-        expect(descriptors['pet'].map).to.equal(Animal);
-        expect(descriptors['patient'].map).to.equal(Person);
+    it("should retrieve all property metadata", () => {
+        const metadata = $meta(Doctor).getMetadata();
+        expect(metadata['pet'].map).to.equal(Animal);
+        expect(metadata['patient'].map).to.equal(Person);
     });
 
-    it("should filter property descriptors", () => {
+    it("should filter property metadata", () => {
         const Something = Base.extend({
             $properties: {
                 matchBool:   { val: true },
@@ -431,30 +444,30 @@ describe("$properties", () => {
             }
         });
 
-        let descriptors = $meta(Something).getDescriptor({ val: false });
-        expect(descriptors).to.be.undefined;
-        descriptors = $meta(Something).getDescriptor({ val: true });
-        expect(descriptors).to.eql({ matchBool: { val: true } });
-        descriptors = $meta(Something).getDescriptor({ val: 22 });
-        expect(descriptors).to.eql({ matchNumber: { val: 22 } });
-        descriptors = $meta(Something).getDescriptor({ val: 22 });
-        expect(descriptors).to.eql({ matchNumber: { val: 22 } });
-        descriptors = $meta(Something).getDescriptor({ val: "Hello" });
-        expect(descriptors).to.eql({ matchString: { val: "Hello" } });
-        descriptors = $meta(Something).getDescriptor({ val: ["z"] });
-        expect(descriptors).to.be.undefined;
-        descriptors = $meta(Something).getDescriptor({ val: ["b"] });
-        expect(descriptors).to.eql({ matchArray: { val: ["a", "b", "c" ] } });
-        descriptors = $meta(Something).getDescriptor({ nestedBool: { val: false } });
-        expect(descriptors).to.eql({  
+        let metadata = $meta(Something).getMetadata({ val: false });
+        expect(metadata).to.be.undefined;
+        metadata = $meta(Something).getMetadata({ val: true });
+        expect(metadata).to.eql({ matchBool: { val: true } });
+        metadata = $meta(Something).getMetadata({ val: 22 });
+        expect(metadata).to.eql({ matchNumber: { val: 22 } });
+        metadata = $meta(Something).getMetadata({ val: 22 });
+        expect(metadata).to.eql({ matchNumber: { val: 22 } });
+        metadata = $meta(Something).getMetadata({ val: "Hello" });
+        expect(metadata).to.eql({ matchString: { val: "Hello" } });
+        metadata = $meta(Something).getMetadata({ val: ["z"] });
+        expect(metadata).to.be.undefined;
+        metadata = $meta(Something).getMetadata({ val: ["b"] });
+        expect(metadata).to.eql({ matchArray: { val: ["a", "b", "c" ] } });
+        metadata = $meta(Something).getMetadata({ nestedBool: { val: false } });
+        expect(metadata).to.eql({  
               matchNested: {
                     nestedBool: { val: false },
                     nestedNumber: { val: 19 },
                     nestedString: { val: "Goodbye" },
                     nestedArray:  { val: ["x", "y", "z"] }
                 }});
-        descriptors = $meta(Something).getDescriptor({ nestedBool: undefined });
-        expect(descriptors).to.eql({  
+        metadata = $meta(Something).getMetadata({ nestedBool: undefined });
+        expect(metadata).to.eql({  
               matchNested: {
                     nestedBool: { val: false },
                     nestedNumber: { val: 19 },
@@ -476,15 +489,15 @@ describe("$properties", () => {
         expect(person.$properties).to.be.undefined;
     });
 
-    it("should retrieve instance property descriptor", () => {
+    it("should retrieve instance property metadata", () => {
         const person = (new Person).extend({
             $properties: {
                 friend: { map: Person }
             }
         });
-        const descriptor = $meta(person).getDescriptor('friend');
-        expect(descriptor.map).to.equal(Person);
-        expect($meta(Person).getDescriptor('friend')).to.be.undefined;
+        const metadata = $meta(person).getMetadata('friend');
+        expect(metadata.map).to.equal(Person);
+        expect($meta(Person).getMetadata('friend')).to.be.undefined;
     });
 
     it("should synthesize protocol properties", () => {
