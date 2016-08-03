@@ -1055,13 +1055,13 @@ describe("Protocol", () => {
         });
     });
 
-    describe("#addProtocol", () => {
+    describe("#adoptProtocol", () => {
         it("should add protocol to class", () => {
             const Bird  = Base.extend(Animal),
                   eagle = (new Bird()).extend({
                    getTag() { return "Eagle"; }
 				});
-            $meta(Bird).addProtocol(Tracked);
+            $meta(Bird).adoptProtocol(Tracked);
             expect(Bird.conformsTo(Tracked)).to.be.true;
 			expect(eagle.getTag()).to.equal("Eagle");
         });
@@ -1071,7 +1071,7 @@ describe("Protocol", () => {
                   polarBear = (new Bear()).extend({
                   getTag() { return "Polar Bear"; }
             });
-			$meta(Animal).addProtocol(Tracked);
+			$meta(Animal).adoptProtocol(Tracked);
             expect(polarBear.conformsTo(Tracked)).to.be.true;
 			expect(polarBear.getTag()).to.equal("Polar Bear");
 			expect(Animal(polarBear).getTag()).to.equal("Polar Bear");

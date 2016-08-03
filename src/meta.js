@@ -157,12 +157,12 @@ export const MetaMacro = Base.extend({
      */
     execute(step, metadata, target, definition) {},
     /**
-     * Triggered when `protocol` is added to `metadata`.
-     * @method protocolAdded
+     * Triggered when `protocol` is adopted by `metadata`.
+     * @method protocolAdopted
      * @param {MetaBase}  metadata  -  effective metadata
-     * @param {Protocol}  protocol  -  protocol added
+     * @param {Protocol}  protocol  -  protocol adopted
      */
-    protocolAdded(metadata, protocol) {},
+    protocolAdopted(metadata, protocol) {},
     /**
      * Extracts the `property` and evaluate it if a function.
      * @method extractProperty
@@ -222,22 +222,22 @@ export const MetaBase = MetaMacro.extend({
                 return protocols;
             },
             /**
-             * Adds one or more `protocols` to the metadata.
-             * @method addProtocol
-             * @param  {Array}  protocols  -  protocols to add
+             * Adopts one or more `protocols` by the metadata.
+             * @method adoptProtocol
+             * @param  {Array}  protocols  -  protocols to adopt
              */
-            addProtocol(...protocols) {
+            adoptProtocol(...protocols) {
                 for (let protocol of $flatten(protocols, true)) {
                     if ((protocol.prototype instanceof Protocol) &&
                         (_protocols.indexOf(protocol) < 0)) {
                         _protocols.push(protocol);
-                        this.protocolAdded(this, protocol);
+                        this.protocolAdopted(this, protocol);
                     }
                 }
             },
-            protocolAdded(metadata, protocol) {
+            protocolAdopted(metadata, protocol) {
                 if (parent) {
-                    parent.protocolAdded(metadata, protocol);
+                    parent.protocolAdopted(metadata, protocol);
                 }
             },
             /**
@@ -418,14 +418,14 @@ export const ClassMeta = MetaBase.extend({
                 }
                 return protocols;
             },
-            protocolAdded(metadata, protocol) {
+            protocolAdopted(metadata, protocol) {
                 this.base(metadata, protocol);
                 if (!_macros || _macros.length == 0) {
                     return;
                 }
                 for (let macro of _macros) {
-                    if ($isFunction(macro.protocolAdded)) {
-                        macro.protocolAdded(metadata, protocol);
+                    if ($isFunction(macro.protocolAdopted)) {
+                        macro.protocolAdopted(metadata, protocol);
                     }
                 }
             },
@@ -541,7 +541,7 @@ export const ClassMeta = MetaBase.extend({
                 return type;
             }
         });
-        this.addProtocol(protocols);
+        this.adoptProtocol(protocols);
     }
 });
 
@@ -656,7 +656,7 @@ export const $proxyProtocol = MetaMacro.extend({
             Object.defineProperty(expanded, key, member);                
         });
     },
-    protocolAdded(metadata, protocol) {
+    protocolAdopted(metadata, protocol) {
         const source        = protocol.prototype,
               target        = metadata.type.prototype,
               protocolProto = Protocol.prototype,

@@ -10,9 +10,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 exports.Modifier = Modifier;
 exports.$createModifier = $createModifier;
-exports.isDescriptor = isDescriptor;
 exports.decorate = decorate;
 exports.copy = copy;
+exports.isDescriptor = isDescriptor;
 exports.pcopy = pcopy;
 exports.getPropertyDescriptors = getPropertyDescriptors;
 exports.instanceOf = instanceOf;
@@ -122,22 +122,6 @@ function $createModifier() {
     return modifier;
 }
 
-function isDescriptor(desc) {
-    if (!desc || !desc.hasOwnProperty) {
-        return false;
-    }
-
-    var keys = ['value', 'initializer', 'get', 'set'];
-
-    for (var i = 0, l = keys.length; i < l; i++) {
-        if (desc.hasOwnProperty(keys[i])) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 function decorate(decorator, args) {
     if (isDescriptor(args[args.length - 1])) {
         return decorator.apply(undefined, _toConsumableArray(args).concat([[]]));
@@ -174,6 +158,22 @@ function copyOf(value) {
         value = value.copy();
     }
     return value;
+}
+
+function isDescriptor(desc) {
+    if (!desc || !desc.hasOwnProperty) {
+        return false;
+    }
+
+    var keys = ['value', 'initializer', 'get', 'set'];
+
+    for (var i = 0, l = keys.length; i < l; i++) {
+        if (desc.hasOwnProperty(keys[i])) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 var Undefined = exports.Undefined = K(),
@@ -1112,7 +1112,7 @@ var MetaMacro = exports.MetaMacro = Base.extend({
     },
     inflate: function inflate(step, metadata, target, definition, expand) {},
     execute: function execute(step, metadata, target, definition) {},
-    protocolAdded: function protocolAdded(metadata, protocol) {},
+    protocolAdopted: function protocolAdopted(metadata, protocol) {},
     extractProperty: function extractProperty(property, target, source) {
         var value = source[property];
         if ($isFunction(value)) {
@@ -1199,7 +1199,7 @@ var MetaBase = exports.MetaBase = MetaMacro.extend({
 
                 return protocols;
             },
-            addProtocol: function addProtocol() {
+            adoptProtocol: function adoptProtocol() {
                 for (var _len2 = arguments.length, protocols = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
                     protocols[_key2] = arguments[_key2];
                 }
@@ -1214,7 +1214,7 @@ var MetaBase = exports.MetaBase = MetaMacro.extend({
 
                         if (protocol.prototype instanceof Protocol && _protocols.indexOf(protocol) < 0) {
                             _protocols.push(protocol);
-                            this.protocolAdded(this, protocol);
+                            this.protocolAdopted(this, protocol);
                         }
                     }
                 } catch (err) {
@@ -1232,9 +1232,9 @@ var MetaBase = exports.MetaBase = MetaMacro.extend({
                     }
                 }
             },
-            protocolAdded: function protocolAdded(metadata, protocol) {
+            protocolAdopted: function protocolAdopted(metadata, protocol) {
                 if (parent) {
-                    parent.protocolAdded(metadata, protocol);
+                    parent.protocolAdopted(metadata, protocol);
                 }
             },
             conformsTo: function conformsTo(protocol) {
@@ -1377,7 +1377,7 @@ var ClassMeta = exports.ClassMeta = MetaBase.extend({
                 }
                 return protocols;
             },
-            protocolAdded: function protocolAdded(metadata, protocol) {
+            protocolAdopted: function protocolAdopted(metadata, protocol) {
                 this.base(metadata, protocol);
                 if (!_macros || _macros.length == 0) {
                     return;
@@ -1390,8 +1390,8 @@ var ClassMeta = exports.ClassMeta = MetaBase.extend({
                     for (var _iterator5 = _macros[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
                         var macro = _step5.value;
 
-                        if ($isFunction(macro.protocolAdded)) {
-                            macro.protocolAdded(metadata, protocol);
+                        if ($isFunction(macro.protocolAdopted)) {
+                            macro.protocolAdopted(metadata, protocol);
                         }
                     }
                 } catch (err) {
@@ -1605,7 +1605,7 @@ var ClassMeta = exports.ClassMeta = MetaBase.extend({
                 return type;
             }
         });
-        this.addProtocol(protocols);
+        this.adoptProtocol(protocols);
     }
 });
 
@@ -1720,7 +1720,7 @@ var $proxyProtocol = exports.$proxyProtocol = MetaMacro.extend({
             Object.defineProperty(expanded, key, member);
         });
     },
-    protocolAdded: function protocolAdded(metadata, protocol) {
+    protocolAdopted: function protocolAdopted(metadata, protocol) {
         var _this4 = this;
 
         var source = protocol.prototype,
