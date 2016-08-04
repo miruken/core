@@ -7,7 +7,7 @@ import {
     Protocol, $meta, $flatten,
     $decorator, $decorate, $decorated,
     $isClass, $isFunction, $isString,
-    $properties, $inferProperties, $inheritStatic
+    $properties, $inferProperties
 } from '../src/meta';
 
 import '../src/promise';
@@ -28,7 +28,7 @@ const Animal = Protocol.extend({
 });
 
 const Tricks = Protocol.extend({
-    fetch: function (item) {}
+    fetch (item) {}
 });
 
 const CircusAnimal = Animal.extend(Tricks, {
@@ -36,7 +36,7 @@ const CircusAnimal = Animal.extend(Tricks, {
 
 const Dog = Base.extend(Animal, Tricks,
     $inferProperties, {
-    constructor: function (name, color) {
+    constructor(name, color) {
        this.extend({
            getName() { return name; },
            setName(value) { name = value; },
@@ -70,7 +70,7 @@ const ShoppingCart = Base.extend(Disposing, DisposingMixin, {
 });
 
 const LogInterceptor = Interceptor.extend({
-    intercept: function (invocation) {
+    intercept (invocation) {
         console.log(
             `Called ${invocation.method} with (${invocation.args.join(", ")})`
         );
@@ -89,7 +89,27 @@ describe("miruken", () => {
         expect(p.name).to.equal("Poo");
         p.name = "Do";
         expect(p.name).to.equal("Do");        
-    });    
+    });
+
+    const Math = Base.extend(null, {
+            PI: 3.14159265359,
+            add(a, b) {
+                return a + b;
+            },
+            identity(v) { return v; }
+        }), 
+        Geometry = Math.extend(null, {
+            area(length, width) {
+                return length * width;
+            },
+            identity(v) { return this.base(v) * 2; }
+        });
+    
+    it.only("should inherit static members", () => {
+        expect(Geometry.PI).to.equal(Math.PI);
+        expect(Geometry.add).to.equal(Math.add);
+        expect(Geometry.identity(2)).to.equal(4);
+    });
 });
 
 describe("Enum", () => {
@@ -507,7 +527,7 @@ describe("$properties", () => {
                 set name(value) {}
             }),
             Manager = Base.extend(Employment, {
-                constructor: function (name) {
+                constructor(name) {
                     this.extend({
                         get name() { return name; },
                         set name(value) { name = value; }
@@ -528,7 +548,7 @@ describe("$properties", () => {
 describe("$inferProperties", () => {
     const Person = Base.extend( 
         $inferProperties, {
-        constructor: function (firstName) {
+        constructor(firstName) {
             this.firstName = firstName;
         },
         getFirstName() { return this._name; },
@@ -553,7 +573,7 @@ describe("$inferProperties", () => {
 
     it("should infer extended properties", () => {
         const Doctor = Person.extend({
-                constructor: function (firstName, speciality) {
+                constructor(firstName, speciality) {
                     this.base(firstName);
                     this.speciality = speciality;
                 },
@@ -561,7 +581,7 @@ describe("$inferProperties", () => {
                 setSpeciality(value) { this._speciality = value; }
             }),
             Surgeon = Doctor.extend({
-                constructor: function (firstName, speciality, hospital) {
+                constructor(firstName, speciality, hospital) {
                     this.base(firstName, speciality);
                     this.hospital = hospital;
                 },
@@ -612,30 +632,10 @@ describe("$inferProperties", () => {
             teacher = new Teacher('Jane');
         expect(teacher.firstName).to.equal('Teacher Jane');
         Teacher.implement({
-            setFirstName: function (value) { this.base('Sarah'); }
+            setFirstName(value) { this.base('Sarah'); }
         });                        
         teacher.firstName = 'Mary';
         expect(teacher.firstName).to.equal('Teacher Sarah');
-    });
-});
-
-describe("$inheritStatic", () => {
-    const Math = Base.extend(
-        $inheritStatic, null, {
-            PI: 3.14159265359,
-            add: function (a, b) {
-                return a + b;
-            }
-        }), 
-        Geometry = Math.extend(null, {
-            area: function(length, width) {
-                return length * width;
-            }
-        });
-    
-    it("should inherit static members", () => {
-        expect(Geometry.PI).to.equal(Math.PI);
-        expect(Geometry.add).to.equal(Math.add);
     });
 });
 
@@ -670,7 +670,7 @@ describe("$using", () => {
         const shoppingCart = new ShoppingCart();
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
-        $using(shoppingCart, function (cart) {
+        $using(shoppingCart, cart => {
             expect(shoppingCart.getItems()).to.eql(["Halo II", "Porsche"]);
         });
         expect(shoppingCart.getItems()).to.eql([]);
@@ -681,18 +681,18 @@ describe("$using", () => {
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
         expect(() => { 
-            $using(shoppingCart, function (cart) {
+            $using(shoppingCart, cart => {
                 throw new Error("Something bad");
             });
         }).to.throw(Error, "Something bad");
         expect(shoppingCart.getItems()).to.eql([]);
     });
 
-    it("should wait for promise to fulfill then dispose", function (done) {
+    it("should wait for promise to fulfill then dispose", done => {
         const shoppingCart = new ShoppingCart();
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
-        $using(shoppingCart, delay(100).then(() => {
+        $using(shoppingCart, Promise.delay(100).then(() => {
                shoppingCart.addItem("Book");
                expect(shoppingCart.getItems()).to.eql(["Halo II", "Porsche", "Book"]);
                }) 
@@ -702,12 +702,12 @@ describe("$using", () => {
         });
     });
 
-    it("should wait for promise fromm block to fulfill then dispose", function (done) {
+    it("should wait for promise fromm block to fulfill then dispose", done => {
         const shoppingCart = new ShoppingCart();
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
-        $using(shoppingCart, function (cart) {
-               return delay(100).then(() => {
+        $using(shoppingCart, cart => {
+               return Promise.delay(100).then(() => {
                    shoppingCart.addItem("Book");
                    expect(shoppingCart.getItems()).to.eql(["Halo II", "Porsche", "Book"]);
                })
@@ -717,14 +717,14 @@ describe("$using", () => {
         });
     });
     
-    it("should wait for promise to fail then dispose", function (done) {
+    it("should wait for promise to fail then dispose", done => {
         const shoppingCart = new ShoppingCart();
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
-        $using(shoppingCart, delay(100).then(() => {
+        $using(shoppingCart, Promise.delay(100).then(() => {
                throw new Error("Something bad");
                })
-        ).catch(function (err) {
+        ).catch(err => {
             expect(shoppingCart.getItems()).to.eql([]);
             done();
         });
@@ -734,20 +734,15 @@ describe("$using", () => {
         const shoppingCart = new ShoppingCart();
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
-        expect($using(shoppingCart, function (cart) {
-            return "approved";
-        })).to.equal("approved");
+        expect($using(shoppingCart, cart => "approved")).to.equal("approved");
     });
 
-    it("should return block promise result", function (done) {
+    it("should return block promise result", done => {
         const shoppingCart = new ShoppingCart();
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
-        $using(shoppingCart, function (cart) {
-            return delay(100).then(() => {
-                return "approved";
-            })
-        }).then(function (result) {
+        $using(shoppingCart, cart => Promise.delay(100)
+               .then(() => "approved")).then(result => {
             expect(result).to.equal("approved");
             done();
         });
@@ -762,12 +757,10 @@ describe("$using", () => {
         });
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
-        expect($using(shoppingCart, function (cart) {
-            return "approved";
-        })).to.equal("rejected");
+        expect($using(shoppingCart, cart =>  "approved")).to.equal("rejected");
     });
 
-    it("should return dispose promise result", function (done) {
+    it("should return dispose promise result", done => {
         const shoppingCart = (new ShoppingCart).extend({
             dispose() {
                 this.base();
@@ -776,9 +769,7 @@ describe("$using", () => {
         });
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
-        $using(shoppingCart, function (cart) {
-                   return "approved";
-        }).then(function (result) {
+        $using(shoppingCart, cart => "approved").then(result => {
             expect(result).to.equal("rejected");
             done();
         });
@@ -1027,10 +1018,10 @@ describe("Protocol", () => {
 
         it("should allow redefining method", () => {
             const SmartTricks = Tricks.extend({
-                    fetch: function (item) {}
+                    fetch(item) {}
                 }),
                 SmartDog = Dog.extend({
-                    fetch: function (item) { return 'Buried ' + item; }
+                    fetch(item) { return 'Buried ' + item; }
                 }),
                 dog = new SmartDog();
             expect(SmartTricks(dog).fetch('bone')).to.equal('Buried bone');
@@ -1038,13 +1029,13 @@ describe("Protocol", () => {
 
         it("should support strict when redefing method", () => {
             const SmartTricks = Tricks.extend({
-                    constructor: function (proxy) {
+                    constructor(proxy) {
                         this.base(proxy, true);
                     },
-                    fetch: function (item) {}
+                    fetch(item) {}
                 }),
                 SmartDog = Dog.extend({
-                    fetch: function (item) { return 'Buried ' + item; }
+                    fetch(item) { return 'Buried ' + item; }
                 }),
                 dog = new SmartDog();
             expect(Tricks(dog).fetch('bone')).to.equal('Buried bone');
@@ -1122,7 +1113,7 @@ describe("Protocol", () => {
         it("should delegate property gets to array", () => {
             let count = 0;
             const Dog2  = Dog.extend({
-                      constructor: function (name) {
+                      constructor(name) {
                           this.base(name);
                           this.extend({
                               getName() {
@@ -1148,7 +1139,7 @@ describe("Protocol", () => {
         it("should delegate property sets to array", () => {
             let count = 0;
             const Dog2  = Dog.extend({
-                      constructor: function (name) {
+                      constructor(name) {
                           this.base(name);
                           this.extend({
                               getName() {
@@ -1185,7 +1176,7 @@ describe("Protocol", () => {
 
 describe("ProxyBuilder", () => {
     const ToUpperInterceptor = Interceptor.extend({
-        intercept: function (invocation) {
+        intercept(invocation) {
             const args = invocation.args;
             for (let i = 0; i < args.length; ++i) {
                 if ($isString(args[i])) {
@@ -1219,7 +1210,7 @@ describe("ProxyBuilder", () => {
                   AnimalProxy  = proxyBuilder.buildProxy([Animal]),
                   AnimalInterceptor = Interceptor.extend({
                       name : '',
-                      intercept: function (invocation) {
+                      intercept(invocation) {
                           const method = invocation.method,
                                 args   = invocation.args;
                           if (method === "getName") {
@@ -1247,7 +1238,7 @@ describe("ProxyBuilder", () => {
             const proxyBuilder   = new ProxyBuilder(),
                   Flying         = Protocol.extend({ fly() {} }),
                   FlyingInterceptor = Interceptor.extend({
-                      intercept: function (invocation) {
+                      intercept(invocation) {
                           if (invocation.method !== 'fly') {
                               return invocation.proceed();
                           }
@@ -1257,7 +1248,7 @@ describe("ProxyBuilder", () => {
             $using(new FlyingDogProxy({
                        parameters:   ['Wonder Dog'],
                        interceptors: [new FlyingInterceptor(), new LogInterceptor()]
-                   }), function (wonderDog) {
+                   }), wonderDog => {
                 expect(wonderDog.getName()).to.equal('Wonder Dog');
                 expect(wonderDog.talk()).to.equal('Ruff Ruff');
                 expect(wonderDog.fetch("purse")).to.equal('Fetched purse');
@@ -1281,7 +1272,7 @@ describe("ProxyBuilder", () => {
         it("should restrict proxied method with interceptor selector options", () => {
             const proxyBuilder = new ProxyBuilder(),
                   selector     =  (new InterceptorSelector()).extend({
-                      selectInterceptors: function (type, method, interceptors) {
+                      selectInterceptors(type, method, interceptors) {
                           return method === 'getName' ? interceptors : [];
                   }}),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
@@ -1361,87 +1352,3 @@ describe("ProxyBuilder", () => {
         });
     });
 });
-
-/*
-describe("Package", () => {
-    describe("#version", () => {
-        it("should inherit parent version", () => {
-            var foo = base2.package(this, {
-                name:    "foo",
-                version: "1.0.0"
-            });
-            var bar = foo.package(this, {
-                name:    "bar",
-            });
-            var baz = bar.package(this, {
-                name:    "baz",
-                version: "2.0.0"
-            });            
-            expect(bar.version).to.equal("1.0.0");
-            expect(baz.version).to.equal("2.0.0");
-        });        
-    });
-    
-    describe("#getProtocols", () => {
-        it("should expose protocol definitions", () => {
-            var protocols = [];
-            miruken_test.getProtocols(function (protocol) {
-                protocols.push(protocol.member);
-            });
-            expect(protocols).to.have.members([Animal, Tricks, CircusAnimal, Tracked]);
-        });
-
-        it("should expose filtered protocol definitions", () => {
-            var protocols = [];
-            miruken_test.getProtocols(["Tricks", "Tracked"], function (protocol) {
-                protocols.push(protocol.member);
-            });
-            expect(protocols).to.have.members([Tricks, Tracked]);
-        });
-    });
-
-    describe("#getClasses", () => {
-        it("should expose class definitions", () => {
-            var classes = [];
-            miruken_test.getClasses(function (cls) {
-                classes.push(cls.member);
-            });
-            expect(classes).to.have.members([Dog, Elephant, AsianElephant, ShoppingCart, LogInterceptor]);
-        });
-
-        it("should expose filtered class definitions", () => {
-            var classes = [];
-            miruken_test.getClasses(["Elephant", "AsianElephant"], function (cls) {
-                classes.push(cls.member);
-            });
-            expect(classes).to.have.length(2);
-            expect(classes).to.have.members([Elephant, AsianElephant]);
-        });        
-    });
-
-    describe("#getPackages", () => {
-        it("should expose package definitions", () => {
-            var packages = [];
-            base2.getPackages(function (pkg) {
-                packages.push(pkg.member);
-            });
-            expect(packages).to.contain(miruken_test);
-        });
-
-        it("should expose filterd package definitions", () => {
-            var packages = [];
-            base2.getPackages("foo", function (pkg) {
-                packages.push(pkg.member);
-            });
-            expect(packages).to.have.length(0);
-        });
-        
-    });
-});
-*/
-
-function delay(ms) {
-    return new Promise(function (resolve, reject) {
-        setTimeout(resolve, ms);
-    });
-}

@@ -250,10 +250,9 @@ const _subclass = function(_instance, _static) {
   _prototype.constructor = _class;
   
   // Build the static interface.
-  for (var i in Base) _class[i] = this[i];
+  Object.setPrototypeOf(_class, this);
   if (_static) extend(_class, _static);
   _class.ancestor = this;
-  _class.ancestorOf = Base.ancestorOf;
   _class.base = _prototype.base;
   _class.prototype = _prototype;
   if (_class.init) _class.init();
@@ -1310,7 +1309,6 @@ export const Protocol = Base.extend({
         return delegate && delegate.invoke(this.constructor, methodName, args, this[ProtocolStrict]);
     }
 }, {
-    conformsTo: False,        
     /**
      * Determines if the target is a {{#crossLink "Protocol"}}{{/crossLink}}.
      * @static
@@ -1324,13 +1322,12 @@ export const Protocol = Base.extend({
     /**
      * Determines if the target conforms to this protocol.
      * @static
-     * @method conformsTo
+     * @method adoptedBy
      * @param   {Any}      target    -  target to test
      * @returns {boolean}  true if the target conforms to this protocol.
      */
     adoptedBy(target) {
-        const meta = $meta(target);
-        return !!(meta && meta.conformsTo(this));
+        return $meta(target).conformsTo(this);
     },
     /**
      * Creates a protocol binding over the object.
@@ -1436,7 +1433,7 @@ export const MetaMacro = Base.extend({
  */
 export const MetaBase = MetaMacro.extend({
     constructor(parent)  {
-        let _protocols = [], _metadata;
+        let _protocols, _metadata;
         this.extend({
             /**
              * Gets the parent metadata.
@@ -1447,7 +1444,9 @@ export const MetaBase = MetaMacro.extend({
              * Gets the declared protocols.
              * @property {Array} protocols
              */
-            get protocols() { return _protocols.slice(0) },
+            get protocols() {
+                return _protocols ? _protocols.slice(0) : [];
+            },
             
             /**
              * Gets all conforming protocools.
@@ -1469,15 +1468,23 @@ export const MetaBase = MetaMacro.extend({
              * Adopts one or more `protocols` by the metadata.
              * @method adoptProtocol
              * @param  {Array}  protocols  -  protocols to adopt
+             * @returns  {MetaBase} current metadata.
+             * @chainable
              */
             adoptProtocol(...protocols) {
-                for (let protocol of $flatten(protocols, true)) {
+                protocols = $flatten(protocols, true);
+                if (!protocols || protocols.length == 0) {
+                    return this;
+                }
+                if (!_protocols) _protocols = [];
+                for (let protocol of protocols) {
                     if ((protocol.prototype instanceof Protocol) &&
                         (_protocols.indexOf(protocol) < 0)) {
                         _protocols.push(protocol);
                         this.protocolAdopted(this, protocol);
                     }
                 }
+                return this;
             },
             protocolAdopted(metadata, protocol) {
                 if (parent) {
@@ -1491,8 +1498,9 @@ export const MetaBase = MetaMacro.extend({
              * @returns {boolean}  true if the metadata includes the protocol.
              */
             conformsTo(protocol) {
-                return (protocol && (protocol.prototype instanceof Protocol)
-                        && _protocols.some(p => protocol === p || p.conformsTo(protocol)))
+                return (protocol && _protocols &&
+                        (protocol.prototype instanceof Protocol) &&
+                        _protocols.some(p => protocol === p || p.conformsTo(protocol)))
                     || !!(parent && parent.conformsTo(protocol));
                 
             },
@@ -1638,8 +1646,8 @@ export const MetaBase = MetaMacro.extend({
  * @extends MetaBase
  */
 export const ClassMeta = MetaBase.extend({
-    constructor(parent, type, protocols, macros)  {
-        let _macros     = macros && macros.slice(0),
+    constructor(parent, type, protocols, macros) {
+        let _macros,
             _isProtocol = (type === Protocol)
                        || (type.prototype instanceof Protocol);
         this.base(parent);
@@ -1685,6 +1693,26 @@ export const ClassMeta = MetaBase.extend({
                 }
                 return this.base(protocol);
             },
+            addMacro(...macros) {
+                macros = $flatten(macros, true);
+                if (!macros || macros.length == 0) {
+                    return this;
+                }
+                if (!_macros) _macros = [];
+                for (let macro of macros) {
+                    if ((macro instanceof MetaMacro) &&
+                        (_macros.indexOf(macros) < 0)) {
+                        _macros.push(macro);
+                        this.macroAdded(this, macro);
+                    }
+                }
+                return this;                
+            },
+            macroAdded(metadata, macro) {
+                if (parent) {
+                    parent.macroAdded(metadata, macro);
+                }
+            },            
             inflate(step, metadata, target, definition, expand) {
                 this.base(step, metadata, target, definition, expand);
                 if (!_macros || _macros.length == 0) {
@@ -1696,7 +1724,7 @@ export const ClassMeta = MetaBase.extend({
                         (!active || macro.active) && macro.inherit) {
                         macro.inflate(step, metadata, target, definition, expand);
                     }
-                }                    
+                }
             },
             execute(step, metadata, target, definition) {
                 this.base(step, metadata, target, definition);
@@ -1752,9 +1780,7 @@ export const ClassMeta = MetaBase.extend({
                 }
                 instanceDef  = expand.x || instanceDef;
                 const derived  = baseExtend.call(type, instanceDef, staticDef),
-                      metadata = new ClassMeta(this, derived, protocols, macros);
-                defineMetadata(derived.prototype, metadata);
-                derived.conformsTo = metadata.conformsTo.bind(metadata);
+                      metadata = $meta(derived).adoptProtocol(protocols).addMacro(macros);
                 metadata.execute(MetaStep.Subclass, metadata, derived.prototype, instanceDef);
                 if (mixins) {
                     for (let mixin of mixins) {
@@ -1764,7 +1790,6 @@ export const ClassMeta = MetaBase.extend({
                 function expand() {
                     return expand.x || (expand.x = Object.create(instanceDef));
                 }
-                Reflect.setPrototypeOf(derived, type);                
                 return derived;                    
             },
             /**
@@ -1790,6 +1815,7 @@ export const ClassMeta = MetaBase.extend({
             }
         });
         this.adoptProtocol(protocols);
+        this.addMacro(macros);
     }
 });
 
@@ -1819,19 +1845,13 @@ export const InstanceMeta = MetaBase.extend({
     }
 });
 
-const baseMetadata     = new ClassMeta(undefined, Base),
-      abstractMetadata = new ClassMeta(baseMetadata, Abstract);
-
-defineMetadata(Base.prototype, baseMetadata);
-defineMetadata(Abstract.prototype, abstractMetadata);
-
-Base.extend = Abstract.extend = function () {
+Base.extend = function () {
     return $meta(this).createSubclass(...arguments);
 };
-Base.implement = Abstract.implement = function () {
+Base.implement = function () {
     return $meta(this).embellishClass(...arguments);                
 }
-Base.prototype.conformsTo = function (protocol) {
+Base.conformsTo = Base.prototype.conformsTo = function (protocol) {
     return $meta(this).conformsTo(protocol);
 };
 
@@ -1860,13 +1880,6 @@ Base.prototype.extend = function (key, value) {
     }
     return this;
 }
-
-Enum.extend    = Base.extend
-Enum.implement = Base.implement;
-const enumMetadata  = new ClassMeta(baseMetadata, Enum),
-      flagsMetadata = new ClassMeta(enumMetadata, Flags);
-      defineMetadata(Enum.prototype, enumMetadata);
-defineMetadata(Flags.prototype, flagsMetadata);
 
 /**
  * Metamacro to proxy protocol members through a delegate.<br/>
@@ -1916,10 +1929,8 @@ export const $proxyProtocol = MetaMacro.extend({
         });
     }
 });
-Protocol.extend    = Base.extend
-Protocol.implement = Base.implement;
-const protocolMetadata = new ClassMeta(baseMetadata, Protocol, null, [new $proxyProtocol()]);
-defineMetadata(Protocol.prototype, protocolMetadata);
+
+$meta(Protocol).addMacro(new $proxyProtocol());
 
 /**
  * Protocol base requiring conformance to match methods.

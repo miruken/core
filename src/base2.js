@@ -65,10 +65,9 @@ const _subclass = function(_instance, _static) {
   _prototype.constructor = _class;
   
   // Build the static interface.
-  for (var i in Base) _class[i] = this[i];
+  Object.setPrototypeOf(_class, this);
   if (_static) extend(_class, _static);
   _class.ancestor = this;
-  _class.ancestorOf = Base.ancestorOf;
   _class.base = _prototype.base;
   _class.prototype = _prototype;
   if (_class.init) _class.init();

@@ -223,11 +223,9 @@ var _subclass = function _subclass(_instance, _static) {
     };
     _prototype.constructor = _class;
 
-    for (var i in Base) {
-        _class[i] = this[i];
-    }if (_static) _extend(_class, _static);
+    Object.setPrototypeOf(_class, this);
+    if (_static) _extend(_class, _static);
     _class.ancestor = this;
-    _class.ancestorOf = Base.ancestorOf;
     _class.base = _prototype.base;
     _class.prototype = _prototype;
     if (_class.init) _class.init();
@@ -1083,13 +1081,11 @@ var Protocol = exports.Protocol = Base.extend((_Base$extend = {
     var delegate = this[ProtocolDelegate];
     return delegate && delegate.invoke(this.constructor, methodName, args, this[ProtocolStrict]);
 }), _Base$extend), {
-    conformsTo: False,
     isProtocol: function isProtocol(target) {
         return target && target.prototype instanceof Protocol;
     },
     adoptedBy: function adoptedBy(target) {
-        var meta = $meta(target);
-        return !!(meta && meta.conformsTo(this));
+        return $meta(target).conformsTo(this);
     },
     coerce: function coerce(object, strict) {
         return new this(object, strict);
@@ -1135,7 +1131,7 @@ var MetaMacro = exports.MetaMacro = Base.extend({
 
 var MetaBase = exports.MetaBase = MetaMacro.extend({
     constructor: function constructor(parent) {
-        var _protocols = [],
+        var _protocols = void 0,
             _metadata = void 0;
         this.extend({
             get parent() {
@@ -1143,7 +1139,7 @@ var MetaBase = exports.MetaBase = MetaMacro.extend({
             },
 
             get protocols() {
-                return _protocols.slice(0);
+                return _protocols ? _protocols.slice(0) : [];
             },
 
             get allProtocols() {
@@ -1206,12 +1202,17 @@ var MetaBase = exports.MetaBase = MetaMacro.extend({
                     protocols[_key2] = arguments[_key2];
                 }
 
+                protocols = $flatten(protocols, true);
+                if (!protocols || protocols.length == 0) {
+                    return this;
+                }
+                if (!_protocols) _protocols = [];
                 var _iteratorNormalCompletion3 = true;
                 var _didIteratorError3 = false;
                 var _iteratorError3 = undefined;
 
                 try {
-                    for (var _iterator3 = $flatten(protocols, true)[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                    for (var _iterator3 = protocols[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
                         var protocol = _step3.value;
 
                         if (protocol.prototype instanceof Protocol && _protocols.indexOf(protocol) < 0) {
@@ -1233,6 +1234,8 @@ var MetaBase = exports.MetaBase = MetaMacro.extend({
                         }
                     }
                 }
+
+                return this;
             },
             protocolAdopted: function protocolAdopted(metadata, protocol) {
                 if (parent) {
@@ -1240,7 +1243,7 @@ var MetaBase = exports.MetaBase = MetaMacro.extend({
                 }
             },
             conformsTo: function conformsTo(protocol) {
-                return protocol && protocol.prototype instanceof Protocol && _protocols.some(function (p) {
+                return protocol && _protocols && protocol.prototype instanceof Protocol && _protocols.some(function (p) {
                     return protocol === p || p.conformsTo(protocol);
                 }) || !!(parent && parent.conformsTo(protocol));
             },
@@ -1362,7 +1365,7 @@ var MetaBase = exports.MetaBase = MetaMacro.extend({
 
 var ClassMeta = exports.ClassMeta = MetaBase.extend({
     constructor: function constructor(parent, type, protocols, macros) {
-        var _macros = macros && macros.slice(0),
+        var _macros = void 0,
             _isProtocol = type === Protocol || type.prototype instanceof Protocol;
         this.base(parent);
         this.extend({
@@ -1445,22 +1448,27 @@ var ClassMeta = exports.ClassMeta = MetaBase.extend({
                 }
                 return this.base(protocol);
             },
-            inflate: function inflate(step, metadata, target, definition, expand) {
-                this.base(step, metadata, target, definition, expand);
-                if (!_macros || _macros.length == 0) {
-                    return;
+            addMacro: function addMacro() {
+                for (var _len3 = arguments.length, macros = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+                    macros[_key3] = arguments[_key3];
                 }
-                var active = step !== MetaStep.Subclass;
+
+                macros = $flatten(macros, true);
+                if (!macros || macros.length == 0) {
+                    return this;
+                }
+                if (!_macros) _macros = [];
                 var _iteratorNormalCompletion7 = true;
                 var _didIteratorError7 = false;
                 var _iteratorError7 = undefined;
 
                 try {
-                    for (var _iterator7 = _macros[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+                    for (var _iterator7 = macros[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
                         var macro = _step7.value;
 
-                        if ($isFunction(macro.inflate) && (!active || macro.active) && macro.inherit) {
-                            macro.inflate(step, metadata, target, definition, expand);
+                        if (macro instanceof MetaMacro && _macros.indexOf(macros) < 0) {
+                            _macros.push(macro);
+                            this.macroAdded(this, macro);
                         }
                     }
                 } catch (err) {
@@ -1477,14 +1485,20 @@ var ClassMeta = exports.ClassMeta = MetaBase.extend({
                         }
                     }
                 }
+
+                return this;
             },
-            execute: function execute(step, metadata, target, definition) {
-                this.base(step, metadata, target, definition);
+            macroAdded: function macroAdded(metadata, macro) {
+                if (parent) {
+                    parent.macroAdded(metadata, macro);
+                }
+            },
+            inflate: function inflate(step, metadata, target, definition, expand) {
+                this.base(step, metadata, target, definition, expand);
                 if (!_macros || _macros.length == 0) {
                     return;
                 }
-                var inherit = this !== metadata,
-                    active = step !== MetaStep.Subclass;
+                var active = step !== MetaStep.Subclass;
                 var _iteratorNormalCompletion8 = true;
                 var _didIteratorError8 = false;
                 var _iteratorError8 = undefined;
@@ -1493,8 +1507,8 @@ var ClassMeta = exports.ClassMeta = MetaBase.extend({
                     for (var _iterator8 = _macros[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
                         var macro = _step8.value;
 
-                        if ((!active || macro.active) && (!inherit || macro.inherit)) {
-                            macro.execute(step, metadata, target, definition);
+                        if ($isFunction(macro.inflate) && (!active || macro.active) && macro.inherit) {
+                            macro.inflate(step, metadata, target, definition, expand);
                         }
                     }
                 } catch (err) {
@@ -1512,9 +1526,43 @@ var ClassMeta = exports.ClassMeta = MetaBase.extend({
                     }
                 }
             },
+            execute: function execute(step, metadata, target, definition) {
+                this.base(step, metadata, target, definition);
+                if (!_macros || _macros.length == 0) {
+                    return;
+                }
+                var inherit = this !== metadata,
+                    active = step !== MetaStep.Subclass;
+                var _iteratorNormalCompletion9 = true;
+                var _didIteratorError9 = false;
+                var _iteratorError9 = undefined;
+
+                try {
+                    for (var _iterator9 = _macros[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+                        var macro = _step9.value;
+
+                        if ((!active || macro.active) && (!inherit || macro.inherit)) {
+                            macro.execute(step, metadata, target, definition);
+                        }
+                    }
+                } catch (err) {
+                    _didIteratorError9 = true;
+                    _iteratorError9 = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion9 && _iterator9.return) {
+                            _iterator9.return();
+                        }
+                    } finally {
+                        if (_didIteratorError9) {
+                            throw _iteratorError9;
+                        }
+                    }
+                }
+            },
             createSubclass: function createSubclass() {
-                for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-                    args[_key3] = arguments[_key3];
+                for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+                    args[_key4] = arguments[_key4];
                 }
 
                 var constraints = args,
@@ -1548,47 +1596,15 @@ var ClassMeta = exports.ClassMeta = MetaBase.extend({
                     staticDef = args.shift() || {};
                 this.inflate(MetaStep.Subclass, this, type.prototype, instanceDef, expand);
                 if (macros) {
-                    var _iteratorNormalCompletion9 = true;
-                    var _didIteratorError9 = false;
-                    var _iteratorError9 = undefined;
-
-                    try {
-                        for (var _iterator9 = macros[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
-                            var macro = _step9.value;
-
-                            macro.inflate(MetaStep.Subclass, this, type.prototype, instanceDef, expand);
-                        }
-                    } catch (err) {
-                        _didIteratorError9 = true;
-                        _iteratorError9 = err;
-                    } finally {
-                        try {
-                            if (!_iteratorNormalCompletion9 && _iterator9.return) {
-                                _iterator9.return();
-                            }
-                        } finally {
-                            if (_didIteratorError9) {
-                                throw _iteratorError9;
-                            }
-                        }
-                    }
-                }
-                instanceDef = expand.x || instanceDef;
-                var derived = baseExtend.call(type, instanceDef, staticDef),
-                    metadata = new ClassMeta(this, derived, protocols, macros);
-                defineMetadata(derived.prototype, metadata);
-                derived.conformsTo = metadata.conformsTo.bind(metadata);
-                metadata.execute(MetaStep.Subclass, metadata, derived.prototype, instanceDef);
-                if (mixins) {
                     var _iteratorNormalCompletion10 = true;
                     var _didIteratorError10 = false;
                     var _iteratorError10 = undefined;
 
                     try {
-                        for (var _iterator10 = mixins[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
-                            var mixin = _step10.value;
+                        for (var _iterator10 = macros[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
+                            var macro = _step10.value;
 
-                            derived.implement(mixin);
+                            macro.inflate(MetaStep.Subclass, this, type.prototype, instanceDef, expand);
                         }
                     } catch (err) {
                         _didIteratorError10 = true;
@@ -1605,10 +1621,39 @@ var ClassMeta = exports.ClassMeta = MetaBase.extend({
                         }
                     }
                 }
+                instanceDef = expand.x || instanceDef;
+                var derived = baseExtend.call(type, instanceDef, staticDef),
+                    metadata = $meta(derived).adoptProtocol(protocols).addMacro(macros);
+                metadata.execute(MetaStep.Subclass, metadata, derived.prototype, instanceDef);
+                if (mixins) {
+                    var _iteratorNormalCompletion11 = true;
+                    var _didIteratorError11 = false;
+                    var _iteratorError11 = undefined;
+
+                    try {
+                        for (var _iterator11 = mixins[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
+                            var mixin = _step11.value;
+
+                            derived.implement(mixin);
+                        }
+                    } catch (err) {
+                        _didIteratorError11 = true;
+                        _iteratorError11 = err;
+                    } finally {
+                        try {
+                            if (!_iteratorNormalCompletion11 && _iterator11.return) {
+                                _iterator11.return();
+                            }
+                        } finally {
+                            if (_didIteratorError11) {
+                                throw _iteratorError11;
+                            }
+                        }
+                    }
+                }
                 function expand() {
                     return expand.x || (expand.x = Object.create(instanceDef));
                 }
-                Reflect.setPrototypeOf(derived, type);
                 return derived;
             },
             embellishClass: function embellishClass(source) {
@@ -1634,6 +1679,7 @@ var ClassMeta = exports.ClassMeta = MetaBase.extend({
             }
         });
         this.adoptProtocol(protocols);
+        this.addMacro(macros);
     }
 });
 
@@ -1651,23 +1697,17 @@ var InstanceMeta = exports.InstanceMeta = MetaBase.extend({
     }
 });
 
-var baseMetadata = new ClassMeta(undefined, Base),
-    abstractMetadata = new ClassMeta(baseMetadata, Abstract);
-
-defineMetadata(Base.prototype, baseMetadata);
-defineMetadata(Abstract.prototype, abstractMetadata);
-
-Base.extend = Abstract.extend = function () {
+Base.extend = function () {
     var _$meta;
 
     return (_$meta = $meta(this)).createSubclass.apply(_$meta, arguments);
 };
-Base.implement = Abstract.implement = function () {
+Base.implement = function () {
     var _$meta2;
 
     return (_$meta2 = $meta(this)).embellishClass.apply(_$meta2, arguments);
 };
-Base.prototype.conformsTo = function (protocol) {
+Base.conformsTo = Base.prototype.conformsTo = function (protocol) {
     return $meta(this).conformsTo(protocol);
 };
 
@@ -1703,13 +1743,6 @@ Base.prototype.extend = function (key, value) {
     return this;
 };
 
-Enum.extend = Base.extend;
-Enum.implement = Base.implement;
-var enumMetadata = new ClassMeta(baseMetadata, Enum),
-    flagsMetadata = new ClassMeta(enumMetadata, Flags);
-defineMetadata(Enum.prototype, enumMetadata);
-defineMetadata(Flags.prototype, flagsMetadata);
-
 var $proxyProtocol = exports.$proxyProtocol = MetaMacro.extend({
     get active() {
         return true;
@@ -1724,8 +1757,8 @@ var $proxyProtocol = exports.$proxyProtocol = MetaMacro.extend({
             var member = props[key];
             if ($isFunction(member.value)) {
                 member.value = function () {
-                    for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-                        args[_key4] = arguments[_key4];
+                    for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+                        args[_key5] = arguments[_key5];
                     }
 
                     return this[ProtocolInvoke](key, args);
@@ -1761,10 +1794,8 @@ var $proxyProtocol = exports.$proxyProtocol = MetaMacro.extend({
         });
     }
 });
-Protocol.extend = Base.extend;
-Protocol.implement = Base.implement;
-var protocolMetadata = new ClassMeta(baseMetadata, Protocol, null, [new $proxyProtocol()]);
-defineMetadata(Protocol.prototype, protocolMetadata);
+
+$meta(Protocol).addMacro(new $proxyProtocol());
 
 var StrictProtocol = exports.StrictProtocol = Protocol.extend({
     constructor: function constructor(proxy, strict) {
@@ -2303,29 +2334,29 @@ function traverseChildren(visitor, withSelf, context) {
     if (withSelf && visitor.call(context, this)) {
         return;
     }
-    var _iteratorNormalCompletion11 = true;
-    var _didIteratorError11 = false;
-    var _iteratorError11 = undefined;
+    var _iteratorNormalCompletion12 = true;
+    var _didIteratorError12 = false;
+    var _iteratorError12 = undefined;
 
     try {
-        for (var _iterator11 = this.children[Symbol.iterator](), _step11; !(_iteratorNormalCompletion11 = (_step11 = _iterator11.next()).done); _iteratorNormalCompletion11 = true) {
-            var child = _step11.value;
+        for (var _iterator12 = this.children[Symbol.iterator](), _step12; !(_iteratorNormalCompletion12 = (_step12 = _iterator12.next()).done); _iteratorNormalCompletion12 = true) {
+            var child = _step12.value;
 
             if (visitor.call(context, child)) {
                 return;
             }
         }
     } catch (err) {
-        _didIteratorError11 = true;
-        _iteratorError11 = err;
+        _didIteratorError12 = true;
+        _iteratorError12 = err;
     } finally {
         try {
-            if (!_iteratorNormalCompletion11 && _iterator11.return) {
-                _iterator11.return();
+            if (!_iteratorNormalCompletion12 && _iterator12.return) {
+                _iterator12.return();
             }
         } finally {
-            if (_didIteratorError11) {
-                throw _iteratorError11;
+            if (_didIteratorError12) {
+                throw _iteratorError12;
             }
         }
     }
@@ -2372,29 +2403,29 @@ function traverseAncestorSiblingOrSelf(visitor, withSelf, withAncestor, context)
     }
     var parent = this.parent;
     if (parent) {
-        var _iteratorNormalCompletion12 = true;
-        var _didIteratorError12 = false;
-        var _iteratorError12 = undefined;
+        var _iteratorNormalCompletion13 = true;
+        var _didIteratorError13 = false;
+        var _iteratorError13 = undefined;
 
         try {
-            for (var _iterator12 = parent.children[Symbol.iterator](), _step12; !(_iteratorNormalCompletion12 = (_step12 = _iterator12.next()).done); _iteratorNormalCompletion12 = true) {
-                var sibling = _step12.value;
+            for (var _iterator13 = parent.children[Symbol.iterator](), _step13; !(_iteratorNormalCompletion13 = (_step13 = _iterator13.next()).done); _iteratorNormalCompletion13 = true) {
+                var sibling = _step13.value;
 
                 if (!$equals(this, sibling) && visitor.call(context, sibling)) {
                     return;
                 }
             }
         } catch (err) {
-            _didIteratorError12 = true;
-            _iteratorError12 = err;
+            _didIteratorError13 = true;
+            _iteratorError13 = err;
         } finally {
             try {
-                if (!_iteratorNormalCompletion12 && _iterator12.return) {
-                    _iterator12.return();
+                if (!_iteratorNormalCompletion13 && _iterator13.return) {
+                    _iterator13.return();
                 }
             } finally {
-                if (_didIteratorError12) {
-                    throw _iteratorError12;
+                if (_didIteratorError13) {
+                    throw _iteratorError13;
                 }
             }
         }
