@@ -12,7 +12,8 @@ module.exports = function(config) {
         jspm: {
             loadFiles: [paths.tests],
             serveFiles: [paths.source]
-        },  
+        },
+        
         files: [],
         
         preprocessors: {
@@ -20,11 +21,12 @@ module.exports = function(config) {
             [paths.source]: ['babel']
         },
 
-        'babelPreprocessor': {
+        babelPreprocessor: {
             options: {
                 sourceMap: 'inline',
                 presets: [ 'es2015'],
                 plugins: [
+                    'transform-decorators-legacy'
                 ]
             }
         },

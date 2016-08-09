@@ -105,7 +105,7 @@ describe("miruken", () => {
             identity(v) { return this.base(v) * 2; }
         });
     
-    it.only("should inherit static members", () => {
+    it("should inherit static members", () => {
         expect(Geometry.PI).to.equal(Math.PI);
         expect(Geometry.add).to.equal(Math.add);
         expect(Geometry.identity(2)).to.equal(4);

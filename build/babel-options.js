@@ -2,20 +2,19 @@ var path = require('path');
 var paths = require('./paths');
 
 exports.base = function() {
-  var config = {
-    filename: '',
-    filenameRelative: '',
-    sourceMap: true,
-    sourceRoot: '',
-    moduleRoot: path.resolve('src').replace(/\\/g, '/'),
-    moduleIds: false,
-    comments: false,
-    compact: false,
-    code: true,
-    presets: [ 'es2015' ],
-    plugins: []
-  };
-  return config;
+    return {
+        filename: '',
+        filenameRelative: '',
+        sourceMap: true,
+        sourceRoot: '',
+        moduleRoot: path.resolve('src').replace(/\\/g, '/'),
+        moduleIds: false,
+        comments: false,
+        compact: false,
+        code: true,
+        presets: [ 'es2015' ],
+        plugins: ['transform-decorators-legacy']
+    };
 }
 
 exports.commonjs = function() {
