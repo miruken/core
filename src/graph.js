@@ -1,5 +1,6 @@
 import { Base, Abstract, Module } from './base2';
-import { Protocol, $isFunction, $equals } from './meta';
+import { $isFunction, $equals } from './util';
+import { Protocol } from './meta';
 import { Enum } from './enum';
 
 /**

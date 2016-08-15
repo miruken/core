@@ -1,4 +1,6 @@
-import { Base } from './base2';
+import {
+    Base, typeOf, getPropertyDescriptors
+} from './base2';
 
 /**
  * Helper class to simplify array manipulation.
@@ -239,6 +241,205 @@ export const IndexedList = Base.extend({
         });
     }
 });
+
+/**
+ * Determines if `str` is a string.
+ * @method $isString
+ * @param    {Any}     str  - string to test
+ * @returns  {boolean} true if a string.
+ */
+export function $isString(str) {
+    return typeOf(str) === 'string';
+}
+
+/**
+ * Determines if `sym` is a symbol.
+ * @method $isSymbol
+ * @param    {Symbole} sym  - symbol to test
+ * @returns  {boolean} true if a symbol.
+ */
+export function $isSymbol(str) {
+    return Object(str) instanceof Symbol;
+}
+
+/**
+ * Determines if `fn` is a function.
+ * @method $isFunction
+ * @param    {Any}     fn  - function to test
+ * @returns  {boolean} true if a function.
+ */
+export function $isFunction(fn) {
+    return fn instanceof Function;
+}
+
+/**
+ * Determines if `obj` is an object.
+ * @method $isObject
+ * @param    {Any}     obj  - object to test
+ * @returns  {boolean} true if an object.
+ */
+export function $isObject(obj) {
+    return obj === Object(obj);
+}
+
+/**
+ * Determines if `promise` is a promise.
+ * @method $isPromise
+ * @param    {Any}     promise  - promise to test
+ * @returns  {boolean} true if a promise. 
+ */
+export function $isPromise(promise) {
+    return promise && $isFunction(promise.then);
+}
+
+/**
+ * Determines if `value` is null or undefined.
+ * @method $isNothing
+ * @param    {Any}     value  - value to test
+ * @returns  {boolean} true if value null or undefined.
+ */
+export function $isNothing(value) {
+    return value == null;
+}
+
+/**
+ * Determines if `value` is not null or undefined.
+ * @method $isSomething
+ * @param    {Any}     value  - value to test
+ * @returns  {boolean} true if value not null or undefined.
+ */
+export function $isSomething(value) {
+    return value != null;
+}
+
+/**
+ * Returns a function that returns `value`.
+ * @method $lift
+ * @param    {Any}      value  - any value
+ * @returns  {Function} function that returns value.
+ */
+export function $lift(value) {
+    return function() { return value; };
+}
+
+/**
+ * Creates a decorator builder.<br/>
+ * See [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern)
+ * @method
+ * @param   {Object}   decorations  -  object defining decorations
+ * @erturns {Function} function to build decorators.
+ */
+export function $decorator(decorations) {
+    return function (decoratee) {
+        if ($isNothing(decoratee)) {
+            throw new TypeError("No decoratee specified.");
+        }
+        const decorator = Object.create(decoratee);
+        Object.defineProperty(decorator, 'decoratee', {
+            configurable: false,
+            value:        decoratee
+        });
+        if (decorations && $isFunction(decorator.extend)) {
+            decorator.extend(decorations);
+        }
+        return decorator;
+    }
+}
+
+/**
+ * Decorates an instance using the 
+ * [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern).
+ * @method
+ * @param   {Object}   decoratee    -  decoratee
+ * @param   {Object}   decorations  -  object defining decorations
+ * @erturns {Function} function to build decorators.
+ */
+export function $decorate(decoratee, decorations) {
+    return $decorator(decorations)(decoratee);
+}
+
+/**
+ * Gets the decoratee used in the  
+ * [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern).
+ * @method
+ * @param   {Object}   decorator  -  possible decorator
+ * @param   {boolean}  deepest    -  true if deepest decoratee, false if nearest.
+ * @erturns {Object}   decoratee if present, otherwise decorator.
+ */
+export function $decorated(decorator, deepest) {
+    let decoratee;
+    while (decorator && (decoratee = decorator.decoratee)) {
+        if (!deepest) {
+            return decoratee;
+        }
+        decorator = decoratee;
+    }
+    return decorator;
+}
+
+/**
+ * Recursively flattens and optionally prune an array.
+ * @method $flatten
+ * @param    {Array}   arr    -  array to flatten
+ * @param    {boolean} prune  -  true if prune null items
+ * @returns  {Array}   flattend/pruned array or `arr`
+ */
+export function $flatten(arr, prune) {
+    if (!Array.isArray(arr)) return arr;
+    let items = arr.map(item => $flatten(item, prune));
+    if (prune) items = items.filter($isSomething);
+    return [].concat(...items);
+}
+
+/**
+ * Recursively merges `sources` into `target`.
+ * @method $mergeDeep
+ * @param    {Object}  target   -  object to merge into
+ * @param    {Array}   sources  -  objects to merge from
+ * @returns  {Object} the original `target`.
+ */
+export function $merge(target, ...sources) {
+    if (!$isObject(target)) return target;
+    for (let source of sources) {
+        if ($isObject(source)) {
+            const props = getPropertyDescriptors(source);
+            for (let key in props) {
+                if (!props[key].enumerable) continue;
+                const newValue = source[key],
+                      curValue = target[key];
+                if (curValue && $isObject(curValue)) {
+                    $merge(curValue, newValue);
+                } else {
+                    target[key] = newValue;
+                }
+            }
+        }
+    }
+    return target;
+}
+
+/**
+ * Determines whether `obj1` and `obj2` are considered equal.
+ * <p>
+ * Objects are considered equal if the objects are strictly equal (===) or
+ * either object has an equals method accepting other object that returns true.
+ * </p>
+ * @method $equals
+ * @param    {Any}     obj1  - first object
+ * @param    {Any}     obj2  - second object
+ * @returns  {boolean} true if the obejcts are considered equal, false otherwise.
+ */
+export function $equals(obj1, obj2) {
+    if (obj1 === obj2) {
+        return true;
+    }
+    if ($isFunction(obj1.equals)) {
+        return obj1.equals(obj2);
+    } else if ($isFunction(obj2.equals)) {
+        return obj2.equals(obj1);
+    }
+    return false;
+}
 
 /**
  * Throttles `fn` over a time period.

@@ -3,6 +3,29 @@ import { Protocol, StrictProtocol } from './meta';
 import { Enum } from './enum';
 
 /**
+ * Type of property method.
+ * @class PropertyType
+ * @extends Enum
+ */
+export const MethodType = Enum({
+    /**
+     * Getter property method
+     * @property {number} Get
+     */
+    Get: 1,
+    /**
+     * Setter property method
+     * @property {number} Set
+     */    
+    Set: 2,
+    /**
+     * Method invocation
+     * @property {number} Invoke
+     */        
+    Invoke: 3
+});
+
+/**
  * Variance enum
  * @class Variance
  * @extends Enum

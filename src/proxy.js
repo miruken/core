@@ -1,8 +1,8 @@
 import { Base, getPropertyDescriptors } from './base2';
-
-import {
-    $isFunction, $isClass, $isProtocol, $isNothing
-} from './meta';
+import { $meta, $isClass, $isProtocol } from './meta';
+import { $isNothing, $isFunction } from './util';
+import { MethodType } from './core';
+import { Enum } from './enum';
 
 /**
  * Facet choices for proxies.
@@ -87,36 +87,35 @@ export const ProxyBuilder = Base.extend({
 
 function buildProxy(classes, protocols, options) {
     const base  = options.baseType || classes.shift() || Base,
-          proxy = base.extend(classes.concat(protocols), {
+          proxy = base.extend(...classes.concat(protocols), {
             constructor(facets) {
                 const spec = {};
                 spec.value = facets[Facet.InterceptorSelectors]
                 if (spec.value && spec.value.length > 0) {
-                    Object.defineProperty(this, "selectors", spec);
+                    Object.defineProperty(this, 'selectors', spec);
                 }
                 spec.value = facets[Facet.Interceptors];
                 if (spec.value && spec.value.length > 0) {
-                    Object.defineProperty(this, "interceptors", spec);
+                    Object.defineProperty(this, 'interceptors', spec);
                 }
                 spec.value = facets[Facet.Delegate];
                 if (spec.value) {
                     spec.writable = true;
-                    Object.defineProperty(this, "delegate", spec);
+                    Object.defineProperty(this, 'delegate', spec);
                 }
-                const ctor = proxyMethod("constructor", this.base, base);
+                const ctor = proxyMethod('constructor', this.base, base);
                 ctor.apply(this, facets[Facet.Parameters]);
                 delete spec.writable;
                 delete spec.value;
             },
             getInterceptors(source, method) {
                 const selectors = this.selectors;
-                return selectors 
-                    ? selectors.reduce((interceptors, selector) =>
-                         selector.selectInterceptors(source, method, interceptors)
-                    , this.interceptors)
-                : this.interceptors;
+                return selectors ? selectors.reduce((interceptors, selector) =>
+                           selector.selectInterceptors(source, method, interceptors),
+                           this.interceptors)
+                     : this.interceptors;
             },
-            extend: extendProxy
+            extend: extendProxyInstance
         }, {
             shouldProxy: options.shouldProxy
         });
@@ -130,80 +129,77 @@ function throwProxiesSealedExeception()
     throw new TypeError("Proxy classes are sealed and cannot be extended from.");
 }
 
+const noProxyMethods = {
+    base: true, extend: true, constructor: true, conformsTo: true,
+    getInterceptors: true, getDelegate: true, setDelegate: true
+};
+
 function proxyClass(proxy, protocols) {
-    const sources    = [proxy].concat(protocols),
-          proxyProto = proxy.prototype,
-          proxied    = {};
+    const sources = [proxy].concat($meta(proxy).allProtocols, protocols),
+          proxied = {};
     for (let i = 0; i < sources.length; ++i) {
-        const source      = sources[i],
-              sourceProto = source.prototype,
-              isProtocol  = $isProtocol(source);
-        for (let key in sourceProto) {
-            if (!((key in proxied) || (key in noProxyMethods))
-                && (!proxy.shouldProxy || proxy.shouldProxy(key, source))) {
-                const descriptor = getPropertyDescriptors(sourceProto, key);
-                if ('value' in descriptor) {
-                    const member = isProtocol ? undefined : descriptor.value;
-                    if ($isNothing(member) || $isFunction(member)) {
-                        proxyProto[key] = proxyMethod(key, member, proxy);
-                    }
-                    proxied[key] = true;
-                } else if (isProtocol) {
-                    const cname = key.charAt(0).toUpperCase() + key.slice(1),
-                          get   = 'get' + cname,
-                          set   = 'set' + cname,
-                          spec  = proxyClass.spec || (proxyClass.spec = {
-                              enumerable: true
-                          });
-                    spec.get = function (get) {
-                        let proxyGet;
-                        return function () {
-                            if (get in this) {
-                                return (this[get]).call(this);
-                            }
-                            if (!proxyGet) {
-                                proxyGet = proxyMethod(get, undefined, proxy);
-                            }
-                            return proxyGet.call(this);
-                        }
-                    }(get);
-                    spec.set = function (set) {
-                        let proxySet;
-                        return function (value) {
-                            if (set in this) {
-                                return (this[set]).call(this, value);
-                            }
-                            if (!proxySet) {
-                                proxySet = proxyMethod(set, undefined, proxy);
-                            }
-                            return proxySet.call(this, value);
-                        }
-                    }(set);
-                    Object.defineProperty(proxy.prototype, key, spec);
-                    proxied[key] = true;
+        const source     = sources[i],
+              isProtocol = $isProtocol(source),
+              props      = getPropertyDescriptors(source.prototype);
+        Reflect.ownKeys(props).forEach(key => {
+            if (proxied.hasOwnProperty(key) || (key in noProxyMethods)) return;
+            if (proxy.shouldProxy && !proxy.shouldProxy(key, source)) return;
+            const descriptor = props[key];
+            if (!descriptor.enumerable) return;
+            let { value, get, set } = descriptor;
+            if ($isFunction(value)) {
+                if (isProtocol) value = null;
+                descriptor.value = proxyMethod(key, value, proxy);
+            } else {
+                if (descriptor.hasOwnProperty('value')) {
+                    const field = Symbol();
+                    get = function () { return this[field]; },
+                    set = function (value) { this[field] = value; };
+                    delete descriptor.value;
+                    delete descriptor.writable;
+                }
+                if (get) {
+                    if (isProtocol) get = null;
+                    descriptor.get = proxyMethod(key, get, proxy, MethodType.Get);
+                }
+                if (set) {
+                    if (isProtocol) set = null;                    
+                    descriptor.set = proxyMethod(key, set, proxy, MethodType.Set);
                 }
             }
-        }
+            Object.defineProperty(proxy.prototype, key, descriptor);
+            proxied[key] = true;
+        });
     }
 }
 
-function proxyMethod(key, method, source) {
+function proxyMethod(key, method, source, type) {
     let interceptors;    
-    const spec = proxyMethod.spec || (proxyMethod.spec = {});
-    function methodProxy() {
+    function methodProxy(...args) {
         const _this    = this;
         let   delegate = this.delegate,
               idx      = -1;
         if (!interceptors) {
             interceptors = this.getInterceptors(source, key);
         }
+        type = type || MethodType.Invoke;
         const invocation = {
-            args: Array.from(arguments),
-            useDelegate(value) {
-                delegate = value;
-            },
+            method:     key,
+            methodType: type,            
+            source:     source,
+            args:       args,
+            useDelegate(value) { delegate = value; },
             replaceDelegate(value) {
                 _this.delegate = delegate = value;
+            },
+            get canProceed() {
+                if (interceptors && (idx + 1 < interceptors.length)) {
+                    return true;
+                }
+                if (delegate) {
+                    return $isFunction(delegate[key]);
+                }
+                return !!method;
             },
             proceed() {
                 ++idx;
@@ -212,9 +208,18 @@ function proxyMethod(key, method, source) {
                     return interceptor.intercept(invocation);
                 }
                 if (delegate) {
-                    const delegateMethod = delegate[key];
-                    if ($isFunction(delegateMethod)) {
-                        return delegateMethod.apply(delegate, this.args);
+                    switch(type) {
+                    case MethodType.Get:
+                        return delegate[key];
+                    case MethodType.Set:
+                        delegate[key] = args[0];
+                        break;
+                    case MethodType.Invoke:
+                        const invoke = delegate[key];
+                        if ($isFunction(invoke)) {
+                            return invoke.apply(delegate, this.args);
+                        }
+                        break;
                     }
                 } else if (method) {
                     return method.apply(_this, this.args);
@@ -222,50 +227,63 @@ function proxyMethod(key, method, source) {
                 throw new Error(`Interceptor cannot proceed without a class or delegate method '${key}'.`);
             }
         };
-        spec.value = key;
-        Object.defineProperty(invocation, 'method', spec);
-        spec.value = source;
-        Object.defineProperty(invocation, 'source', spec);
-        delete spec.value;
-        spec.get = function () {
-            if (interceptors && (idx + 1 < interceptors.length)) {
-                return true;
-            }
-            if (delegate) {
-                return $isFunction(delegate(key));
-            }
-            return !!method;
-        };
-        Object.defineProperty(invocation, 'canProceed', spec);
-        delete spec.get;
         return invocation.proceed();
     }
     methodProxy.baseMethod = method;
     return methodProxy;
 }
 
-function extendProxy() {
+function extendProxyInstance(key, value) {
     const proxy     = this.constructor,
-          clazz     = proxy.prototype,
-          overrides = (arguments.length === 1) ? arguments[0] : {};
-    if (arguments.length >= 2) {
-        overrides[arguments[0]] = arguments[1];
-    }
-    for (let methodName in overrides) {
-        if (!(methodName in noProxyMethods) && 
-            (!proxy.shouldProxy || proxy.shouldProxy(methodName, clazz))) {
-            const method = this[methodName];
-            if (method && method.baseMethod) {
-                this[methodName] = method.baseMethod;
+          overrides = arguments.length === 1
+                    ? key : { [key]: value },
+          props     = getPropertyDescriptors(overrides);
+    Reflect.ownKeys(props).forEach(key => {
+        const descriptor = props[key];        
+        if (!descriptor.enumerable) return;
+        let { value, get, set } = descriptor,
+            baseDescriptor = getPropertyDescriptors(this, key);
+        if (!baseDescriptor) return;
+        if (value) {
+            if ($isFunction(value)) {
+                const baseValue = baseDescriptor.value;
+                if ($isFunction(value) && value.baseMethod) {
+                    baseDescriptor.value = value.baseMethod;
+                }
             }
-            this.base(methodName, overrides[methodName]);
-            this[methodName] = proxyMethod(methodName, this[methodName], clazz);
+        } else if (get) {
+            const baseGet = baseDescriptor.get;
+            if (baseGet && get.baseMethod) {
+                baseDescriptor.get = get.baseMethod;
+            }
+        } else if (set) {
+            const baseSet = baseDescriptor.set;
+            if (baseSet && set.baseMethod) {
+                baseDescriptor.set = set.baseMethod;
+            }            
         }
-    }
+        Object.defineProperty(this, key, baseDescriptor);
+    });
+    this.base(overrides);
+    Reflect.ownKeys(props).forEach(key => {
+        if (key in noProxyMethods) return;
+        if (proxy.shouldProxy && !proxy.shouldProxy(key, proxy)) return;
+        const descriptor = props[key];
+        if (!descriptor.enumerable) return;
+        let { value, get, set } = descriptor;        
+        if ($isFunction(value)) {
+            descriptor.value = proxyMethod(key, value, proxy);
+        } else if (!(get || set)) {
+            return;
+        } else {
+            if (get) {
+                descriptor.get = proxyMethod(key, get, proxy, MethodType.Get);
+            }
+            if (set) {
+                descriptor.set = proxyMethod(key, set, proxy, MethodType.Set);
+            }
+        }
+        Object.defineProperty(this, key, descriptor);
+    });
     return this;
 }
-
-const noProxyMethods = {
-    base: true, extend: true, constructor: true, conformsTo: true,
-    getInterceptors: true, getDelegate: true, setDelegate: true
-};

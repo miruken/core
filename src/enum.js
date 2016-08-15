@@ -63,7 +63,7 @@ export const Enum = Base.extend({
         en.items     = Object.freeze(items);
         en.fromValue = this.fromValue;
         delete en[Defining]
-        return Object.freeze(en);
+        return en;
     },
     fromValue(value) {
         const match = this.items.find(item => item.value == value);

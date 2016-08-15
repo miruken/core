@@ -1,8 +1,10 @@
-import { decorate } from './decorator';
+import { decorate } from './decorate';
 
 export function copy(...args) {
     return decorate(handleCopy, args);
 }
+
+export default copy;
 
 function handleCopy(target, key, descriptor) {
     const { get, set, value } = descriptor;

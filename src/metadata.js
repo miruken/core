@@ -1,15 +1,18 @@
-import { decorate } from './decorator';
+import { decorate } from './decorate';
+import { $meta } from './meta';
 
 export function metadata(...args) {
     return decorate(handleMetadata, args);
 }
 
-function handleMetadata(target, key, descriptor, [keyMeta]) {
-    if (keyMeta.length > 0) {
+function handleMetadata(target, key, descriptor, [keyMetadata]) {
+    if (keyMetadata) {
         const meta = $meta(target);
         if (meta) {
-            meta.addMetadata(key, keyMeta[0]);
+            meta.addMetadata(key, keyMetadata);
         }
     }
     return descriptor;
 }
+
+export default metadata;
