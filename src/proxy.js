@@ -38,9 +38,7 @@ export const Interceptor = Base.extend({
      * @param    {Object} invocation  - invocation
      * @returns  {Any} invocation result
      */
-    intercept(invocation) {
-        return invocation.proceed();
-    }
+    intercept(invocation) { return invocation.proceed(); }
 });
 
 /**

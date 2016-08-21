@@ -1365,7 +1365,7 @@ export function $isFunction(fn) {
  * @returns  {boolean} true if an object.
  */
 export function $isObject(obj) {
-    return obj === Object(obj);
+    return typeOf(obj) === 'object';
 }
 
 /**
@@ -1455,9 +1455,7 @@ export function $decorate(decoratee, decorations) {
 export function $decorated(decorator, deepest) {
     let decoratee;
     while (decorator && (decoratee = decorator.decoratee)) {
-        if (!deepest) {
-            return decoratee;
-        }
+        if (!deepest) return decoratee;
         decorator = decoratee;
     }
     return decorator;
@@ -1479,29 +1477,73 @@ export function $flatten(arr, prune) {
 
 /**
  * Recursively merges `sources` into `target`.
- * @method $mergeDeep
+ * @method $merge
  * @param    {Object}  target   -  object to merge into
  * @param    {Array}   sources  -  objects to merge from
  * @returns  {Object} the original `target`.
  */
 export function $merge(target, ...sources) {
-    if (!$isObject(target)) return target;
-    for (let source of sources) {
-        if ($isObject(source)) {
-            const props = getPropertyDescriptors(source);
-            for (let key in props) {
-                if (!props[key].enumerable) continue;
-                const newValue = source[key],
-                      curValue = target[key];
-                if (curValue && $isObject(curValue)) {
-                    $merge(curValue, newValue);
-                } else {
-                    target[key] = newValue;
-                }
-            }
-        }
+    if (!$isObject(target) ||
+        Object.isFrozen(target)) {
+        return target;
     }
+    sources.forEach(source => {
+        if (!$isObject(source)) return;
+        const props = getPropertyDescriptors(source);
+        Reflect.ownKeys(props).forEach(key => {
+            if (!props[key].enumerable) return;
+            const newValue = source[key],
+                  curValue = target[key];
+            if ($isObject(curValue)) {
+                $merge(curValue, newValue);
+            } else {
+                target[key] = newValue;
+            }
+        });
+    });
     return target;
+}
+
+/**
+ * Determines if 'criteria' is satisfied by 'target'.
+ * @method $match
+ * @param    {Object}    target     -  object to match
+ * @param    {Object}    criteria   -  criteria to match
+ * @param    {Function}  [matched]  -  receives matched output
+ * @returns  {boolean} true if matches.
+ */
+export function $match(target, criteria, matched) {
+    if (!$isObject(target) || !$isObject(criteria)) {
+        return false;
+    }
+    const match   = $isFunction(matched) ? {} : null,
+          matches = Reflect.ownKeys(criteria).every(key => {
+              if (!target.hasOwnProperty(key)) {
+                  return false;
+              }
+              const constraint = criteria[key],
+                    value      = target[key];              
+              if (constraint === undefined) {
+                  if (match) {
+                      match[key] = $isObject(value) ? $merge({}, value) : value;
+                  }
+                  return true;
+              }
+              if ($isObject(value)) {
+                  return $match(value, constraint, match ? m => match[key] = m : null);
+              }
+              if (value === constraint) {
+                  if (match) {
+                      match[key] = value;
+                  }
+                  return true;
+              }
+              return false;
+          });
+    if (matches && match) {
+        matched(match);
+    }
+    return matches;
 }
 
 /**
@@ -1561,7 +1603,7 @@ const baseExtend        = Base.extend,
       baseProtoExtend   = Base.prototype.extend,
       MetadataSymbol    = Symbol.for('miruken.$meta');
 
-const { defineProperty, getOwnPropertyDescriptor } = Object,
+const { defineProperty, getOwnPropertyDescriptor, isFrozen } = Object,
       { ownKeys } = Reflect;
 
 /**
@@ -1770,7 +1812,7 @@ export const Metadata = Base.extend({
             /**
              * Gets/sets the associated type.
              * @property {Function} type
-             */                                              
+             */
             get type() {
                 return _type || (_parent && _parent.type);
             },
@@ -1898,8 +1940,10 @@ export const Metadata = Base.extend({
                 }
                 let members      = args.shift() || {},
                     classMembers = args.shift() || {},
-                    derived      = baseExtend.call(type, members, classMembers);
-                defineMetadata(derived.prototype, $meta(members));
+                    derived      = baseExtend.call(type, members, classMembers),
+                    derivedMeta  = $meta(members);
+                derivedMeta.type = derived;
+                defineMetadata(derived.prototype, derivedMeta);
                 if (decorators.length > 0) {
                     for (let decorator of decorators) {
                         derived = decorator(derived) || derived;
@@ -1920,7 +1964,10 @@ export const Metadata = Base.extend({
                     if (this.isProtocol && !(source instanceof Base)) {
                         source = protocol(source) || source;
                     }
-                    (_extensions || (_extensions = [])).push($meta(source));
+                    const extension = $meta(source);
+                    if (extension) {
+                        (_extensions || (_extensions = [])).push(extension);
+                    }
                 }
                 return baseImplement.call(type, source);
             },
@@ -1939,31 +1986,86 @@ export const Metadata = Base.extend({
                     if (object instanceof Protocol) {
                         key = protocol(key) || key;
                     }
-                    (_extensions || (_extensions = [])).push($meta(key));
+                    const extension = $meta(key);
+                    if (extension) {
+                        (_extensions || (_extensions = [])).push(extension);
+                    }
                     return baseProtoExtend.call(object, key);
                 }
                 return baseProtoExtend.call(object, key, value);
+            },
+            /**
+             * Traverses the metadata from top to bottom.
+             * @method traverseTopDown
+             * @param  {Function}  visitor  -  receives metadata
+             */            
+            traverseTopDown(visitor) {
+                if (!visitor) return;
+                if (_extensions) {
+                    let i = _extensions.length;
+                    while (--i >= 0) {
+                        if (visitor(_extensions[i])) return;
+                    }
+                }
+                if (visitor(this)) return;
+                if (_parent) {
+                    _parent.traverseTopDown(visitor);
+                }
+            },
+            /**
+             * Traverses the metadata from bottom to top.
+             * @method traverseBottomUp
+             * @param  {Function}  visitor  -  receives metadata
+             */                        
+            traverseBottomUp(visitor) {
+                if (!visitor) return;
+                if (_parent) {
+                    _parent.traverseTopDown(visitor);
+                }
+                if (visitor(this)) return;                
+                if (_extensions) {
+                    let i = _extensions.length;
+                    while (--i >= 0) {
+                        if (visitor(_extensions[i])) return;
+                    }
+                }
             },            
             /**
-             * Gets the metadata for one or all keys.
+             * Gets the metadata for `key` and `criteria`.
              * @method getMetadata
-             * @param    {string|Symbol}  key  -  key selector
-             * @returns  {Object} key metadata.
+             * @param    {Any}     [key]     -  key selector
+             * @param    {Object}  criteria  -  metadata criteria
+             * @returns  {Object}  matching metadata.
              */
-            getMetadata(key) {
+            getMetadata(key, criteria) {
                 let metadata;
+                if ($isObject(key)) {
+                    [key, criteria] = [null, key];
+                }
                 if (_parent) {
-                    metadata = _parent.getMetadata(key);
+                    metadata = _parent.getMetadata(key, criteria);
                 }
                 if (_metadata) {
-                    const keyData = key ? _metadata[key] : _metadata;
-                    if (keyData) {
-                        metadata = $merge(metadata || {}, keyData);
-                    }
+                    const addKey = !key,
+                          keys   = key ? [key] : ownKeys(_metadata);
+                    keys.forEach(key => {
+                        let keyMeta = _metadata[key];
+                        if (keyMeta) {
+                            if (criteria) {
+                                if (!$match(keyMeta, criteria, m => keyMeta = m)) {
+                                    return;
+                                }
+                            }
+                            if (addKey) {
+                                keyMeta = { [key]: keyMeta };
+                            }
+                            metadata = $merge(metadata || {}, keyMeta);
+                        }
+                    });
                 }                
                 if (_extensions) {
                     metadata = _extensions.reduce((result, ext) => {
-                        const keyMeta = ext.getMetadata(key);
+                        const keyMeta = ext.getMetadata(key, criteria);
                         return keyMeta ? $merge(result || {}, keyMeta) : result;
                     }, metadata);  
                 }
@@ -2044,6 +2146,7 @@ export function $meta(target) {
     if (target.hasOwnProperty(MetadataSymbol)) {
         return target[MetadataSymbol];
     }
+    if (isFrozen(target)) return;
     if (target === Metadata || target instanceof Metadata ||
         target.prototype instanceof Metadata)
         return;    
@@ -2707,9 +2810,7 @@ export const Interceptor = Base.extend({
      * @param    {Object} invocation  - invocation
      * @returns  {Any} invocation result
      */
-    intercept(invocation) {
-        return invocation.proceed();
-    }
+    intercept(invocation) { return invocation.proceed(); }
 });
 
 /**

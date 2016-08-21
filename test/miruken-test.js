@@ -9,7 +9,7 @@ import metadata from '../src/metadata';
 
 import {
     $isFunction, $isString, $flatten, $merge,
-    $decorator, $decorate, $decorated
+    $match, $decorator, $decorate, $decorated
 } from '../src/util';
 
 import '../src/promise';
@@ -75,7 +75,7 @@ const LogInterceptor = Interceptor.extend({
             `${invocation.methodType.name} ${invocation.method} (${invocation.args.join(", ")})`
         );
         const result = invocation.proceed();
-        console.log(`    And returned ${result}`);
+        console.log(`     Return ${result}`);
         return result;
     }
 });
@@ -372,10 +372,30 @@ describe("$meta", () => {
         doctor.dob = new Date();
         expect(doctor.age).to.be.at.least(10);
     });
-
+    
     it("should retrieve property metadata", () => {
-        const patient = $meta(Doctor).getMetadata('patient');
-        expect(patient.map).to.equal(Person);
+        const meta = $meta(Doctor).getMetadata('patient');
+        expect(meta).to.eql({ map: Person });
+    });
+
+    it("should retrieve all property metadata", () => {
+        const meta = $meta(Doctor).getMetadata();
+        expect(meta).to.eql({
+            pet:     { map: Animal },
+            patient: { map: Person }
+        });
+    });
+
+    it("should filter all property metadata", () => {
+        let meta = $meta(Doctor).getMetadata({ map: undefined });
+        expect(meta).to.eql({
+            pet:     { map: Animal },
+            patient: { map: Person }
+        });
+        meta = $meta(Doctor).getMetadata({ map: Person });
+        expect(meta).to.eql({
+            patient: { map: Person }
+        });        
     });
 
     it("should merge property metadata", () => {
@@ -691,6 +711,67 @@ describe("$merge", () => {
         expect($merge(target, {a: {b: {c: 3}, d: 'x'}, x: {z: 4}, u: {r: 6}}))
         	.eql({a: {b: {c: 3}, d: 'x'}, x: {y: 2, z: 4}, u: {r: 6}});
     });
+});
+
+describe("$match", () => {
+    const source = {
+        a: {
+            b: 2
+        },
+        c: 3,
+        d: { e: { f: 4 }, g: 5 },
+        h: Animal
+    };
+
+    it("should provide match if requested", () => {
+        let match;
+        expect($match(source, { c: undefined }, m => match = m)).to.be.true;
+        expect(match).to.eql({ c: 3 });
+    });
+
+    it("should match if key present", () => {
+        expect($match(source, {
+            c: undefined,
+            h: undefined
+        }, match => expect(match).to.eql({
+            c: 3,
+            h: Animal
+        }))).to.be.true;
+        expect($match(source, {
+            a : undefined,
+            d: {
+                e: {
+                    f: undefined
+                }
+            }
+        }, match => expect(match).to.eql({
+            a: {
+                b: 2
+            },
+            d: {
+                e: { f: 4 }
+            }
+        }))).to.be.true;
+        expect($match(source, {
+            d: {
+                e: {
+                    f: undefined
+                },
+                l: undefined
+            }
+        })).to.be.false;
+    });
+
+    it("should match simple properties", () => {
+        expect($match(source, { c: 1 })).to.be.false;
+        expect($match(source, { c: 3 })).to.be.true;
+    });
+
+    it("should match nested properties", () => {
+        expect($match(source, { a: { b: 5 } })).to.be.false;
+        expect($match(source, { a: { b: 2 } })).to.be.true;
+    });    
+    
 });
 
 describe("Modifier", () => {
@@ -1058,10 +1139,11 @@ describe("ProxyBuilder", () => {
             const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
-                                     parameters:   ['Patches'],
+                                     parameters:   ['Patches', "red"],
                                      interceptors: [new LogInterceptor()]
                   });
             expect(dog.name).to.equal('Patches');
+            expect(dog.color).to.equal("red");            
             expect(dog.talk()).to.equal('Ruff Ruff');
             expect(dog.fetch("bone")).to.equal('Fetched bone');
         });

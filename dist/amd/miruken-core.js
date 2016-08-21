@@ -31,6 +31,7 @@ define(['exports'], function (exports) {
     exports.$decorated = $decorated;
     exports.$flatten = $flatten;
     exports.$merge = $merge;
+    exports.$match = $match;
     exports.$equals = $equals;
     exports.$debounce = $debounce;
     exports.protocol = protocol;
@@ -1169,7 +1170,7 @@ define(['exports'], function (exports) {
     }
 
     function $isObject(obj) {
-        return obj === Object(obj);
+        return typeOf(obj) === 'object';
     }
 
     function $isPromise(promise) {
@@ -1214,9 +1215,7 @@ define(['exports'], function (exports) {
     function $decorated(decorator, deepest) {
         var decoratee = void 0;
         while (decorator && (decoratee = decorator.decoratee)) {
-            if (!deepest) {
-                return decoratee;
-            }
+            if (!deepest) return decoratee;
             decorator = decoratee;
         }
         return decorator;
@@ -1234,50 +1233,65 @@ define(['exports'], function (exports) {
     }
 
     function $merge(target) {
-        if (!$isObject(target)) return target;
+        if (!$isObject(target) || Object.isFrozen(target)) {
+            return target;
+        }
 
         for (var _len2 = arguments.length, sources = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
             sources[_key2 - 1] = arguments[_key2];
         }
 
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
-
-        try {
-            for (var _iterator = sources[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                var source = _step.value;
-
-                if ($isObject(source)) {
-                    var props = getPropertyDescriptors(source);
-                    for (var key in props) {
-                        if (!props[key].enumerable) continue;
-                        var newValue = source[key],
-                            curValue = target[key];
-                        if (curValue && $isObject(curValue)) {
-                            $merge(curValue, newValue);
-                        } else {
-                            target[key] = newValue;
-                        }
-                    }
+        sources.forEach(function (source) {
+            if (!$isObject(source)) return;
+            var props = getPropertyDescriptors(source);
+            Reflect.ownKeys(props).forEach(function (key) {
+                if (!props[key].enumerable) return;
+                var newValue = source[key],
+                    curValue = target[key];
+                if ($isObject(curValue)) {
+                    $merge(curValue, newValue);
+                } else {
+                    target[key] = newValue;
                 }
-            }
-        } catch (err) {
-            _didIteratorError = true;
-            _iteratorError = err;
-        } finally {
-            try {
-                if (!_iteratorNormalCompletion && _iterator.return) {
-                    _iterator.return();
-                }
-            } finally {
-                if (_didIteratorError) {
-                    throw _iteratorError;
-                }
-            }
-        }
-
+            });
+        });
         return target;
+    }
+
+    function $match(target, criteria, matched) {
+        if (!$isObject(target) || !$isObject(criteria)) {
+            return false;
+        }
+        var match = $isFunction(matched) ? {} : null,
+            matches = Reflect.ownKeys(criteria).every(function (key) {
+            if (!target.hasOwnProperty(key)) {
+                return false;
+            }
+            var constraint = criteria[key],
+                value = target[key];
+            if (constraint === undefined) {
+                if (match) {
+                    match[key] = $isObject(value) ? $merge({}, value) : value;
+                }
+                return true;
+            }
+            if ($isObject(value)) {
+                return $match(value, constraint, match ? function (m) {
+                    return match[key] = m;
+                } : null);
+            }
+            if (value === constraint) {
+                if (match) {
+                    match[key] = value;
+                }
+                return true;
+            }
+            return false;
+        });
+        if (matches && match) {
+            matched(match);
+        }
+        return matches;
     }
 
     function $equals(obj1, obj2) {
@@ -1320,6 +1334,7 @@ define(['exports'], function (exports) {
 
     var defineProperty = Object.defineProperty;
     var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+    var isFrozen = Object.isFrozen;
     var ownKeys = Reflect.ownKeys;
 
     var ProtocolGet = Symbol(),
@@ -1453,27 +1468,27 @@ define(['exports'], function (exports) {
         behaviors = $flatten(behaviors, true);
         return function (target) {
             if (behaviors.length > 0 && $isFunction(target.implement)) {
-                var _iteratorNormalCompletion2 = true;
-                var _didIteratorError2 = false;
-                var _iteratorError2 = undefined;
+                var _iteratorNormalCompletion = true;
+                var _didIteratorError = false;
+                var _iteratorError = undefined;
 
                 try {
-                    for (var _iterator2 = behaviors[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                        var behavior = _step2.value;
+                    for (var _iterator = behaviors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                        var behavior = _step.value;
 
                         target.implement(behavior);
                     }
                 } catch (err) {
-                    _didIteratorError2 = true;
-                    _iteratorError2 = err;
+                    _didIteratorError = true;
+                    _iteratorError = err;
                 } finally {
                     try {
-                        if (!_iteratorNormalCompletion2 && _iterator2.return) {
-                            _iterator2.return();
+                        if (!_iteratorNormalCompletion && _iterator.return) {
+                            _iterator.return();
                         }
                     } finally {
-                        if (_didIteratorError2) {
-                            throw _iteratorError2;
+                        if (_didIteratorError) {
+                            throw _iteratorError;
                         }
                     }
                 }
@@ -1517,53 +1532,53 @@ define(['exports'], function (exports) {
                     if (_parent) {
                         _parent.allProtocols.forEach(addProtocol);
                     }
-                    var _iteratorNormalCompletion3 = true;
-                    var _didIteratorError3 = false;
-                    var _iteratorError3 = undefined;
+                    var _iteratorNormalCompletion2 = true;
+                    var _didIteratorError2 = false;
+                    var _iteratorError2 = undefined;
 
                     try {
-                        for (var _iterator3 = declared[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
-                            var _protocol = _step3.value;
+                        for (var _iterator2 = declared[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                            var _protocol = _step2.value;
 
                             $meta(_protocol).allProtocols.forEach(addProtocol);
                         }
                     } catch (err) {
-                        _didIteratorError3 = true;
-                        _iteratorError3 = err;
+                        _didIteratorError2 = true;
+                        _iteratorError2 = err;
                     } finally {
                         try {
-                            if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                                _iterator3.return();
+                            if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                                _iterator2.return();
                             }
                         } finally {
-                            if (_didIteratorError3) {
-                                throw _iteratorError3;
+                            if (_didIteratorError2) {
+                                throw _iteratorError2;
                             }
                         }
                     }
 
                     if (_extensions) {
-                        var _iteratorNormalCompletion4 = true;
-                        var _didIteratorError4 = false;
-                        var _iteratorError4 = undefined;
+                        var _iteratorNormalCompletion3 = true;
+                        var _didIteratorError3 = false;
+                        var _iteratorError3 = undefined;
 
                         try {
-                            for (var _iterator4 = _extensions[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-                                var extension = _step4.value;
+                            for (var _iterator3 = _extensions[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                                var extension = _step3.value;
 
                                 extension.allProtocols.forEach(addProtocol);
                             }
                         } catch (err) {
-                            _didIteratorError4 = true;
-                            _iteratorError4 = err;
+                            _didIteratorError3 = true;
+                            _iteratorError3 = err;
                         } finally {
                             try {
-                                if (!_iteratorNormalCompletion4 && _iterator4.return) {
-                                    _iterator4.return();
+                                if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                                    _iterator3.return();
                                 }
                             } finally {
-                                if (_didIteratorError4) {
-                                    throw _iteratorError4;
+                                if (_didIteratorError3) {
+                                    throw _iteratorError3;
                                 }
                             }
                         }
@@ -1587,13 +1602,13 @@ define(['exports'], function (exports) {
                     var type = this.type,
                         notifyType = type && $isFunction(type.protocolAdopted);
                     _protocols = _protocols || [];
-                    var _iteratorNormalCompletion5 = true;
-                    var _didIteratorError5 = false;
-                    var _iteratorError5 = undefined;
+                    var _iteratorNormalCompletion4 = true;
+                    var _didIteratorError4 = false;
+                    var _iteratorError4 = undefined;
 
                     try {
-                        for (var _iterator5 = protocols[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-                            var _protocol2 = _step5.value;
+                        for (var _iterator4 = protocols[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
+                            var _protocol2 = _step4.value;
 
                             if (_protocol2.prototype instanceof Protocol && _protocols.indexOf(_protocol2) < 0) {
                                 _protocols.push(_protocol2);
@@ -1603,16 +1618,16 @@ define(['exports'], function (exports) {
                             }
                         }
                     } catch (err) {
-                        _didIteratorError5 = true;
-                        _iteratorError5 = err;
+                        _didIteratorError4 = true;
+                        _iteratorError4 = err;
                     } finally {
                         try {
-                            if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                                _iterator5.return();
+                            if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                                _iterator4.return();
                             }
                         } finally {
-                            if (_didIteratorError5) {
-                                throw _iteratorError5;
+                            if (_didIteratorError4) {
+                                throw _iteratorError4;
                             }
                         }
                     }
@@ -1664,30 +1679,32 @@ define(['exports'], function (exports) {
                     }
                     var members = args.shift() || {},
                         classMembers = args.shift() || {},
-                        derived = baseExtend.call(type, members, classMembers);
-                    defineMetadata(derived.prototype, $meta(members));
+                        derived = baseExtend.call(type, members, classMembers),
+                        derivedMeta = $meta(members);
+                    derivedMeta.type = derived;
+                    defineMetadata(derived.prototype, derivedMeta);
                     if (decorators.length > 0) {
-                        var _iteratorNormalCompletion6 = true;
-                        var _didIteratorError6 = false;
-                        var _iteratorError6 = undefined;
+                        var _iteratorNormalCompletion5 = true;
+                        var _didIteratorError5 = false;
+                        var _iteratorError5 = undefined;
 
                         try {
-                            for (var _iterator6 = decorators[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-                                var decorator = _step6.value;
+                            for (var _iterator5 = decorators[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+                                var decorator = _step5.value;
 
                                 derived = decorator(derived) || derived;
                             }
                         } catch (err) {
-                            _didIteratorError6 = true;
-                            _iteratorError6 = err;
+                            _didIteratorError5 = true;
+                            _iteratorError5 = err;
                         } finally {
                             try {
-                                if (!_iteratorNormalCompletion6 && _iterator6.return) {
-                                    _iterator6.return();
+                                if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                                    _iterator5.return();
                                 }
                             } finally {
-                                if (_didIteratorError6) {
-                                    throw _iteratorError6;
+                                if (_didIteratorError5) {
+                                    throw _iteratorError5;
                                 }
                             }
                         }
@@ -1701,7 +1718,10 @@ define(['exports'], function (exports) {
                         if (this.isProtocol && !(source instanceof Base)) {
                             source = protocol(source) || source;
                         }
-                        (_extensions || (_extensions = [])).push($meta(source));
+                        var extension = $meta(source);
+                        if (extension) {
+                            (_extensions || (_extensions = [])).push(extension);
+                        }
                     }
                     return baseImplement.call(type, source);
                 },
@@ -1712,25 +1732,75 @@ define(['exports'], function (exports) {
                         if (object instanceof Protocol) {
                             key = protocol(key) || key;
                         }
-                        (_extensions || (_extensions = [])).push($meta(key));
+                        var extension = $meta(key);
+                        if (extension) {
+                            (_extensions || (_extensions = [])).push(extension);
+                        }
                         return baseProtoExtend.call(object, key);
                     }
                     return baseProtoExtend.call(object, key, value);
                 },
-                getMetadata: function getMetadata(key) {
-                    var metadata = void 0;
+                traverseTopDown: function traverseTopDown(visitor) {
+                    if (!visitor) return;
+                    if (_extensions) {
+                        var i = _extensions.length;
+                        while (--i >= 0) {
+                            if (visitor(_extensions[i])) return;
+                        }
+                    }
+                    if (visitor(this)) return;
                     if (_parent) {
-                        metadata = _parent.getMetadata(key);
+                        _parent.traverseTopDown(visitor);
+                    }
+                },
+                traverseBottomUp: function traverseBottomUp(visitor) {
+                    if (!visitor) return;
+                    if (_parent) {
+                        _parent.traverseTopDown(visitor);
+                    }
+                    if (visitor(this)) return;
+                    if (_extensions) {
+                        var i = _extensions.length;
+                        while (--i >= 0) {
+                            if (visitor(_extensions[i])) return;
+                        }
+                    }
+                },
+                getMetadata: function getMetadata(key, criteria) {
+                    var metadata = void 0;
+                    if ($isObject(key)) {
+                        var _ref2 = [null, key];
+                        key = _ref2[0];
+                        criteria = _ref2[1];
+                    }
+                    if (_parent) {
+                        metadata = _parent.getMetadata(key, criteria);
                     }
                     if (_metadata) {
-                        var keyData = key ? _metadata[key] : _metadata;
-                        if (keyData) {
-                            metadata = $merge(metadata || {}, keyData);
-                        }
+                        (function () {
+                            var addKey = !key,
+                                keys = key ? [key] : ownKeys(_metadata);
+                            keys.forEach(function (key) {
+                                var keyMeta = _metadata[key];
+                                if (keyMeta) {
+                                    if (criteria) {
+                                        if (!$match(keyMeta, criteria, function (m) {
+                                            return keyMeta = m;
+                                        })) {
+                                            return;
+                                        }
+                                    }
+                                    if (addKey) {
+                                        keyMeta = _defineProperty({}, key, keyMeta);
+                                    }
+                                    metadata = $merge(metadata || {}, keyMeta);
+                                }
+                            });
+                        })();
                     }
                     if (_extensions) {
                         metadata = _extensions.reduce(function (result, ext) {
-                            var keyMeta = ext.getMetadata(key);
+                            var keyMeta = ext.getMetadata(key, criteria);
                             return keyMeta ? $merge(result || {}, keyMeta) : result;
                         }, metadata);
                     }
@@ -1783,6 +1853,7 @@ define(['exports'], function (exports) {
         if (target.hasOwnProperty(MetadataSymbol)) {
             return target[MetadataSymbol];
         }
+        if (isFrozen(target)) return;
         if (target === Metadata || target instanceof Metadata || target.prototype instanceof Metadata) return;
         var i = SUPPRESS_METADATA.length;
         while (i--) {
@@ -2039,29 +2110,29 @@ define(['exports'], function (exports) {
         if (withSelf && visitor.call(context, this)) {
             return;
         }
-        var _iteratorNormalCompletion7 = true;
-        var _didIteratorError7 = false;
-        var _iteratorError7 = undefined;
+        var _iteratorNormalCompletion6 = true;
+        var _didIteratorError6 = false;
+        var _iteratorError6 = undefined;
 
         try {
-            for (var _iterator7 = this.children[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-                var child = _step7.value;
+            for (var _iterator6 = this.children[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                var child = _step6.value;
 
                 if (visitor.call(context, child)) {
                     return;
                 }
             }
         } catch (err) {
-            _didIteratorError7 = true;
-            _iteratorError7 = err;
+            _didIteratorError6 = true;
+            _iteratorError6 = err;
         } finally {
             try {
-                if (!_iteratorNormalCompletion7 && _iterator7.return) {
-                    _iterator7.return();
+                if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                    _iterator6.return();
                 }
             } finally {
-                if (_didIteratorError7) {
-                    throw _iteratorError7;
+                if (_didIteratorError6) {
+                    throw _iteratorError6;
                 }
             }
         }
@@ -2108,29 +2179,29 @@ define(['exports'], function (exports) {
         }
         var parent = this.parent;
         if (parent) {
-            var _iteratorNormalCompletion8 = true;
-            var _didIteratorError8 = false;
-            var _iteratorError8 = undefined;
+            var _iteratorNormalCompletion7 = true;
+            var _didIteratorError7 = false;
+            var _iteratorError7 = undefined;
 
             try {
-                for (var _iterator8 = parent.children[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-                    var sibling = _step8.value;
+                for (var _iterator7 = parent.children[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+                    var sibling = _step7.value;
 
                     if (!$equals(this, sibling) && visitor.call(context, sibling)) {
                         return;
                     }
                 }
             } catch (err) {
-                _didIteratorError8 = true;
-                _iteratorError8 = err;
+                _didIteratorError7 = true;
+                _iteratorError7 = err;
             } finally {
                 try {
-                    if (!_iteratorNormalCompletion8 && _iterator8.return) {
-                        _iterator8.return();
+                    if (!_iteratorNormalCompletion7 && _iterator7.return) {
+                        _iterator7.return();
                     }
                 } finally {
-                    if (_didIteratorError8) {
-                        throw _iteratorError8;
+                    if (_didIteratorError7) {
+                        throw _iteratorError7;
                     }
                 }
             }
@@ -2239,10 +2310,10 @@ define(['exports'], function (exports) {
         return decorate(handleMetadata, args);
     }
 
-    function handleMetadata(target, key, descriptor, _ref2) {
-        var _ref3 = _slicedToArray(_ref2, 1);
+    function handleMetadata(target, key, descriptor, _ref3) {
+        var _ref4 = _slicedToArray(_ref3, 1);
 
-        var keyMetadata = _ref3[0];
+        var keyMetadata = _ref4[0];
 
         if (keyMetadata) {
             var meta = $meta(target);

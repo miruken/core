@@ -12,7 +12,7 @@ import { decorate } from './decorate';
 import {
     $isSomething, $isNothing, $isString,
     $isFunction, $isObject, $isSymbol,
-    $flatten, $merge
+    $flatten, $merge, $match
 } from './util';
 
 const baseExtend        = Base.extend,
@@ -20,7 +20,7 @@ const baseExtend        = Base.extend,
       baseProtoExtend   = Base.prototype.extend,
       MetadataSymbol    = Symbol.for('miruken.$meta');
 
-const { defineProperty, getOwnPropertyDescriptor } = Object,
+const { defineProperty, getOwnPropertyDescriptor, isFrozen } = Object,
       { ownKeys } = Reflect;
 
 /**
@@ -229,7 +229,7 @@ export const Metadata = Base.extend({
             /**
              * Gets/sets the associated type.
              * @property {Function} type
-             */                                              
+             */
             get type() {
                 return _type || (_parent && _parent.type);
             },
@@ -357,8 +357,10 @@ export const Metadata = Base.extend({
                 }
                 let members      = args.shift() || {},
                     classMembers = args.shift() || {},
-                    derived      = baseExtend.call(type, members, classMembers);
-                defineMetadata(derived.prototype, $meta(members));
+                    derived      = baseExtend.call(type, members, classMembers),
+                    derivedMeta  = $meta(members);
+                derivedMeta.type = derived;
+                defineMetadata(derived.prototype, derivedMeta);
                 if (decorators.length > 0) {
                     for (let decorator of decorators) {
                         derived = decorator(derived) || derived;
@@ -379,7 +381,10 @@ export const Metadata = Base.extend({
                     if (this.isProtocol && !(source instanceof Base)) {
                         source = protocol(source) || source;
                     }
-                    (_extensions || (_extensions = [])).push($meta(source));
+                    const extension = $meta(source);
+                    if (extension) {
+                        (_extensions || (_extensions = [])).push(extension);
+                    }
                 }
                 return baseImplement.call(type, source);
             },
@@ -398,31 +403,86 @@ export const Metadata = Base.extend({
                     if (object instanceof Protocol) {
                         key = protocol(key) || key;
                     }
-                    (_extensions || (_extensions = [])).push($meta(key));
+                    const extension = $meta(key);
+                    if (extension) {
+                        (_extensions || (_extensions = [])).push(extension);
+                    }
                     return baseProtoExtend.call(object, key);
                 }
                 return baseProtoExtend.call(object, key, value);
+            },
+            /**
+             * Traverses the metadata from top to bottom.
+             * @method traverseTopDown
+             * @param  {Function}  visitor  -  receives metadata
+             */            
+            traverseTopDown(visitor) {
+                if (!visitor) return;
+                if (_extensions) {
+                    let i = _extensions.length;
+                    while (--i >= 0) {
+                        if (visitor(_extensions[i])) return;
+                    }
+                }
+                if (visitor(this)) return;
+                if (_parent) {
+                    _parent.traverseTopDown(visitor);
+                }
+            },
+            /**
+             * Traverses the metadata from bottom to top.
+             * @method traverseBottomUp
+             * @param  {Function}  visitor  -  receives metadata
+             */                        
+            traverseBottomUp(visitor) {
+                if (!visitor) return;
+                if (_parent) {
+                    _parent.traverseTopDown(visitor);
+                }
+                if (visitor(this)) return;                
+                if (_extensions) {
+                    let i = _extensions.length;
+                    while (--i >= 0) {
+                        if (visitor(_extensions[i])) return;
+                    }
+                }
             },            
             /**
-             * Gets the metadata for one or all keys.
+             * Gets the metadata for `key` and `criteria`.
              * @method getMetadata
-             * @param    {string|Symbol}  key  -  key selector
-             * @returns  {Object} key metadata.
+             * @param    {Any}     [key]     -  key selector
+             * @param    {Object}  criteria  -  metadata criteria
+             * @returns  {Object}  matching metadata.
              */
-            getMetadata(key) {
+            getMetadata(key, criteria) {
                 let metadata;
+                if ($isObject(key)) {
+                    [key, criteria] = [null, key];
+                }
                 if (_parent) {
-                    metadata = _parent.getMetadata(key);
+                    metadata = _parent.getMetadata(key, criteria);
                 }
                 if (_metadata) {
-                    const keyData = key ? _metadata[key] : _metadata;
-                    if (keyData) {
-                        metadata = $merge(metadata || {}, keyData);
-                    }
+                    const addKey = !key,
+                          keys   = key ? [key] : ownKeys(_metadata);
+                    keys.forEach(key => {
+                        let keyMeta = _metadata[key];
+                        if (keyMeta) {
+                            if (criteria) {
+                                if (!$match(keyMeta, criteria, m => keyMeta = m)) {
+                                    return;
+                                }
+                            }
+                            if (addKey) {
+                                keyMeta = { [key]: keyMeta };
+                            }
+                            metadata = $merge(metadata || {}, keyMeta);
+                        }
+                    });
                 }                
                 if (_extensions) {
                     metadata = _extensions.reduce((result, ext) => {
-                        const keyMeta = ext.getMetadata(key);
+                        const keyMeta = ext.getMetadata(key, criteria);
                         return keyMeta ? $merge(result || {}, keyMeta) : result;
                     }, metadata);  
                 }
@@ -503,6 +563,7 @@ export function $meta(target) {
     if (target.hasOwnProperty(MetadataSymbol)) {
         return target[MetadataSymbol];
     }
+    if (isFrozen(target)) return;
     if (target === Metadata || target instanceof Metadata ||
         target.prototype instanceof Metadata)
         return;    

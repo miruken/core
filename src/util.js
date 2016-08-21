@@ -279,7 +279,7 @@ export function $isFunction(fn) {
  * @returns  {boolean} true if an object.
  */
 export function $isObject(obj) {
-    return obj === Object(obj);
+    return typeOf(obj) === 'object';
 }
 
 /**
@@ -369,9 +369,7 @@ export function $decorate(decoratee, decorations) {
 export function $decorated(decorator, deepest) {
     let decoratee;
     while (decorator && (decoratee = decorator.decoratee)) {
-        if (!deepest) {
-            return decoratee;
-        }
+        if (!deepest) return decoratee;
         decorator = decoratee;
     }
     return decorator;
@@ -393,29 +391,73 @@ export function $flatten(arr, prune) {
 
 /**
  * Recursively merges `sources` into `target`.
- * @method $mergeDeep
+ * @method $merge
  * @param    {Object}  target   -  object to merge into
  * @param    {Array}   sources  -  objects to merge from
  * @returns  {Object} the original `target`.
  */
 export function $merge(target, ...sources) {
-    if (!$isObject(target)) return target;
-    for (let source of sources) {
-        if ($isObject(source)) {
-            const props = getPropertyDescriptors(source);
-            for (let key in props) {
-                if (!props[key].enumerable) continue;
-                const newValue = source[key],
-                      curValue = target[key];
-                if (curValue && $isObject(curValue)) {
-                    $merge(curValue, newValue);
-                } else {
-                    target[key] = newValue;
-                }
-            }
-        }
+    if (!$isObject(target) ||
+        Object.isFrozen(target)) {
+        return target;
     }
+    sources.forEach(source => {
+        if (!$isObject(source)) return;
+        const props = getPropertyDescriptors(source);
+        Reflect.ownKeys(props).forEach(key => {
+            if (!props[key].enumerable) return;
+            const newValue = source[key],
+                  curValue = target[key];
+            if ($isObject(curValue)) {
+                $merge(curValue, newValue);
+            } else {
+                target[key] = newValue;
+            }
+        });
+    });
     return target;
+}
+
+/**
+ * Determines if 'criteria' is satisfied by 'target'.
+ * @method $match
+ * @param    {Object}    target     -  object to match
+ * @param    {Object}    criteria   -  criteria to match
+ * @param    {Function}  [matched]  -  receives matched output
+ * @returns  {boolean} true if matches.
+ */
+export function $match(target, criteria, matched) {
+    if (!$isObject(target) || !$isObject(criteria)) {
+        return false;
+    }
+    const match   = $isFunction(matched) ? {} : null,
+          matches = Reflect.ownKeys(criteria).every(key => {
+              if (!target.hasOwnProperty(key)) {
+                  return false;
+              }
+              const constraint = criteria[key],
+                    value      = target[key];              
+              if (constraint === undefined) {
+                  if (match) {
+                      match[key] = $isObject(value) ? $merge({}, value) : value;
+                  }
+                  return true;
+              }
+              if ($isObject(value)) {
+                  return $match(value, constraint, match ? m => match[key] = m : null);
+              }
+              if (value === constraint) {
+                  if (match) {
+                      match[key] = value;
+                  }
+                  return true;
+              }
+              return false;
+          });
+    if (matches && match) {
+        matched(match);
+    }
+    return matches;
 }
 
 /**
