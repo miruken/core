@@ -41,6 +41,7 @@ define(['exports'], function (exports) {
     exports.$isClass = $isClass;
     exports.$classOf = $classOf;
     exports.$using = $using;
+    exports.inject = inject;
     exports.metadata = metadata;
 
     var _slicedToArray = function () {
@@ -822,36 +823,36 @@ define(['exports'], function (exports) {
             args[_key] = arguments[_key];
         }
 
-        return decorate(handleCopy, args);
+        return decorate(_copy, args);
     }
 
     exports.default = copy;
 
 
-    function handleCopy(target, key, descriptor) {
+    function _copy(target, key, descriptor) {
         var get = descriptor.get;
         var set = descriptor.set;
         var value = descriptor.value;
 
         if ($isFunction(value)) {
             descriptor.value = function () {
-                return copyOf(value.apply(this, arguments));
+                return _copyOf(value.apply(this, arguments));
             };
         }
         if ($isFunction(get)) {
             descriptor.get = function () {
-                return copyOf(get.apply(this));
+                return _copyOf(get.apply(this));
             };
         }
         if ($isFunction(set)) {
             descriptor.set = function (value) {
-                return set.call(this, copyOf(value));
+                return set.call(this, _copyOf(value));
             };
         }
         return descriptor;
     }
 
-    function copyOf(value) {
+    function _copyOf(value) {
         if (value != null && $isFunction(value.copy)) {
             value = value.copy();
         }
@@ -1248,10 +1249,10 @@ define(['exports'], function (exports) {
                 if (!props[key].enumerable) return;
                 var newValue = source[key],
                     curValue = target[key];
-                if ($isObject(curValue)) {
+                if ($isObject(curValue) && !Array.isArray(curValue)) {
                     $merge(curValue, newValue);
                 } else {
-                    target[key] = newValue;
+                    target[key] = Array.isArray(newValue) ? newValue.slice(0) : newValue;
                 }
             });
         });
@@ -1271,11 +1272,17 @@ define(['exports'], function (exports) {
                 value = target[key];
             if (constraint === undefined) {
                 if (match) {
-                    match[key] = $isObject(value) ? $merge({}, value) : value;
+                    if (Array.isArray(value)) {
+                        match[key] = value.slice(0);
+                    } else if ($isObject(value)) {
+                        match[key] = $merge({}, value);
+                    } else {
+                        match[key] = value;
+                    }
                 }
                 return true;
             }
-            if ($isObject(value)) {
+            if ($isObject(value) && !Array.isArray(value)) {
                 return $match(value, constraint, match ? function (m) {
                     return match[key] = m;
                 } : null);
@@ -1393,7 +1400,7 @@ define(['exports'], function (exports) {
         }
     });
 
-    function decorateProtocol(target) {
+    function _protocol(target) {
         if ($isFunction(target)) {
             target = target.prototype;
         }
@@ -1437,10 +1444,10 @@ define(['exports'], function (exports) {
 
         if (args.length === 0) {
             return function () {
-                return decorateProtocol.apply(null, arguments);
+                return _protocol.apply(null, arguments);
             };
         }
-        return decorateProtocol.apply(undefined, args);
+        return _protocol.apply(undefined, args);
     }
 
     function conformsTo() {
@@ -1538,9 +1545,9 @@ define(['exports'], function (exports) {
 
                     try {
                         for (var _iterator2 = declared[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                            var _protocol = _step2.value;
+                            var _protocol2 = _step2.value;
 
-                            $meta(_protocol).allProtocols.forEach(addProtocol);
+                            $meta(_protocol2).allProtocols.forEach(addProtocol);
                         }
                     } catch (err) {
                         _didIteratorError2 = true;
@@ -1608,12 +1615,12 @@ define(['exports'], function (exports) {
 
                     try {
                         for (var _iterator4 = protocols[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-                            var _protocol2 = _step4.value;
+                            var _protocol3 = _step4.value;
 
-                            if (_protocol2.prototype instanceof Protocol && _protocols.indexOf(_protocol2) < 0) {
-                                _protocols.push(_protocol2);
+                            if (_protocol3.prototype instanceof Protocol && _protocols.indexOf(_protocol3) < 0) {
+                                _protocols.push(_protocol3);
                                 if (notifyType) {
-                                    type.protocolAdopted(_protocol2);
+                                    type.protocolAdopted(_protocol3);
                                 }
                             }
                         }
@@ -2302,15 +2309,46 @@ define(['exports'], function (exports) {
         }
     }
 
-    function metadata() {
-        for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
-            args[_key9] = arguments[_key9];
+    var injectKey = Symbol(),
+        injectCriteria = _defineProperty({}, injectKey, undefined);
+
+    function inject() {
+        for (var _len9 = arguments.length, dependencies = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
+            dependencies[_key9] = arguments[_key9];
         }
 
-        return decorate(handleMetadata, args);
+        return decorate(_inject, dependencies);
+    }
+    inject.get = function (source, key) {
+        var meta = $meta(source);
+        if (meta) {
+            var match = meta.getMetadata(key, injectCriteria);
+            if (match) {
+                return match[injectKey];
+            }
+        }
+    };
+
+    function _inject(target, key, descriptor, dependencies) {
+        dependencies = $flatten(dependencies);
+        if (dependencies.length > 0) {
+            var meta = $meta(target);
+            if (meta) {
+                meta.addMetadata(key, _defineProperty({}, injectKey, dependencies));
+            }
+        }
     }
 
-    function handleMetadata(target, key, descriptor, _ref3) {
+    exports.default = inject;
+    function metadata() {
+        for (var _len10 = arguments.length, args = Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
+            args[_key10] = arguments[_key10];
+        }
+
+        return decorate(_metadata, args);
+    }
+
+    function _metadata(target, key, descriptor, _ref3) {
         var _ref4 = _slicedToArray(_ref3, 1);
 
         var keyMetadata = _ref4[0];
@@ -2321,7 +2359,6 @@ define(['exports'], function (exports) {
                 meta.addMetadata(key, keyMetadata);
             }
         }
-        return descriptor;
     }
 
     exports.default = metadata;
@@ -2461,8 +2498,8 @@ define(['exports'], function (exports) {
     function proxyMethod(key, method, source, type) {
         var interceptors = void 0;
         function methodProxy() {
-            for (var _len10 = arguments.length, args = Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
-                args[_key10] = arguments[_key10];
+            for (var _len11 = arguments.length, args = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
+                args[_key11] = arguments[_key11];
             }
 
             var _this = this;

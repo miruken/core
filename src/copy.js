@@ -1,32 +1,32 @@
 import { decorate } from './decorate';
 
 export function copy(...args) {
-    return decorate(handleCopy, args);
+    return decorate(_copy, args);
 }
 
 export default copy;
 
-function handleCopy(target, key, descriptor) {
+function _copy(target, key, descriptor) {
     const { get, set, value } = descriptor;
     if ($isFunction(value)) {
         descriptor.value = function () {
-            return copyOf(value.apply(this, arguments));
+            return _copyOf(value.apply(this, arguments));
         }
     }
     if ($isFunction(get)) {
         descriptor.get = function () {
-            return copyOf(get.apply(this));
+            return _copyOf(get.apply(this));
         }
     }
     if ($isFunction(set)) {
         descriptor.set = function (value) {
-            return set.call(this, copyOf(value));
+            return set.call(this, _copyOf(value));
         }
     }
     return descriptor;
 }
 
-function copyOf(value) {
+function _copyOf(value) {
     if (value != null && $isFunction(value.copy)) {
         value = value.copy();
     }

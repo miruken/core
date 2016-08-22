@@ -408,10 +408,12 @@ export function $merge(target, ...sources) {
             if (!props[key].enumerable) return;
             const newValue = source[key],
                   curValue = target[key];
-            if ($isObject(curValue)) {
+            if ($isObject(curValue) && !Array.isArray(curValue)) {
                 $merge(curValue, newValue);
             } else {
-                target[key] = newValue;
+                target[key] = Array.isArray(newValue)
+                            ? newValue.slice(0)
+                            : newValue;
             }
         });
     });
@@ -439,11 +441,17 @@ export function $match(target, criteria, matched) {
                     value      = target[key];              
               if (constraint === undefined) {
                   if (match) {
-                      match[key] = $isObject(value) ? $merge({}, value) : value;
+                      if (Array.isArray(value)) {
+                          match[key] = value.slice(0);
+                      } else if ($isObject(value)) {
+                          match[key] = $merge({}, value);
+                      } else {
+                          match[key] = value;
+                      }
                   }
                   return true;
               }
-              if ($isObject(value)) {
+              if ($isObject(value) && !Array.isArray(value)) {
                   return $match(value, constraint, match ? m => match[key] = m : null);
               }
               if (value === constraint) {

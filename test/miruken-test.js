@@ -1,11 +1,12 @@
 import { Base, assignID } from '../src/base2';
 import { Enum, Flags } from '../src/enum';
 import { MethodType } from '../src/core';
-import { Modifier,  $createModifier } from '../src/modifier';
+import { Modifier,  $createModifier, $every } from '../src/modifier';
 import { Disposing, DisposingMixin, $using } from '../src/dispose';
 import { Interceptor, InterceptorSelector, ProxyBuilder } from '../src/proxy';
 import { Protocol, $isClass, $meta } from '../src/meta';
 import metadata from '../src/metadata';
+import inject from '../src/inject';
 
 import {
     $isFunction, $isString, $flatten, $merge,
@@ -778,7 +779,7 @@ describe("Modifier", () => {
     describe("$createModifier", () => {
         it("should create a new modifier", () => {
             const wrap    = $createModifier('wrap');
-        expect(wrap.prototype).to.be.instanceOf(Modifier);
+            expect(wrap.prototype).to.be.instanceOf(Modifier);
         });
 
         it("should apply a  modifier using function call", () => {
@@ -1298,4 +1299,25 @@ describe("ProxyBuilder", () => {
             }).to.throw(TypeError, "Proxy classes are sealed and cannot be extended from.");
         });
     });
+});
+
+describe("inject", () => {
+    const Circus = Base.extend({
+        @inject(Dog)
+        dancingDog(Dance) {},
+        
+        @inject($every(Elephant))
+        elpehantParade(elephant) {}
+    });
+    
+    it("should add dependencies to class metadata", () => {
+        const dep = inject.get(Circus, 'dancingDog');
+        expect(dep).to.eql([Dog]);
+    });
+
+    it("should add modifier dependencies to class metadata", () => {
+        const dep = inject.get(Circus, 'elpehantParade');
+        expect($every.test(dep[0])).to.be.true;
+        expect(Modifier.unwrap(dep[0])).to.equal(Elephant);
+    });    
 });

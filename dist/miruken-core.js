@@ -824,32 +824,32 @@ function K(k) {
 };
 
 export function copy(...args) {
-    return decorate(handleCopy, args);
+    return decorate(_copy, args);
 }
 
 export default copy;
 
-function handleCopy(target, key, descriptor) {
+function _copy(target, key, descriptor) {
     const { get, set, value } = descriptor;
     if ($isFunction(value)) {
         descriptor.value = function () {
-            return copyOf(value.apply(this, arguments));
+            return _copyOf(value.apply(this, arguments));
         }
     }
     if ($isFunction(get)) {
         descriptor.get = function () {
-            return copyOf(get.apply(this));
+            return _copyOf(get.apply(this));
         }
     }
     if ($isFunction(set)) {
         descriptor.set = function (value) {
-            return set.call(this, copyOf(value));
+            return set.call(this, _copyOf(value));
         }
     }
     return descriptor;
 }
 
-function copyOf(value) {
+function _copyOf(value) {
     if (value != null && $isFunction(value.copy)) {
         value = value.copy();
     }
@@ -1494,10 +1494,12 @@ export function $merge(target, ...sources) {
             if (!props[key].enumerable) return;
             const newValue = source[key],
                   curValue = target[key];
-            if ($isObject(curValue)) {
+            if ($isObject(curValue) && !Array.isArray(curValue)) {
                 $merge(curValue, newValue);
             } else {
-                target[key] = newValue;
+                target[key] = Array.isArray(newValue)
+                            ? newValue.slice(0)
+                            : newValue;
             }
         });
     });
@@ -1525,11 +1527,17 @@ export function $match(target, criteria, matched) {
                     value      = target[key];              
               if (constraint === undefined) {
                   if (match) {
-                      match[key] = $isObject(value) ? $merge({}, value) : value;
+                      if (Array.isArray(value)) {
+                          match[key] = value.slice(0);
+                      } else if ($isObject(value)) {
+                          match[key] = $merge({}, value);
+                      } else {
+                          match[key] = value;
+                      }
                   }
                   return true;
               }
-              if ($isObject(value)) {
+              if ($isObject(value) && !Array.isArray(value)) {
                   return $match(value, constraint, match ? m => match[key] = m : null);
               }
               if (value === constraint) {
@@ -1706,7 +1714,7 @@ export const Protocol = Base.extend({
     coerce(object, strict) { return new this(object, strict); }
 });
 
-function decorateProtocol(target) {
+function _protocol(target) {
     if ($isFunction(target)) {
         target = target.prototype;
     }
@@ -1748,10 +1756,10 @@ function decorateProtocol(target) {
 export function protocol(...args) {
     if (args.length === 0) {
         return function () {
-            return decorateProtocol.apply(null, arguments);
+            return _protocol.apply(null, arguments);
         };
     }
-    return decorateProtocol(...args);
+    return _protocol(...args);
 }
 
 /**
@@ -2760,18 +2768,45 @@ function reverseLevelOrder(node, visitor, context, visited = []) {
     }
 }
 
-export function metadata(...args) {
-    return decorate(handleMetadata, args);
+const injectKey      = Symbol(),
+      injectCriteria = { [injectKey]: undefined };
+
+export function inject(...dependencies) {
+    return decorate(_inject, dependencies);
+}
+inject.get = function (source, key) {
+    const meta = $meta(source);
+    if (meta) {
+        const match = meta.getMetadata(key, injectCriteria);
+        if (match) {
+            return match[injectKey]; 
+        }
+    }
 }
 
-function handleMetadata(target, key, descriptor, [keyMetadata]) {
+function _inject(target, key, descriptor, dependencies) {
+    dependencies = $flatten(dependencies);
+    if (dependencies.length > 0) {
+        const meta = $meta(target);
+        if (meta) {
+            meta.addMetadata(key, { [injectKey]: dependencies });
+        }
+    }
+}
+
+export default inject;
+
+export function metadata(...args) {
+    return decorate(_metadata, args);
+}
+
+function _metadata(target, key, descriptor, [keyMetadata]) {
     if (keyMetadata) {
         const meta = $meta(target);
         if (meta) {
             meta.addMetadata(key, keyMetadata);
         }
     }
-    return descriptor;
 }
 
 export default metadata;

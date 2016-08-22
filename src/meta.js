@@ -123,7 +123,7 @@ export const Protocol = Base.extend({
     coerce(object, strict) { return new this(object, strict); }
 });
 
-function decorateProtocol(target) {
+function _protocol(target) {
     if ($isFunction(target)) {
         target = target.prototype;
     }
@@ -165,10 +165,10 @@ function decorateProtocol(target) {
 export function protocol(...args) {
     if (args.length === 0) {
         return function () {
-            return decorateProtocol.apply(null, arguments);
+            return _protocol.apply(null, arguments);
         };
     }
-    return decorateProtocol(...args);
+    return _protocol(...args);
 }
 
 /**
