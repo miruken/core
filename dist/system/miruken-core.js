@@ -3,7 +3,7 @@
 System.register([], function (_export, _context) {
     "use strict";
 
-    var _slicedToArray, _Base$extend, _typeof, $eq, $use, $copy, $lazy, $eval, $every, $child, $optional, $promise, $instant, Undefined, Null, True, False, __prototyping, _counter, _IGNORE, _BASE, _HIDDEN, _slice, _subclass, Base, Package, Abstract, _moduleCount, Module, _toString, Delegate, ObjectDelegate, ArrayDelegate, Defining, Enum, Flags, ArrayManager, IndexedList, baseExtend, baseImplement, baseProtoExtend, MetadataSymbol, defineProperty, getOwnPropertyDescriptor, isFrozen, ownKeys, ProtocolGet, ProtocolSet, ProtocolInvoke, ProtocolDelegate, ProtocolStrict, Protocol, Metadata, SUPPRESS_METADATA, StrictProtocol, $isProtocol, MethodType, Variance, Initializing, Resolving, Invoking, Parenting, Starting, Startup, Disposing, DisposingMixin, TraversingAxis, Traversing, TraversingMixin, Traversal, injectKey, injectCriteria, Facet, Interceptor, InterceptorSelector, ProxyBuilder, noProxyMethods;
+    var _slicedToArray, _Base$extend, _typeof, $eq, $use, $copy, $lazy, $eval, $every, $child, $optional, $promise, $instant, Undefined, Null, True, False, __prototyping, _counter, _IGNORE, _BASE, _HIDDEN, _slice, _subclass, Base, Package, Abstract, _moduleCount, Module, _toString, Delegate, ObjectDelegate, ArrayDelegate, Defining, Enum, Flags, ArrayManager, IndexedList, baseExtend, baseImplement, baseProtoExtend, MetadataSymbol, defineProperty, getOwnPropertyDescriptor, isFrozen, ownKeys, ProtocolGet, ProtocolSet, ProtocolInvoke, ProtocolDelegate, ProtocolStrict, Protocol, Metadata, SUPPRESS_METADATA, StrictProtocol, $isProtocol, MethodType, Variance, Initializing, Resolving, Invoking, Parenting, Starting, Startup, Disposing, DisposingMixin, TraversingAxis, Traversing, TraversingMixin, Traversal, injectKey, injectCriteria, noDependencies, Facet, Interceptor, InterceptorSelector, ProxyBuilder, noProxyMethods;
 
     function _defineProperty(obj, key, value) {
         if (key in obj) {
@@ -2688,6 +2688,7 @@ System.register([], function (_export, _context) {
 
             injectKey = Symbol();
             injectCriteria = _defineProperty({}, injectKey, undefined);
+            noDependencies = Object.freeze([]);
             function inject() {
                 for (var _len9 = arguments.length, dependencies = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
                     dependencies[_key9] = arguments[_key9];
@@ -2703,9 +2704,10 @@ System.register([], function (_export, _context) {
                 if (meta) {
                     var match = meta.getMetadata(key, injectCriteria);
                     if (match) {
-                        return match[injectKey];
+                        return key ? match[injectKey] : match;
                     }
                 }
+                return noDependencies;
             };
             _export('default', inject);
 

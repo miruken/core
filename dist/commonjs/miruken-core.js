@@ -2247,7 +2247,8 @@ function _reverseLevelOrder(node, visitor, context) {
 }
 
 var injectKey = Symbol(),
-    injectCriteria = _defineProperty({}, injectKey, undefined);
+    injectCriteria = _defineProperty({}, injectKey, undefined),
+    noDependencies = Object.freeze([]);
 
 function inject() {
     for (var _len9 = arguments.length, dependencies = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
@@ -2261,9 +2262,10 @@ inject.get = function (source, key) {
     if (meta) {
         var match = meta.getMetadata(key, injectCriteria);
         if (match) {
-            return match[injectKey];
+            return key ? match[injectKey] : match;
         }
     }
+    return noDependencies;
 };
 
 function _inject(target, key, descriptor, dependencies) {

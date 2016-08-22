@@ -3,7 +3,8 @@ import { $flatten } from './util';
 import { $meta } from './meta';
 
 const injectKey      = Symbol(),
-      injectCriteria = { [injectKey]: undefined };
+      injectCriteria = { [injectKey]: undefined },
+      noDependencies = Object.freeze([]);
 
 export function inject(...dependencies) {
     return decorate(_inject, dependencies);
@@ -13,9 +14,10 @@ inject.get = function (source, key) {
     if (meta) {
         const match = meta.getMetadata(key, injectCriteria);
         if (match) {
-            return match[injectKey]; 
+            return key ? match[injectKey] : match; 
         }
     }
+    return noDependencies;
 }
 
 function _inject(target, key, descriptor, dependencies) {
