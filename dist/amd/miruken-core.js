@@ -41,8 +41,8 @@ define(['exports'], function (exports) {
     exports.$isClass = $isClass;
     exports.$classOf = $classOf;
     exports.$using = $using;
-    exports.inject = inject;
     exports.metadata = metadata;
+    exports.inject = inject;
 
     var _slicedToArray = function () {
         function sliceIterator(arr, i) {
@@ -1252,7 +1252,7 @@ define(['exports'], function (exports) {
                 if ($isObject(curValue) && !Array.isArray(curValue)) {
                     $merge(curValue, newValue);
                 } else {
-                    target[key] = Array.isArray(newValue) ? newValue.slice(0) : newValue;
+                    target[key] = Array.isArray(newValue) ? newValue.slice() : newValue;
                 }
             });
         });
@@ -1273,7 +1273,7 @@ define(['exports'], function (exports) {
             if (constraint === undefined) {
                 if (match) {
                     if (Array.isArray(value)) {
-                        match[key] = value.slice(0);
+                        match[key] = value.slice();
                     } else if ($isObject(value)) {
                         match[key] = $merge({}, value);
                     } else {
@@ -1530,12 +1530,12 @@ define(['exports'], function (exports) {
                 },
 
                 get protocols() {
-                    return _protocols ? _protocols.slice(0) : [];
+                    return _protocols ? _protocols.slice() : [];
                 },
 
                 get allProtocols() {
                     var protocols = this.protocols,
-                        declared = protocols.slice(0);
+                        declared = protocols.slice();
                     if (_parent) {
                         _parent.allProtocols.forEach(addProtocol);
                     }
@@ -1756,6 +1756,12 @@ define(['exports'], function (exports) {
                         }
                     }
                     if (visitor(this)) return;
+                    if (_protocols) {
+                        var _i = _protocols.length;
+                        while (--_i >= 0) {
+                            if (visitor($meta(_protocols[_i]))) return;
+                        }
+                    }
                     if (_parent) {
                         _parent.traverseTopDown(visitor);
                     }
@@ -1765,11 +1771,17 @@ define(['exports'], function (exports) {
                     if (_parent) {
                         _parent.traverseTopDown(visitor);
                     }
+                    if (_protocols) {
+                        var i = _protocols.length;
+                        while (--i >= 0) {
+                            if (visitor($meta(_protocols[i]))) return;
+                        }
+                    }
                     if (visitor(this)) return;
                     if (_extensions) {
-                        var i = _extensions.length;
-                        while (--i >= 0) {
-                            if (visitor(_extensions[i])) return;
+                        var _i2 = _extensions.length;
+                        while (--_i2 >= 0) {
+                            if (visitor(_extensions[_i2])) return;
                         }
                     }
                 },
@@ -1782,6 +1794,13 @@ define(['exports'], function (exports) {
                     }
                     if (_parent) {
                         metadata = _parent.getMetadata(key, criteria);
+                    }
+                    if (_protocols) {
+                        metadata = _protocols.reduce(function (result, protocol) {
+                            var protoMeta = $meta(protocol),
+                                keyMeta = protoMeta.getMetadata(key, criteria);
+                            return keyMeta ? $merge(result || {}, keyMeta) : result;
+                        }, metadata);
                     }
                     if (_metadata) {
                         (function () {
@@ -2309,51 +2328,41 @@ define(['exports'], function (exports) {
         }
     }
 
-    var injectKey = Symbol(),
-        injectCriteria = _defineProperty({}, injectKey, undefined),
-        noDependencies = Object.freeze([]);
-
-    function inject() {
-        for (var _len9 = arguments.length, dependencies = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
-            dependencies[_key9] = arguments[_key9];
-        }
-
-        return decorate(_inject, dependencies);
-    }
-    inject.get = function (source, key) {
-        var meta = $meta(source);
-        if (meta) {
-            var match = meta.getMetadata(key, injectCriteria);
-            if (match) {
-                return key ? match[injectKey] : match;
-            }
-        }
-        return noDependencies;
-    };
-
-    function _inject(target, key, descriptor, dependencies) {
-        dependencies = $flatten(dependencies);
-        if (dependencies.length > 0) {
-            var meta = $meta(target);
-            if (meta) {
-                meta.addMetadata(key, _defineProperty({}, injectKey, dependencies));
-            }
-        }
-    }
-
-    exports.default = inject;
     function metadata() {
-        for (var _len10 = arguments.length, args = Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
-            args[_key10] = arguments[_key10];
+        for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
+            args[_key9] = arguments[_key9];
         }
 
         return decorate(_metadata, args);
     }
+    metadata.get = function (metaKey, criteria, source, key, fn) {
+        if (!fn && $isFunction(key)) {
+            var _ref3 = [null, key];
+            key = _ref3[0];
+            fn = _ref3[1];
+        }
+        if (!fn) return;
+        var meta = $meta(source);
+        if (meta) {
+            (function () {
+                var match = meta.getMetadata(key, criteria);
+                if (match) {
+                    if (key) {
+                        fn(match[metaKey], key);
+                    } else {
+                        Reflect.ownKeys(match).forEach(function (k) {
+                            return fn(match[metaKey], k);
+                        });
+                    }
+                }
+            })();
+        }
+    };
 
-    function _metadata(target, key, descriptor, _ref3) {
-        var _ref4 = _slicedToArray(_ref3, 1);
+    function _metadata(target, key, descriptor, _ref4) {
+        var _ref5 = _slicedToArray(_ref4, 1);
 
-        var keyMetadata = _ref4[0];
+        var keyMetadata = _ref5[0];
 
         if (keyMetadata) {
             var meta = $meta(target);
@@ -2500,8 +2509,8 @@ define(['exports'], function (exports) {
     function proxyMethod(key, method, source, type) {
         var interceptors = void 0;
         function methodProxy() {
-            for (var _len11 = arguments.length, args = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
-                args[_key11] = arguments[_key11];
+            for (var _len10 = arguments.length, args = Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
+                args[_key10] = arguments[_key10];
             }
 
             var _this = this;
@@ -2624,4 +2633,31 @@ define(['exports'], function (exports) {
         });
         return this;
     }
+
+    var injectKey = Symbol(),
+        injectCriteria = _defineProperty({}, injectKey, undefined),
+        noDependencies = Object.freeze([]);
+
+    function inject() {
+        for (var _len11 = arguments.length, dependencies = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
+            dependencies[_key11] = arguments[_key11];
+        }
+
+        return decorate(_inject, dependencies);
+    }
+    inject.get = function () {
+        return metadata.get.apply(metadata, [injectKey, injectCriteria].concat(Array.prototype.slice.call(arguments))) || noDependencies;
+    };
+
+    function _inject(target, key, descriptor, dependencies) {
+        dependencies = $flatten(dependencies);
+        if (dependencies.length > 0) {
+            var meta = $meta(target);
+            if (meta) {
+                meta.addMetadata(key, _defineProperty({}, injectKey, dependencies));
+            }
+        }
+    }
+
+    exports.default = inject;
 });

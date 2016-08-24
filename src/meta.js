@@ -251,7 +251,7 @@ export const Metadata = Base.extend({
              * @property {Array} protocols
              */
             get protocols() {
-                return _protocols ? _protocols.slice(0) : [];
+                return _protocols ? _protocols.slice() : [];
             },
             /**
              * Gets all conforming protocools.
@@ -259,7 +259,7 @@ export const Metadata = Base.extend({
              */
             get allProtocols() {
                 const protocols = this.protocols,
-                      declared  = protocols.slice(0);
+                      declared  = protocols.slice();
                 if (_parent) {
                     _parent.allProtocols.forEach(addProtocol);
                 }                
@@ -425,6 +425,12 @@ export const Metadata = Base.extend({
                     }
                 }
                 if (visitor(this)) return;
+                if (_protocols) {
+                    let i = _protocols.length;
+                    while (--i >= 0) {
+                        if (visitor($meta(_protocols[i]))) return;
+                    }                    
+                }
                 if (_parent) {
                     _parent.traverseTopDown(visitor);
                 }
@@ -439,6 +445,12 @@ export const Metadata = Base.extend({
                 if (_parent) {
                     _parent.traverseTopDown(visitor);
                 }
+                if (_protocols) {
+                    let i = _protocols.length;
+                    while (--i >= 0) {
+                        if (visitor($meta(_protocols[i]))) return;
+                    }                    
+                }                
                 if (visitor(this)) return;                
                 if (_extensions) {
                     let i = _extensions.length;
@@ -461,6 +473,13 @@ export const Metadata = Base.extend({
                 }
                 if (_parent) {
                     metadata = _parent.getMetadata(key, criteria);
+                }
+                if (_protocols) {
+                    metadata = _protocols.reduce((result, protocol) => {
+                        const protoMeta = $meta(protocol),
+                              keyMeta   = protoMeta.getMetadata(key, criteria);
+                        return keyMeta ? $merge(result || {}, keyMeta) : result;
+                    }, metadata);  
                 }
                 if (_metadata) {
                     const addKey = !key,

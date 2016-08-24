@@ -21,9 +21,11 @@ const Code  = Symbol(),
       Breed = Symbol();
 
 const Animal = Protocol.extend({
+    @metadata({required: true})
     name:   undefined,
     [Code]: undefined,
-    
+
+    @metadata({profile: true})
     talk() {},
     eat(food) {},
     [Breed]() {}
@@ -290,31 +292,6 @@ describe("Flags", () => {
     });    
 });
 
-describe("$meta", () => {
-    it("should not have metadata for primitives", () => {
-        expect($meta()).to.be.undefined;
-        expect($meta(1)).to.be.undefined;
-        expect($meta(true)).to.be.undefined;
-        expect($meta("hello")).to.be.undefined;
-    });
-
-    it("should not have metadata for Object, Function or Array", () => {
-        expect($meta(Object)).to.be.undefined;
-        expect($meta(Function)).to.be.undefined;
-        expect($meta(Array)).to.be.undefined;
-    });
-
-    it("should have class metadata", () => {
-        expect($meta(Dog)).to.be.ok;
-    });
-
-    it("should have instance metadata", () => {
-        const dog = new Dog();
-        expect($meta(dog)).to.be.ok;
-        expect($meta(dog)).to.not.equal($meta(Dog));
-    });
-});
-
 describe("$isClass", () => {
     it("should identify miruken classes", () => {
         expect($isClass(Dog)).to.be.true;
@@ -359,6 +336,29 @@ describe("$meta", () => {
         @metadata({map: Person})        
         patient: undefined,
         get age() { return this.base() + 10; }
+    });
+
+    it("should not have metadata for primitives", () => {
+        expect($meta()).to.be.undefined;
+        expect($meta(1)).to.be.undefined;
+        expect($meta(true)).to.be.undefined;
+        expect($meta("hello")).to.be.undefined;
+    });
+
+    it("should not have metadata for Object, Function or Array", () => {
+        expect($meta(Object)).to.be.undefined;
+        expect($meta(Function)).to.be.undefined;
+        expect($meta(Array)).to.be.undefined;
+    });
+
+    it("should have class metadata", () => {
+        expect($meta(Dog)).to.be.ok;
+    });
+
+    it("should have instance metadata", () => {
+        const dog = new Dog();
+        expect($meta(dog)).to.be.ok;
+        expect($meta(dog)).to.not.equal($meta(Dog));
     });
 
     it("should support properties", () => {
@@ -430,10 +430,16 @@ describe("$meta", () => {
     });
 
     it("should retrieve all property metadata", () => {
-        const all = $meta(Doctor).getMetadata();
-        expect(all['pet'].map).to.equal(Animal);
-        expect(all['patient'].map).to.equal(Person);
+        const meta = $meta(Doctor).getMetadata();
+        expect(meta['pet'].map).to.equal(Animal);
+        expect(meta['patient'].map).to.equal(Person);
     });
+    
+    it("should inherit protocol metadata", () => {
+        const meta = $meta(Dog).getMetadata();
+        expect(meta['name']).to.eql({required: true});
+        expect(meta['talk']).to.eql({profile: true});        
+    });    
 
     it("should synthesize instance properties", () => {
         const person = (new Person).extend({
@@ -1311,12 +1317,20 @@ describe("inject", () => {
     });
     
     it("should add dependencies to class metadata", () => {
-        const dep = inject.get(Circus, 'dancingDog');
+        let dep;
+        inject.get(Circus, 'dancingDog', (d, k) => {
+            expect(k).to.eql('dancingDog');
+            dep = d;
+        });
         expect(dep).to.eql([Dog]);
     });
 
     it("should add modifier dependencies to class metadata", () => {
-        const dep = inject.get(Circus, 'elpehantParade');
+        let dep;
+        inject.get(Circus, 'elpehantParade', (d, k) => {
+            expect(k).to.eql('elpehantParade');
+            dep = d;            
+        });
         expect($every.test(dep[0])).to.be.true;
         expect(Modifier.unwrap(dep[0])).to.equal(Elephant);
     });    

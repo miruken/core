@@ -1,4 +1,5 @@
 import { decorate } from './decorate';
+import { metadata } from './metadata';
 import { $flatten } from './util';
 import { $meta } from './meta';
 
@@ -9,15 +10,9 @@ const injectKey      = Symbol(),
 export function inject(...dependencies) {
     return decorate(_inject, dependencies);
 }
-inject.get = function (source, key) {
-    const meta = $meta(source);
-    if (meta) {
-        const match = meta.getMetadata(key, injectCriteria);
-        if (match) {
-            return key ? match[injectKey] : match; 
-        }
-    }
-    return noDependencies;
+inject.get = function () {
+    return metadata.get(injectKey, injectCriteria, ...arguments)
+        || noDependencies;
 }
 
 function _inject(target, key, descriptor, dependencies) {

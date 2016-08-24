@@ -1498,7 +1498,7 @@ export function $merge(target, ...sources) {
                 $merge(curValue, newValue);
             } else {
                 target[key] = Array.isArray(newValue)
-                            ? newValue.slice(0)
+                            ? newValue.slice()
                             : newValue;
             }
         });
@@ -1528,7 +1528,7 @@ export function $match(target, criteria, matched) {
               if (constraint === undefined) {
                   if (match) {
                       if (Array.isArray(value)) {
-                          match[key] = value.slice(0);
+                          match[key] = value.slice();
                       } else if ($isObject(value)) {
                           match[key] = $merge({}, value);
                       } else {
@@ -1842,7 +1842,7 @@ export const Metadata = Base.extend({
              * @property {Array} protocols
              */
             get protocols() {
-                return _protocols ? _protocols.slice(0) : [];
+                return _protocols ? _protocols.slice() : [];
             },
             /**
              * Gets all conforming protocools.
@@ -1850,7 +1850,7 @@ export const Metadata = Base.extend({
              */
             get allProtocols() {
                 const protocols = this.protocols,
-                      declared  = protocols.slice(0);
+                      declared  = protocols.slice();
                 if (_parent) {
                     _parent.allProtocols.forEach(addProtocol);
                 }                
@@ -2016,6 +2016,12 @@ export const Metadata = Base.extend({
                     }
                 }
                 if (visitor(this)) return;
+                if (_protocols) {
+                    let i = _protocols.length;
+                    while (--i >= 0) {
+                        if (visitor($meta(_protocols[i]))) return;
+                    }                    
+                }
                 if (_parent) {
                     _parent.traverseTopDown(visitor);
                 }
@@ -2030,6 +2036,12 @@ export const Metadata = Base.extend({
                 if (_parent) {
                     _parent.traverseTopDown(visitor);
                 }
+                if (_protocols) {
+                    let i = _protocols.length;
+                    while (--i >= 0) {
+                        if (visitor($meta(_protocols[i]))) return;
+                    }                    
+                }                
                 if (visitor(this)) return;                
                 if (_extensions) {
                     let i = _extensions.length;
@@ -2052,6 +2064,13 @@ export const Metadata = Base.extend({
                 }
                 if (_parent) {
                     metadata = _parent.getMetadata(key, criteria);
+                }
+                if (_protocols) {
+                    metadata = _protocols.reduce((result, protocol) => {
+                        const protoMeta = $meta(protocol),
+                              keyMeta   = protoMeta.getMetadata(key, criteria);
+                        return keyMeta ? $merge(result || {}, keyMeta) : result;
+                    }, metadata);  
                 }
                 if (_metadata) {
                     const addKey = !key,
@@ -2768,38 +2787,25 @@ function reverseLevelOrder(node, visitor, context, visited = []) {
     }
 }
 
-const injectKey      = Symbol(),
-      injectCriteria = { [injectKey]: undefined },
-      noDependencies = Object.freeze([]);
-
-export function inject(...dependencies) {
-    return decorate(_inject, dependencies);
-}
-inject.get = function (source, key) {
-    const meta = $meta(source);
-    if (meta) {
-        const match = meta.getMetadata(key, injectCriteria);
-        if (match) {
-            return key ? match[injectKey] : match; 
-        }
-    }
-    return noDependencies;
-}
-
-function _inject(target, key, descriptor, dependencies) {
-    dependencies = $flatten(dependencies);
-    if (dependencies.length > 0) {
-        const meta = $meta(target);
-        if (meta) {
-            meta.addMetadata(key, { [injectKey]: dependencies });
-        }
-    }
-}
-
-export default inject;
-
 export function metadata(...args) {
     return decorate(_metadata, args);
+}
+metadata.get = function (metaKey, criteria, source, key, fn) {
+    if (!fn && $isFunction(key)) {
+        [key, fn] = [null, key];
+    }
+    if (!fn) return;
+    const meta = $meta(source);
+    if (meta) {
+        const match = meta.getMetadata(key, criteria);
+        if (match) {
+            if (key) {
+                fn(match[metaKey], key);
+            } else {
+                Reflect.ownKeys(match).forEach(k => fn(match[metaKey], k));
+            }
+        }
+    }
 }
 
 function _metadata(target, key, descriptor, [keyMetadata]) {
@@ -3094,3 +3100,27 @@ function extendProxyInstance(key, value) {
     });
     return this;
 }
+
+const injectKey      = Symbol(),
+      injectCriteria = { [injectKey]: undefined },
+      noDependencies = Object.freeze([]);
+
+export function inject(...dependencies) {
+    return decorate(_inject, dependencies);
+}
+inject.get = function () {
+    return metadata.get(injectKey, injectCriteria, ...arguments)
+        || noDependencies;
+}
+
+function _inject(target, key, descriptor, dependencies) {
+    dependencies = $flatten(dependencies);
+    if (dependencies.length > 0) {
+        const meta = $meta(target);
+        if (meta) {
+            meta.addMetadata(key, { [injectKey]: dependencies });
+        }
+    }
+}
+
+export default inject;

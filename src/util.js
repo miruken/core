@@ -412,7 +412,7 @@ export function $merge(target, ...sources) {
                 $merge(curValue, newValue);
             } else {
                 target[key] = Array.isArray(newValue)
-                            ? newValue.slice(0)
+                            ? newValue.slice()
                             : newValue;
             }
         });
@@ -442,7 +442,7 @@ export function $match(target, criteria, matched) {
               if (constraint === undefined) {
                   if (match) {
                       if (Array.isArray(value)) {
-                          match[key] = value.slice(0);
+                          match[key] = value.slice();
                       } else if ($isObject(value)) {
                           match[key] = $merge({}, value);
                       } else {
