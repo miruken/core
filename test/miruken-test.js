@@ -406,7 +406,7 @@ describe("$meta", () => {
         }));
         let age = meta.getMetadata("age");
         expect(age).to.eql({required: true});
-        meta.addMetadata("age", {length: 1});
+        meta.defineMetadata("age", {length: 1});
         age = meta.getMetadata("age");        
         expect(age).to.eql({required: true, length: 1});        
     });

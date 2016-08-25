@@ -1837,7 +1837,7 @@ define(['exports'], function (exports) {
                     }
                     return metadata;
                 },
-                addMetadata: function addMetadata(key, metadata, replace) {
+                defineMetadata: function defineMetadata(key, metadata, replace) {
                     if (key && metadata) {
                         var meta = _metadata || (_metadata = {});
                         if (replace) {
@@ -2373,7 +2373,7 @@ define(['exports'], function (exports) {
         if (keyMetadata) {
             var meta = $meta(target);
             if (meta) {
-                meta.addMetadata(key, keyMetadata);
+                meta.defineMetadata(key, keyMetadata);
             }
         }
     }
@@ -2661,7 +2661,7 @@ define(['exports'], function (exports) {
         if (dependencies.length > 0) {
             var meta = $meta(target);
             if (meta) {
-                meta.addMetadata(key, _defineProperty({}, injectKey, dependencies));
+                meta.defineMetadata(key, _defineProperty({}, injectKey, dependencies));
             }
         }
     }

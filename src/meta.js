@@ -507,15 +507,15 @@ export const Metadata = Base.extend({
                 return metadata;
             },
             /**
-             * Adds metadata to a property `key`.
-             * @method addMetadata
+             * Defines metadata to a property `key`.
+             * @method defineMetadata
              * @param    {string | Symbol}  key       -  property key
              * @param    {Object}           metadata  -  metadata
              * @param    {boolean}          replace   -  true if replace
              * @returns  {Metadata} current metadata.
              * @chainable
              */
-            addMetadata(key, metadata, replace) {
+            defineMetadata(key, metadata, replace) {
                 if (key && metadata) {
                     const meta = _metadata || (_metadata = {});
                     if (replace) {

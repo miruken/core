@@ -26,7 +26,7 @@ function _inject(target, key, descriptor, dependencies) {
     if (dependencies.length > 0) {
         const meta = $meta(target);
         if (meta) {
-            meta.addMetadata(key, { [injectKey]: dependencies });
+            meta.defineMetadata(key, { [injectKey]: dependencies });
         }
     }
 }

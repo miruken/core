@@ -32,7 +32,7 @@ function _metadata(target, key, descriptor, [keyMetadata]) {
     if (keyMetadata) {
         const meta = $meta(target);
         if (meta) {
-            meta.addMetadata(key, keyMetadata);
+            meta.defineMetadata(key, keyMetadata);
         }
     }
 }
