@@ -22,3 +22,5 @@ export function isDescriptor(desc) {
 
     return false;
 }
+
+export default decorate;

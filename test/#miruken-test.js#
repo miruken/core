@@ -1,4 +1,4 @@
-import { Base, assignID } from '../src/base2';
+mport { Base, assignID } from '../src/base2';
 import { Enum, Flags } from '../src/enum';
 import { MethodType } from '../src/core';
 import { Modifier,  $createModifier, $every } from '../src/modifier';

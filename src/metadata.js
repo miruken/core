@@ -2,9 +2,14 @@ import { decorate } from './decorate';
 import { $isFunction } from './util';
 import { $meta } from './meta';
 
+/**
+ * Registers metadata for properties and methods.
+ * @method metadata
+ */
 export function metadata(...args) {
     return decorate(_metadata, args);
 }
+
 metadata.get = function (metaKey, criteria, source, key, fn) {
     if (!fn && $isFunction(key)) {
         [key, fn] = [null, key];
@@ -17,7 +22,7 @@ metadata.get = function (metaKey, criteria, source, key, fn) {
             if (key) {
                 fn(match[metaKey], key);
             } else {
-                Reflect.ownKeys(match).forEach(k => fn(match[metaKey], k));
+                Reflect.ownKeys(match).forEach(k => fn(match[k][metaKey], k));
             }
         }
     }

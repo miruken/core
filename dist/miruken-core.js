@@ -156,6 +156,8 @@ export function isDescriptor(desc) {
     return false;
 }
 
+export default decorate;
+
 /*
   base2 - copyright 2007-2009, Dean Edwards
   http://code.google.com/p/base2/
@@ -823,17 +825,24 @@ function K(k) {
     };
 };
 
+/**
+ * Applies copy semantics on properties and return values.
+ * @method copy
+ */
 export function copy(...args) {
     return decorate(_copy, args);
 }
 
-export default copy;
-
 function _copy(target, key, descriptor) {
-    const { get, set, value } = descriptor;
+    const { get, set, value, initializer } = descriptor;
     if ($isFunction(value)) {
         descriptor.value = function () {
             return _copyOf(value.apply(this, arguments));
+        }
+    }
+    if ($isFunction(initializer)) {
+        descriptor.initializer = function () {
+            return _copyOf(initializer.apply(this));
         }
     }
     if ($isFunction(get)) {
@@ -855,6 +864,8 @@ function _copyOf(value) {
     }
     return value;
 }
+
+export default copy;
 
 /**
  * Delegates properties and methods to another object.<br/>
@@ -1750,8 +1761,7 @@ function _protocol(target) {
 /**
  * Marks a class as a {{#crossLink "Protocol"}}{{/crossLink}}.
  * @method protocol
- * @param    {Array}    args  -  protocol args
- * @returns  {Function} the protocol decorator.
+ * @param  {Array}  args  -  protocol args
  */
 export function protocol(...args) {
     if (args.length === 0) {
@@ -2787,9 +2797,14 @@ function reverseLevelOrder(node, visitor, context, visited = []) {
     }
 }
 
+/**
+ * Registers metadata for properties and methods.
+ * @method metadata
+ */
 export function metadata(...args) {
     return decorate(_metadata, args);
 }
+
 metadata.get = function (metaKey, criteria, source, key, fn) {
     if (!fn && $isFunction(key)) {
         [key, fn] = [null, key];
@@ -2802,7 +2817,7 @@ metadata.get = function (metaKey, criteria, source, key, fn) {
             if (key) {
                 fn(match[metaKey], key);
             } else {
-                Reflect.ownKeys(match).forEach(k => fn(match[metaKey], k));
+                Reflect.ownKeys(match).forEach(k => fn(match[k][metaKey], k));
             }
         }
     }
@@ -3105,9 +3120,15 @@ const injectKey      = Symbol(),
       injectCriteria = { [injectKey]: undefined },
       noDependencies = Object.freeze([]);
 
+/**
+ * Specifies dependencies on properties and methods.
+ * @method inject
+ * @param  {Array}  ...dependencies  -  property/method dependencies
+ */
 export function inject(...dependencies) {
     return decorate(_inject, dependencies);
 }
+
 inject.get = function () {
     return metadata.get(injectKey, injectCriteria, ...arguments)
         || noDependencies;

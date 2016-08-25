@@ -233,10 +233,16 @@ System.register([], function (_export, _context) {
         var get = descriptor.get;
         var set = descriptor.set;
         var value = descriptor.value;
+        var initializer = descriptor.initializer;
 
         if ($isFunction(value)) {
             descriptor.value = function () {
                 return _copyOf(value.apply(this, arguments));
+            };
+        }
+        if ($isFunction(initializer)) {
+            descriptor.initializer = function () {
+                return _copyOf(initializer.apply(this));
             };
         }
         if ($isFunction(get)) {
@@ -939,6 +945,8 @@ System.register([], function (_export, _context) {
 
             _export('isDescriptor', isDescriptor);
 
+            _export('default', decorate);
+
             _export('Undefined', Undefined = K());
 
             _export('Null', Null = K(null));
@@ -1391,7 +1399,6 @@ System.register([], function (_export, _context) {
 
                 return decorate(_copy, args);
             }
-
             _export('copy', copy);
 
             _export('default', copy);
@@ -2732,7 +2739,7 @@ System.register([], function (_export, _context) {
                                 fn(match[metaKey], key);
                             } else {
                                 Reflect.ownKeys(match).forEach(function (k) {
-                                    return fn(match[metaKey], k);
+                                    return fn(match[k][metaKey], k);
                                 });
                             }
                         }

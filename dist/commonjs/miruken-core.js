@@ -157,6 +157,7 @@ function isDescriptor(desc) {
     return false;
 }
 
+exports.default = decorate;
 var Undefined = exports.Undefined = K(),
     Null = exports.Null = K(null),
     True = exports.True = K(true),
@@ -763,17 +764,20 @@ function copy() {
     return decorate(_copy, args);
 }
 
-exports.default = copy;
-
-
 function _copy(target, key, descriptor) {
     var get = descriptor.get;
     var set = descriptor.set;
     var value = descriptor.value;
+    var initializer = descriptor.initializer;
 
     if ($isFunction(value)) {
         descriptor.value = function () {
             return _copyOf(value.apply(this, arguments));
+        };
+    }
+    if ($isFunction(initializer)) {
+        descriptor.initializer = function () {
+            return _copyOf(initializer.apply(this));
         };
     }
     if ($isFunction(get)) {
@@ -796,6 +800,7 @@ function _copyOf(value) {
     return value;
 }
 
+exports.default = copy;
 var Delegate = exports.Delegate = Base.extend({
     get: function get(protocol, key, strict) {},
     set: function set(protocol, key, value, strict) {},
@@ -2272,6 +2277,7 @@ function metadata() {
 
     return decorate(_metadata, args);
 }
+
 metadata.get = function (metaKey, criteria, source, key, fn) {
     if (!fn && $isFunction(key)) {
         var _ref3 = [null, key];
@@ -2288,7 +2294,7 @@ metadata.get = function (metaKey, criteria, source, key, fn) {
                     fn(match[metaKey], key);
                 } else {
                     Reflect.ownKeys(match).forEach(function (k) {
-                        return fn(match[metaKey], k);
+                        return fn(match[k][metaKey], k);
                     });
                 }
             }
@@ -2582,6 +2588,7 @@ function inject() {
 
     return decorate(_inject, dependencies);
 }
+
 inject.get = function () {
     return metadata.get.apply(metadata, [injectKey, injectCriteria].concat(Array.prototype.slice.call(arguments))) || noDependencies;
 };

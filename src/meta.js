@@ -159,8 +159,7 @@ function _protocol(target) {
 /**
  * Marks a class as a {{#crossLink "Protocol"}}{{/crossLink}}.
  * @method protocol
- * @param    {Array}    args  -  protocol args
- * @returns  {Function} the protocol decorator.
+ * @param  {Array}  args  -  protocol args
  */
 export function protocol(...args) {
     if (args.length === 0) {
