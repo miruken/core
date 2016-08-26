@@ -175,7 +175,6 @@ var _subclass = function _subclass(_instance, _static) {
     __prototyping = this.prototype;
     var _prototype = new this();
     if (_instance) _extend(_prototype, _instance);
-    _prototype.base = function () {};
     __prototyping = undefined;
 
     var _constructor = _prototype.constructor;
@@ -219,6 +218,8 @@ var Base = exports.Base = _subclass.call(Object, {
             this.extend(arguments[0]);
         }
     },
+
+    base: function base() {},
 
     extend: delegate(_extend),
 

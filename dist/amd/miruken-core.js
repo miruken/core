@@ -238,7 +238,6 @@ define(['exports'], function (exports) {
         __prototyping = this.prototype;
         var _prototype = new this();
         if (_instance) _extend(_prototype, _instance);
-        _prototype.base = function () {};
         __prototyping = undefined;
 
         var _constructor = _prototype.constructor;
@@ -282,6 +281,8 @@ define(['exports'], function (exports) {
                 this.extend(arguments[0]);
             }
         },
+
+        base: function base() {},
 
         extend: delegate(_extend),
 

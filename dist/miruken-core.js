@@ -190,9 +190,6 @@ const _subclass = function(_instance, _static) {
   __prototyping = this.prototype;
   var _prototype = new this;
   if (_instance) extend(_prototype, _instance);
-  _prototype.base = function() {
-    // call this method from any other method to invoke that method's ancestor
-  };
   __prototyping = undefined;
   
   // Create the wrapper for the constructor function.
@@ -241,7 +238,11 @@ export let Base = _subclass.call(Object, {
       this.extend(arguments[0]);
     }
   },
-  
+    
+  base: function() {
+    // call this method from any other method to invoke that method's ancestor
+  },
+    
   extend: delegate(extend),
   
   toString: function() {

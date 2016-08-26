@@ -973,7 +973,6 @@ System.register([], function (_export, _context) {
                 __prototyping = this.prototype;
                 var _prototype = new this();
                 if (_instance) _extend(_prototype, _instance);
-                _prototype.base = function () {};
                 __prototyping = undefined;
 
                 var _constructor = _prototype.constructor;
@@ -1017,6 +1016,8 @@ System.register([], function (_export, _context) {
                         this.extend(arguments[0]);
                     }
                 },
+
+                base: function base() {},
 
                 extend: delegate(_extend),
 
