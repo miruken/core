@@ -133,7 +133,7 @@ const noProxyMethods = {
 };
 
 function proxyClass(proxy, protocols) {
-    const sources = [proxy].concat($meta(proxy).allProtocols, protocols),
+    const sources = [proxy].concat($meta(proxy).protocols, protocols),
           proxied = {};
     for (let i = 0; i < sources.length; ++i) {
         const source     = sources[i],

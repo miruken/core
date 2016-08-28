@@ -1,6 +1,6 @@
 import { decorate } from './decorate';
 import { $isFunction } from './util';
-import { $meta } from './meta';
+import { Metadata, $meta } from './meta';
 
 /**
  * Registers metadata for properties and methods.
@@ -10,19 +10,28 @@ export function metadata(...args) {
     return decorate(_metadata, args);
 }
 
-metadata.get = function (metaKey, criteria, source, key, fn) {
+metadata.getOwn = function (metaKey, criteria, source, key, fn) {
+    return metadata.get(metaKey, criteria, source, key, fn, true);
+}
+
+metadata.get = function (metaKey, criteria, source, key, fn, own) {
     if (!fn && $isFunction(key)) {
         [key, fn] = [null, key];
     }
     if (!fn) return;
-    const meta = $meta(source);
+    const meta = source instanceof Metadata
+               ? source
+               : $meta(source);
     if (meta) {
-        const match = meta.getMetadata(key, criteria);
+        const match = own
+              ? meta.getOwnMetadata(key, criteria)
+              : meta.getMetadata(key, criteria);
         if (match) {
             if (key) {
-                fn(match[metaKey], key);
+                fn(match[metaKey], Metadata.getExternalKey(key));
             } else {
-                Reflect.ownKeys(match).forEach(k => fn(match[k][metaKey], k));
+                Reflect.ownKeys(match).forEach(
+                    k => fn(match[k][metaKey], Metadata.getExternalKey(k)));
             }
         }
     }

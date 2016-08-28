@@ -3,7 +3,7 @@
 System.register([], function (_export, _context) {
     "use strict";
 
-    var _slicedToArray, _Base$extend, _typeof, $eq, $use, $copy, $lazy, $eval, $every, $child, $optional, $promise, $instant, Undefined, Null, True, False, __prototyping, _counter, _IGNORE, _BASE, _HIDDEN, _slice, _subclass, Base, Package, Abstract, _moduleCount, Module, _toString, Delegate, ObjectDelegate, ArrayDelegate, Defining, Enum, Flags, ArrayManager, IndexedList, baseExtend, baseImplement, baseProtoExtend, MetadataSymbol, defineProperty, getOwnPropertyDescriptor, isFrozen, ownKeys, ProtocolGet, ProtocolSet, ProtocolInvoke, ProtocolDelegate, ProtocolStrict, Protocol, Metadata, SUPPRESS_METADATA, StrictProtocol, $isProtocol, MethodType, Variance, Initializing, Resolving, Invoking, Parenting, Starting, Startup, Disposing, DisposingMixin, TraversingAxis, Traversing, TraversingMixin, Traversal, Facet, Interceptor, InterceptorSelector, ProxyBuilder, noProxyMethods, injectKey, injectCriteria, noDependencies;
+    var _slicedToArray, _Base$extend, _typeof, $eq, $use, $copy, $lazy, $eval, $every, $child, $optional, $promise, $instant, Undefined, Null, True, False, __prototyping, _counter, _IGNORE, _BASE, _HIDDEN, _slice, _subclass, Base, Package, Abstract, _moduleCount, Module, _toString, Delegate, ObjectDelegate, ArrayDelegate, Defining, Enum, Flags, ArrayManager, IndexedList, baseExtend, baseImplement, baseProtoExtend, MetadataSymbol, defineProperty, getOwnPropertyDescriptor, isFrozen, ownKeys, ProtocolGet, ProtocolSet, ProtocolInvoke, ProtocolDelegate, ProtocolStrict, Protocol, Metadata, SUPPRESS_METADATA, StrictProtocol, $isProtocol, nothing, emptyArray, MethodType, Variance, Initializing, Resolving, Invoking, Parenting, Starting, Startup, Disposing, DisposingMixin, TraversingAxis, Traversing, TraversingMixin, Traversal, Facet, Interceptor, InterceptorSelector, ProxyBuilder, noProxyMethods, injectKey, injectCriteria;
 
     function _defineProperty(obj, key, value) {
         if (key in obj) {
@@ -282,7 +282,7 @@ System.register([], function (_export, _context) {
                     return this[ProtocolInvoke](key, args);
                 };
             } else {
-                var isSimple = descriptor.hasOwnProperty('value');
+                var isSimple = descriptor.hasOwnProperty('value') || descriptor.hasOwnProperty('initializer');
                 if (isSimple) {
                     delete descriptor.value;
                     delete descriptor.writable;
@@ -576,7 +576,7 @@ System.register([], function (_export, _context) {
     }
 
     function proxyClass(proxy, protocols) {
-        var sources = [proxy].concat($meta(proxy).allProtocols, protocols),
+        var sources = [proxy].concat($meta(proxy).protocols, protocols),
             proxied = {};
 
         var _loop2 = function _loop2(i) {
@@ -1012,7 +1012,7 @@ System.register([], function (_export, _context) {
 
             _export('Base', Base = _subclass.call(Object, {
                 constructor: function constructor() {
-                    if (arguments.length > 0) {
+                    if (arguments.length > 0 && typeOf(arguments[0]) === 'object') {
                         this.extend(arguments[0]);
                     }
                 },
@@ -2091,15 +2091,15 @@ System.register([], function (_export, _context) {
                             return Protocol.isProtocol(_type);
                         },
 
-                        get protocols() {
+                        get ownProtocols() {
                             return _protocols ? _protocols.slice() : [];
                         },
 
-                        get allProtocols() {
-                            var protocols = this.protocols,
+                        get protocols() {
+                            var protocols = this.ownProtocols,
                                 declared = protocols.slice();
                             if (_parent) {
-                                _parent.allProtocols.forEach(addProtocol);
+                                _parent.protocols.forEach(addProtocol);
                             }
                             var _iteratorNormalCompletion2 = true;
                             var _didIteratorError2 = false;
@@ -2109,7 +2109,7 @@ System.register([], function (_export, _context) {
                                 for (var _iterator2 = declared[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
                                     var _protocol2 = _step2.value;
 
-                                    $meta(_protocol2).allProtocols.forEach(addProtocol);
+                                    $meta(_protocol2).protocols.forEach(addProtocol);
                                 }
                             } catch (err) {
                                 _didIteratorError2 = true;
@@ -2135,7 +2135,7 @@ System.register([], function (_export, _context) {
                                     for (var _iterator3 = _extensions[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
                                         var extension = _step3.value;
 
-                                        extension.allProtocols.forEach(addProtocol);
+                                        extension.protocols.forEach(addProtocol);
                                     }
                                 } catch (err) {
                                     _didIteratorError3 = true;
@@ -2347,15 +2347,14 @@ System.register([], function (_export, _context) {
                                 }
                             }
                         },
-                        getMetadata: function getMetadata(key, criteria) {
+                        getOwnMetadata: function getOwnMetadata(key, criteria) {
                             var metadata = void 0;
                             if ($isObject(key)) {
-                                var _ref2 = [null, key];
+                                var _ref2 = [undefined, key];
                                 key = _ref2[0];
                                 criteria = _ref2[1];
-                            }
-                            if (_parent) {
-                                metadata = _parent.getMetadata(key, criteria);
+                            } else {
+                                key = Metadata.getInternalKey(key);
                             }
                             if (_protocols) {
                                 metadata = _protocols.reduce(function (result, protocol) {
@@ -2394,8 +2393,14 @@ System.register([], function (_export, _context) {
                             }
                             return metadata;
                         },
+                        getMetadata: function getMetadata(key, criteria) {
+                            var parent = _parent && _parent.getMetadata(key, criteria),
+                                own = this.getOwnMetadata(key, criteria);
+                            return parent ? $merge(parent, own) : own;
+                        },
                         defineMetadata: function defineMetadata(key, metadata, replace) {
                             if (key && metadata) {
+                                key = Metadata.getInternalKey(key);
                                 var meta = _metadata || (_metadata = {});
                                 if (replace) {
                                     Object.assign(meta, _defineProperty({}, key, Object.assign(meta[key] || {}, metadata)));
@@ -2406,6 +2411,14 @@ System.register([], function (_export, _context) {
                             return this;
                         }
                     });
+                }
+            }, {
+                constructorKey: Symbol(),
+                getInternalKey: function getInternalKey(key) {
+                    return key === 'constructor' ? this.constructorKey : key;
+                },
+                getExternalKey: function getExternalKey(key) {
+                    return key === this.constructorKey ? 'constructor' : key;
                 }
             }));
 
@@ -2487,6 +2500,14 @@ System.register([], function (_export, _context) {
             }
 
             _export('$classOf', $classOf);
+
+            _export('nothing', nothing = undefined);
+
+            _export('emptyArray', emptyArray = Object.freeze([]));
+
+            _export('nothing', nothing);
+
+            _export('emptyArray', emptyArray);
 
             _export('MethodType', MethodType = Enum({
                 Get: 1,
@@ -2724,23 +2745,27 @@ System.register([], function (_export, _context) {
 
             _export('metadata', metadata);
 
-            metadata.get = function (metaKey, criteria, source, key, fn) {
+            metadata.getOwn = function (metaKey, criteria, source, key, fn) {
+                return metadata.get(metaKey, criteria, source, key, fn, true);
+            };
+
+            metadata.get = function (metaKey, criteria, source, key, fn, own) {
                 if (!fn && $isFunction(key)) {
                     var _ref3 = [null, key];
                     key = _ref3[0];
                     fn = _ref3[1];
                 }
                 if (!fn) return;
-                var meta = $meta(source);
+                var meta = source instanceof Metadata ? source : $meta(source);
                 if (meta) {
                     (function () {
-                        var match = meta.getMetadata(key, criteria);
+                        var match = own ? meta.getOwnMetadata(key, criteria) : meta.getMetadata(key, criteria);
                         if (match) {
                             if (key) {
-                                fn(match[metaKey], key);
+                                fn(match[metaKey], Metadata.getExternalKey(key));
                             } else {
                                 Reflect.ownKeys(match).forEach(function (k) {
-                                    return fn(match[k][metaKey], k);
+                                    return fn(match[k][metaKey], Metadata.getExternalKey(k));
                                 });
                             }
                         }
@@ -2796,7 +2821,6 @@ System.register([], function (_export, _context) {
             };
             injectKey = Symbol();
             injectCriteria = _defineProperty({}, injectKey, undefined);
-            noDependencies = Object.freeze([]);
             function inject() {
                 for (var _len11 = arguments.length, dependencies = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
                     dependencies[_key11] = arguments[_key11];
@@ -2807,8 +2831,12 @@ System.register([], function (_export, _context) {
 
             _export('inject', inject);
 
+            inject.getOwn = function () {
+                return metadata.getOwn.apply(metadata, [injectKey, injectCriteria].concat(Array.prototype.slice.call(arguments))) || emptyArray;
+            };
+
             inject.get = function () {
-                return metadata.get.apply(metadata, [injectKey, injectCriteria].concat(Array.prototype.slice.call(arguments))) || noDependencies;
+                return metadata.get.apply(metadata, [injectKey, injectCriteria].concat(Array.prototype.slice.call(arguments))) || emptyArray;
             };
             _export('default', inject);
         }

@@ -2,6 +2,9 @@ import { Base } from './base2';
 import { Protocol, StrictProtocol } from './meta';
 import { Enum } from './enum';
 
+export const nothing    = undefined,
+             emptyArray = Object.freeze([]);
+
 /**
  * Type of property method.
  * @class PropertyType

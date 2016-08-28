@@ -878,19 +878,19 @@ describe("Protocol", () => {
         });
     });
 
-    describe("#protocols", () => {
-        it("should retrieve declaring protocols", () => {
-            expect($meta(Dog).protocols).to.eql([Animal, Tricks]);
+    describe("#ownProtocols", () => {
+        it("should retrieve own protocols", () => {
+            expect($meta(Dog).ownProtocols).to.eql([Animal, Tricks]);
         });
     });
 
-    describe("#allProtocols", () => {
+    describe("#protocols", () => {
         it("should retrieve all protocol protocols", () => {
-            expect($meta(CircusAnimal).allProtocols).to.eql([Animal, Tricks]);
+            expect($meta(CircusAnimal).protocols).to.eql([Animal, Tricks]);
         });
 
         it("should retrieve all class protocols", () => {
-            expect($meta(AsianElephant).allProtocols).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
+            expect($meta(AsianElephant).protocols).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
         });
     });
 
@@ -949,18 +949,18 @@ describe("Protocol", () => {
         it("should only list protocol once", () => {
             const Cat = Base.extend(Animal, Animal);
             expect(Cat.conformsTo(Animal)).to.be.true;
-            expect($meta(Cat).protocols).to.eql([Animal]);
+            expect($meta(Cat).ownProtocols).to.eql([Animal]);
         });
 
         it("should only list protocol once if extended", () => {
             const Cat = Animal.extend(Animal);
             expect(Cat.conformsTo(Animal)).to.be.true;
-            expect($meta(Cat).protocols).to.eql([Animal]);
+            expect($meta(Cat).ownProtocols).to.eql([Animal]);
         });
 
         it("should support protocol inheritance", () => {
             expect(Elephant.conformsTo(Animal)).to.be.true;
-            expect($meta(CircusAnimal).protocols).to.eql([Animal, Tricks]);
+            expect($meta(CircusAnimal).ownProtocols).to.eql([Animal, Tricks]);
         });
 
         it("should inherit protocol conformance", () => {
@@ -972,7 +972,7 @@ describe("Protocol", () => {
             const EndangeredAnimal = Base.extend([Animal, Tracked]);
             expect(EndangeredAnimal.conformsTo(Animal)).to.be.true;
             expect(EndangeredAnimal.conformsTo(Tracked)).to.be.true;
-            expect($meta(EndangeredAnimal).protocols).to.eql([Animal, Tracked]);
+            expect($meta(EndangeredAnimal).ownProtocols).to.eql([Animal, Tracked]);
         });
 
         it("should allow redefining method", () => {
@@ -1314,14 +1314,18 @@ describe("ProxyBuilder", () => {
 
 describe("inject", () => {
     const Circus = Base.extend({
-        @inject(Dog)
-        dancingDog(Dance) {},
+              @inject($every(Animal))        
+              constructor() {},
         
-        @inject($every(Elephant))
-        elpehantParade(elephant) {}
-    });
+              @inject(Dog)
+              dancingDog(Dance) {},
+        
+              @inject($every(Elephant))
+              elpehantParade(elephant) {}
+          }),
+          RingBrothers = Circus.extend();          
     
-    it("should add dependencies to class metadata", () => {
+    it("should get class dependencies", () => {
         let dep;
         inject.get(Circus, 'dancingDog', (d, k) => {
             expect(k).to.eql('dancingDog');
@@ -1330,7 +1334,7 @@ describe("inject", () => {
         expect(dep).to.eql([Dog]);
     });
 
-    it("should add modifier dependencies to class metadata", () => {
+    it("should get dependencies with modifiers", () => {
         let dep;
         inject.get(Circus, 'elpehantParade', (d, k) => {
             expect(k).to.eql('elpehantParade');
@@ -1338,5 +1342,21 @@ describe("inject", () => {
         });
         expect($every.test(dep[0])).to.be.true;
         expect(Modifier.unwrap(dep[0])).to.equal(Elephant);
+    });
+
+    it("should get constructor dependencies", () => {
+        let dep;
+        inject.get(Circus, 'constructor', (d, k) => {
+            expect(k).to.eql('constructor');
+            dep = d;
+        });
+        expect($every.test(dep[0])).to.be.true;
+        expect(Modifier.unwrap(dep[0])).to.equal(Animal);
+    });
+
+    it("should get own class dependencies", () => {
+        let dep;
+        inject.getOwn(RingBrothers, 'dancingDog', (d, k) =>  dep = d);
+        expect(dep).to.be.undefined;
     });    
 });

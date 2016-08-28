@@ -74,7 +74,7 @@ const _subclass = function(_instance, _static) {
 
 export let Base = _subclass.call(Object, {
   constructor: function() {
-    if (arguments.length > 0) {
+    if (arguments.length > 0 && typeOf(arguments[0]) === 'object') {
       this.extend(arguments[0]);
     }
   },

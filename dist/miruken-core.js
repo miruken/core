@@ -234,7 +234,7 @@ const _subclass = function(_instance, _static) {
 
 export let Base = _subclass.call(Object, {
   constructor: function() {
-    if (arguments.length > 0) {
+    if (arguments.length > 0 && typeOf(arguments[0]) === 'object') {
       this.extend(arguments[0]);
     }
   },
@@ -1739,7 +1739,8 @@ function _protocol(target) {
                 return this[ProtocolInvoke](key, args);
             };
         } else {
-            const isSimple = descriptor.hasOwnProperty('value');
+            const isSimple = descriptor.hasOwnProperty('value')
+                          || descriptor.hasOwnProperty('initializer');
             if (isSimple) {
                 delete descriptor.value;
                 delete descriptor.writable;
@@ -1849,28 +1850,28 @@ export const Metadata = Base.extend({
                 return Protocol.isProtocol(_type);
             },
             /**
-             * Gets the declared protocols.
-             * @property {Array} protocols
+             * Gets the own protocols.
+             * @property {Array} ownProtocols
              */
-            get protocols() {
+            get ownProtocols() {
                 return _protocols ? _protocols.slice() : [];
             },
             /**
              * Gets all conforming protocools.
-             * @property {Array} allProtocols
+             * @property {Array} protocols
              */
-            get allProtocols() {
-                const protocols = this.protocols,
+            get protocols() {
+                const protocols = this.ownProtocols,
                       declared  = protocols.slice();
                 if (_parent) {
-                    _parent.allProtocols.forEach(addProtocol);
+                    _parent.protocols.forEach(addProtocol);
                 }                
                 for (let protocol of declared) {
-                    $meta(protocol).allProtocols.forEach(addProtocol);
+                    $meta(protocol).protocols.forEach(addProtocol);
                 }
                 if (_extensions) {
                     for (let extension of _extensions) {
-                        extension.allProtocols.forEach(addProtocol);
+                        extension.protocols.forEach(addProtocol);
                     }
                 }
                 function addProtocol(protocol) {
@@ -2060,21 +2061,20 @@ export const Metadata = Base.extend({
                         if (visitor(_extensions[i])) return;
                     }
                 }
-            },            
+            },
             /**
-             * Gets the metadata for `key` and `criteria`.
-             * @method getMetadata
+             * Gets the own metadata for `key` and `criteria`.
+             * @method getOwnMetadata
              * @param    {Any}     [key]     -  key selector
              * @param    {Object}  criteria  -  metadata criteria
              * @returns  {Object}  matching metadata.
              */
-            getMetadata(key, criteria) {
+            getOwnMetadata(key, criteria) {
                 let metadata;
                 if ($isObject(key)) {
-                    [key, criteria] = [null, key];
-                }
-                if (_parent) {
-                    metadata = _parent.getMetadata(key, criteria);
+                    [key, criteria] = [undefined, key];
+                } else {
+                    key = Metadata.getInternalKey(key);
                 }
                 if (_protocols) {
                     metadata = _protocols.reduce((result, protocol) => {
@@ -2107,7 +2107,19 @@ export const Metadata = Base.extend({
                         return keyMeta ? $merge(result || {}, keyMeta) : result;
                     }, metadata);  
                 }
-                return metadata;
+                return metadata;                
+            },
+            /**
+             * Gets the metadata for `key` and `criteria`.
+             * @method getMetadata
+             * @param    {Any}     [key]     -  key selector
+             * @param    {Object}  criteria  -  metadata criteria
+             * @returns  {Object}  matching metadata.
+             */
+            getMetadata(key, criteria) {
+                const parent = _parent && _parent.getMetadata(key, criteria),
+                      own    = this.getOwnMetadata(key, criteria);
+                return parent ? $merge(parent, own) : own;
             },
             /**
              * Defines metadata to a property `key`.
@@ -2120,6 +2132,7 @@ export const Metadata = Base.extend({
              */
             defineMetadata(key, metadata, replace) {
                 if (key && metadata) {
+                    key = Metadata.getInternalKey(key);
                     const meta = _metadata || (_metadata = {});
                     if (replace) {
                         Object.assign(meta, {
@@ -2132,6 +2145,14 @@ export const Metadata = Base.extend({
                 return this;
             },
         });
+    }
+}, {
+    constructorKey: Symbol(),
+    getInternalKey(key) {
+        return key === 'constructor' ? this.constructorKey : key;
+    },
+    getExternalKey(key) {
+        return key === this.constructorKey ? 'constructor' : key;
     }
 });
 
@@ -2253,6 +2274,9 @@ function isUpperCase(char) {
 export function $classOf(instance) {
     return instance && instance.constructor;
 }
+
+export const nothing    = undefined,
+             emptyArray = Object.freeze([]);
 
 /**
  * Type of property method.
@@ -2806,19 +2830,28 @@ export function metadata(...args) {
     return decorate(_metadata, args);
 }
 
-metadata.get = function (metaKey, criteria, source, key, fn) {
+metadata.getOwn = function (metaKey, criteria, source, key, fn) {
+    return metadata.get(metaKey, criteria, source, key, fn, true);
+}
+
+metadata.get = function (metaKey, criteria, source, key, fn, own) {
     if (!fn && $isFunction(key)) {
         [key, fn] = [null, key];
     }
     if (!fn) return;
-    const meta = $meta(source);
+    const meta = source instanceof Metadata
+               ? source
+               : $meta(source);
     if (meta) {
-        const match = meta.getMetadata(key, criteria);
+        const match = own
+              ? meta.getOwnMetadata(key, criteria)
+              : meta.getMetadata(key, criteria);
         if (match) {
             if (key) {
-                fn(match[metaKey], key);
+                fn(match[metaKey], Metadata.getExternalKey(key));
             } else {
-                Reflect.ownKeys(match).forEach(k => fn(match[k][metaKey], k));
+                Reflect.ownKeys(match).forEach(
+                    k => fn(match[k][metaKey], Metadata.getExternalKey(k)));
             }
         }
     }
@@ -2964,7 +2997,7 @@ const noProxyMethods = {
 };
 
 function proxyClass(proxy, protocols) {
-    const sources = [proxy].concat($meta(proxy).allProtocols, protocols),
+    const sources = [proxy].concat($meta(proxy).protocols, protocols),
           proxied = {};
     for (let i = 0; i < sources.length; ++i) {
         const source     = sources[i],
@@ -3118,8 +3151,7 @@ function extendProxyInstance(key, value) {
 }
 
 const injectKey      = Symbol(),
-      injectCriteria = { [injectKey]: undefined },
-      noDependencies = Object.freeze([]);
+      injectCriteria = { [injectKey]: undefined };
 
 /**
  * Specifies dependencies on properties and methods.
@@ -3130,9 +3162,14 @@ export function inject(...dependencies) {
     return decorate(_inject, dependencies);
 }
 
+inject.getOwn = function () {
+    return metadata.getOwn(injectKey, injectCriteria, ...arguments)
+        || emptyArray;
+}
+
 inject.get = function () {
     return metadata.get(injectKey, injectCriteria, ...arguments)
-        || noDependencies;
+        || emptyArray;
 }
 
 function _inject(target, key, descriptor, dependencies) {
