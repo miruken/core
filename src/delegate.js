@@ -50,19 +50,19 @@ export const ObjectDelegate = Delegate.extend({
     },
     get(protocol, key, strict) {
         const object = this.object;
-        if (object && (!strict || protocol.adoptedBy(object))) {
+        if (object && (!strict || protocol.isAdoptedBy(object))) {
             return object[key];
         }
     },
     set(protocol, key, value, strict) {
         const object = this.object;
-        if (object && (!strict || protocol.adoptedBy(object))) {
+        if (object && (!strict || protocol.isAdoptedBy(object))) {
             return object[key] = value;
         }
     },
     invoke(protocol, methodName, args, strict) {
         const object = this.object;
-        if (object && (!strict || protocol.adoptedBy(object))) {
+        if (object && (!strict || protocol.isAdoptedBy(object))) {
             const method = object[methodName];                
             return method && method.apply(object, args);
         }
@@ -83,20 +83,20 @@ export const ArrayDelegate = Delegate.extend({
     get(protocol, key, strict) {
         const array = this.array;
         return array && array.reduce((result, object) =>
-            !strict || protocol.adoptedBy(object) ? object[key] : result
-        , undefined);  
+            !strict || protocol.isAdoptedBy(object) ? object[key] : result,
+            undefined);  
     },
     set(protocol, key, value, strict) {
         const array = this.array;
         return array && array.reduce((result, object) =>
-            !strict || protocol.adoptedBy(object) ? object[key] = value : result
-        , undefined);  
+            !strict || protocol.isAdoptedBy(object) ? object[key] = value : result,
+            undefined);  
     },
     invoke(protocol, methodName, args, strict) {
         const array = this.array;
         return array && array.reduce((result, object) => {
             const method = object[methodName];
-            return method && (!strict || protocol.adoptedBy(object))
+            return method && (!strict || protocol.isAdoptedBy(object))
                 ? method.apply(object, args)
                 : result;
         }, undefined);

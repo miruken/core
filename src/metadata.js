@@ -19,20 +19,17 @@ metadata.get = function (metaKey, criteria, source, key, fn, own) {
         [key, fn] = [null, key];
     }
     if (!fn) return;
-    const meta = source instanceof Metadata
-               ? source
-               : $meta(source);
-    if (meta) {
-        const match = own
-              ? meta.getOwnMetadata(key, criteria)
-              : meta.getMetadata(key, criteria);
-        if (match) {
-            if (key) {
-                fn(match[metaKey], Metadata.getExternalKey(key));
-            } else {
-                Reflect.ownKeys(match).forEach(
-                    k => fn(match[k][metaKey], Metadata.getExternalKey(k)));
-            }
+    const meta = source instanceof Metadata ? source : $meta(source);
+    if (!meta) return;
+    const match = own
+                ? meta.getOwnMetadata(key, criteria)
+                : meta.getMetadata(key, criteria);
+    if (match) {
+        if (key) {
+            fn(match[metaKey], Metadata.getExternalKey(key));
+        } else {
+            Reflect.ownKeys(match).forEach(
+                k => fn(match[k][metaKey], Metadata.getExternalKey(k)));
         }
     }
 }

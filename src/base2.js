@@ -65,7 +65,6 @@ const _subclass = function(_instance, _static) {
   Object.setPrototypeOf(_class, this);
   if (_static) extend(_class, _static);
   _class.ancestor = this;
-  _class.base = _prototype.base;
   _class.prototype = _prototype;
   if (_class.init) _class.init();
   
@@ -78,11 +77,7 @@ export let Base = _subclass.call(Object, {
       this.extend(arguments[0]);
     }
   },
-    
-  base: function() {
-    // call this method from any other method to invoke that method's ancestor
-  },
-    
+        
   extend: delegate(extend),
   
   toString: function() {
@@ -108,6 +103,10 @@ export let Base = _subclass.call(Object, {
     return this;
   }
 });
+
+Base.base = Base.prototype.base = function() {
+  // call this method from any other method to invoke that method's ancestor
+};
 
 // =========================================================================
 // base2/Package.js

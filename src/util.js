@@ -397,8 +397,7 @@ export function $flatten(arr, prune) {
  * @returns  {Object} the original `target`.
  */
 export function $merge(target, ...sources) {
-    if (!$isObject(target) ||
-        Object.isFrozen(target)) {
+    if (!$isObject(target) || Object.isFrozen(target)) {
         return target;
     }
     sources.forEach(source => {

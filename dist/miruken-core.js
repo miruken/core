@@ -918,19 +918,19 @@ export const ObjectDelegate = Delegate.extend({
     },
     get(protocol, key, strict) {
         const object = this.object;
-        if (object && (!strict || protocol.adoptedBy(object))) {
+        if (object && (!strict || protocol.isAdoptedBy(object))) {
             return object[key];
         }
     },
     set(protocol, key, value, strict) {
         const object = this.object;
-        if (object && (!strict || protocol.adoptedBy(object))) {
+        if (object && (!strict || protocol.isAdoptedBy(object))) {
             return object[key] = value;
         }
     },
     invoke(protocol, methodName, args, strict) {
         const object = this.object;
-        if (object && (!strict || protocol.adoptedBy(object))) {
+        if (object && (!strict || protocol.isAdoptedBy(object))) {
             const method = object[methodName];                
             return method && method.apply(object, args);
         }
@@ -951,20 +951,20 @@ export const ArrayDelegate = Delegate.extend({
     get(protocol, key, strict) {
         const array = this.array;
         return array && array.reduce((result, object) =>
-            !strict || protocol.adoptedBy(object) ? object[key] : result
-        , undefined);  
+            !strict || protocol.isAdoptedBy(object) ? object[key] : result,
+            undefined);  
     },
     set(protocol, key, value, strict) {
         const array = this.array;
         return array && array.reduce((result, object) =>
-            !strict || protocol.adoptedBy(object) ? object[key] = value : result
-        , undefined);  
+            !strict || protocol.isAdoptedBy(object) ? object[key] = value : result,
+            undefined);  
     },
     invoke(protocol, methodName, args, strict) {
         const array = this.array;
         return array && array.reduce((result, object) => {
             const method = object[methodName];
-            return method && (!strict || protocol.adoptedBy(object))
+            return method && (!strict || protocol.isAdoptedBy(object))
                 ? method.apply(object, args)
                 : result;
         }, undefined);
@@ -1693,17 +1693,35 @@ export const Protocol = Base.extend({
     /**
      * Determines if `target` conforms to this protocol.
      * @static
-     * @method adoptedBy
+     * @method isAdoptedBy
      * @param   {Any}      target    -  target to test
      * @returns {boolean}  true if the target conforms to this protocol.
      */
-    adoptedBy(target) {
-        return $meta(target).conformsTo(this);
+    isAdoptedBy(target) {
+        const meta = $meta(target);
+        return !!(meta && meta.conformsTo(this));
+    },
+    /**
+     * Marks `target` as conforming to this protocol.
+     * @static
+     * @method adoptBy
+     * @param   {Any}      target  -  conforming target
+     * @returns {boolean}  true if the this protocol could be adopted.
+     */    
+    adoptBy(target) {
+        const meta = $meta(target);        
+        if (!(meta && meta.adoptProtocol(this))) {
+            return false;
+        }
+        if ($isFunction(target.protocolAdopted)) {
+            target.protocolAdopted(this);
+        }
+        return true;
     },
     /**
      * Notifies the `protocol` has been adopted.
-     * @staticsisProto
-     * @method adoptedBy
+     * @statics protocolAdopted
+     * @method 
      * @param   {Protocol} protocol  -  protocol adopted
      */    
     protocolAdopted(protocol) {
@@ -1725,6 +1743,15 @@ export const Protocol = Base.extend({
      */
     coerce(object, strict) { return new this(object, strict); }
 });
+
+/**
+ * Determines if `protocol` is a protocol.
+ * @method $isProtocol
+ * @param    {Any}     protocol  - target to test
+ * @returns  {boolean} true if a protocol.
+ * @for miruken-core.$
+ */
+export const $isProtocol = Protocol.isProtocol;
 
 function _protocol(target) {
     if ($isFunction(target)) {
@@ -1782,15 +1809,13 @@ export function protocol(...args) {
  * @returns  {Function} the conformsTo decorator.
  */
 export function conformsTo(...protocols) {
-    protocols = $flatten(protocols, true);    
-    if (protocols.length === 0) {
-        return Undefined;
+    protocols = $flatten(protocols, true);
+    if (!protocols.every($isProtocol)) {
+        throw new TypeError("Only Protocols can be conformed to");
     }
-    return function (target) {
-        const meta = $meta(target);
-        if (meta) {
-            meta.adoptProtocol(protocols);
-        }
+    return protocols.length === 0 ? Undefined : adopt;
+    function adopt(target) {
+        protocols.forEach(protocol => protocol.adoptBy(target));
     }
 }
 
@@ -1804,12 +1829,12 @@ export function mixin(...behaviors) {
     behaviors = $flatten(behaviors, true);
     return function (target) {
         if (behaviors.length > 0 && $isFunction(target.implement)) {
-            for (let behavior of behaviors) {
-                target.implement(behavior);
-            }
+            behaviors.forEach(b => target.implement(b));
         }
     };
 }
+
+const ParentSymbol = Symbol();
 
 /**
  * Base class for all metadata.
@@ -1821,33 +1846,15 @@ export function mixin(...behaviors) {
 export const Metadata = Base.extend({
     constructor(parent)  {
         let _parent = parent,
-            _type, _protocols,
-            _metadata, _extensions;
+            _protocols, _metadata, _extensions;
         this.extend({
             /**
              * Gets the parent metadata.
              * @property {Metadata} parent
              */
             get parent() { return _parent; },
-            /**
-             * Gets/sets the associated type.
-             * @property {Function} type
-             */
-            get type() {
-                return _type || (_parent && _parent.type);
-            },
-            set type(value) {
-                if (_type != value && $isFunction(value)) {
-                    _type   = value;
-                    _parent = $meta(Object.getPrototypeOf(_type));
-                }
-            },
-            /**
-             * Returns true if this metadata represents a Protocol.
-             * @property {boolean} isProtocol
-             */
-            get isProtocol() {
-                return Protocol.isProtocol(_type);
+            set [ParentSymbol](value) {
+                _parent = value;
             },
             /**
              * Gets the own protocols.
@@ -1865,14 +1872,10 @@ export const Metadata = Base.extend({
                       declared  = protocols.slice();
                 if (_parent) {
                     _parent.protocols.forEach(addProtocol);
-                }                
-                for (let protocol of declared) {
-                    $meta(protocol).protocols.forEach(addProtocol);
                 }
+                declared.forEach(p => $meta(p).protocols.forEach(addProtocol));
                 if (_extensions) {
-                    for (let extension of _extensions) {
-                        extension.protocols.forEach(addProtocol);
-                    }
+                    _extensions.forEach(ext => ext.protocols.forEach(addProtocol));
                 }
                 function addProtocol(protocol) {
                     if (protocols.indexOf(protocol) < 0) {
@@ -1882,30 +1885,20 @@ export const Metadata = Base.extend({
                 return protocols;
             },
             /**
-             * Adopts one or more `protocols` by the metadata.
+             * Marks the metadata as conforming to the `protocol`.
              * @method adoptProtocol
-             * @param  {Array}  protocols  -  protocols to adopt
-             * @returns  {Metadata} current metadata.
-             * @chainable
+             * @param  {Protocol}  protocol  -  protocol to adopt
+             * @returns  {boolean} true if not already adopted.
              */
-            adoptProtocol(...protocols) {
-                protocols = $flatten(protocols, true);
-                if (!protocols || protocols.length == 0) {
-                    return this;
+            adoptProtocol(protocol) {
+                if (!(protocol && (protocol.prototype instanceof Protocol))) {
+                    return false;
                 }
-                const type       = this.type,
-                      notifyType = type && $isFunction(type.protocolAdopted);
-                _protocols = _protocols || [];
-                for (let protocol of protocols) {
-                    if ((protocol.prototype instanceof Protocol) &&
-                        (_protocols.indexOf(protocol) < 0)) {
-                        _protocols.push(protocol);
-                        if (notifyType) {
-                            type.protocolAdopted(protocol);
-                        }
-                    }
+                if (_protocols && _protocols.indexOf(protocol) >= 0) {
+                    return false;
                 }
-                return this;
+                (_protocols || (_protocols = [])).push(protocol);
+                return true;                    
             },
             /**
              * Determines if the metadata conforms to the `protocol`.
@@ -1919,77 +1912,10 @@ export const Metadata = Base.extend({
                 }
                 const type = this.type;                
                 return (type && ((protocol === type) || (type.prototype instanceof protocol)))
-                    || (_protocols && _protocols.some(p => protocol === p || p.conformsTo(protocol)))
+                    || (_protocols && _protocols.some(p => protocol === p || Protocol.isAdoptedBy(p)))
                     || (_extensions && _extensions.some(e => e.conformsTo(protocol)))
                     || !!(_parent && _parent.conformsTo(protocol));
                 
-            },
-            /**
-             * Creates a sub-class of the current class metadata.
-             * @method subClass
-             * @param   {Array}    args  -  constraints
-             * @returns {Function} the newly created sub-class.
-             */                                                                
-            subClass(...args) {
-                const type        = this.type;
-                let   constraints = args, decorators = [];
-                if (type === Protocol) {
-                    decorators.push(protocol);
-                } if (this.isProtocol) {
-                    decorators.push(protocol, conformsTo(type));
-                }
-                if (args.length > 0 && Array.isArray(args[0])) {
-                    constraints = args.shift();
-                }
-                while (constraints.length > 0) {
-                    const constraint = constraints[0];
-                    if (!constraint) {
-                        break;
-                    } else if (constraint.prototype instanceof Protocol) {
-                        decorators.push(conformsTo(constraint));
-                    } else if (constraint.prototype instanceof Base ||
-                               constraint.prototype instanceof Module) {
-                        decorators.push(mixin(constraint));
-                    } else if ($isFunction(constraint)) {
-                        decorators.push(constraint);
-                    }
-                    else {
-                        break;
-                    }
-                    constraints.shift();
-                }
-                let members      = args.shift() || {},
-                    classMembers = args.shift() || {},
-                    derived      = baseExtend.call(type, members, classMembers),
-                    derivedMeta  = $meta(members);
-                derivedMeta.type = derived;
-                defineMetadata(derived.prototype, derivedMeta);
-                if (decorators.length > 0) {
-                    for (let decorator of decorators) {
-                        derived = decorator(derived) || derived;
-                    }                    
-                }                
-                return derived;                    
-            },
-            /**
-             * Extends the class represented by this metadata.
-             * @method extendClass
-             * @param   {Any} source  -  class function or object literal
-             * @returns {Function} the class.
-             */
-            extendClass(source) {
-                const type = this.type;
-                if (!type) return;
-                if (source) {
-                    if (this.isProtocol && !(source instanceof Base)) {
-                        source = protocol(source) || source;
-                    }
-                    const extension = $meta(source);
-                    if (extension) {
-                        (_extensions || (_extensions = [])).push(extension);
-                    }
-                }
-                return baseImplement.call(type, source);
             },
             /**
              * Extends the instance represented by this metadata.
@@ -2006,10 +1932,7 @@ export const Metadata = Base.extend({
                     if (object instanceof Protocol) {
                         key = protocol(key) || key;
                     }
-                    const extension = $meta(key);
-                    if (extension) {
-                        (_extensions || (_extensions = [])).push(extension);
-                    }
+                    this.addExtension($meta(key));
                     return baseProtoExtend.call(object, key);
                 }
                 return baseProtoExtend.call(object, key, value);
@@ -2144,6 +2067,19 @@ export const Metadata = Base.extend({
                 }
                 return this;
             },
+            /**
+             * Adds the `extension` to the metadata.
+             * @method addExtension
+             * @param  {Metadata}  extension  -  extension
+             * @returns  {Metadata} current metadata.
+             * @chainable
+             */
+            addExtension(extension) {
+                if (extension) {
+                    (_extensions || (_extensions = [])).push(extension);
+                }
+                return this;
+            }
         });
     }
 }, {
@@ -2156,23 +2092,118 @@ export const Metadata = Base.extend({
     }
 });
 
+/**
+ * Class level metadata.
+ * @class ClassMetadata
+ * @constructor
+ * @param  {Function}  [type]  - class type
+ * @extends Base
+ */
+export const ClassMetadata = Metadata.extend({
+    constructor(type) {
+        if (!$isFunction(type)) {
+            throw new TypeError("ClassMetadata can only be created for classes");
+        }
+        const superType = Object.getPrototypeOf(type);
+        this.base($meta(superType));
+        this.extend({
+            /**
+             * Gets the associated type.
+             * @property {Function} type
+             */
+            get type() { return type; },
+            get ownProtocols() {
+                return $meta(type.prototype).ownProtocols;
+            },
+            get protocols() {
+                return $meta(type.prototype).protocols;
+            },
+            adoptProtocol(protocol) {
+                $meta(type.prototype).adoptProtocol(protocol);
+                return this;
+            },
+            conformsTo(protocol) {
+                return $meta(type.prototype).conformsTo(protocol);                
+            },
+            /**
+             * Creates a sub-class of the current class metadata.
+             * @method extendClass
+             * @param   {Array}    args  -  constraints
+             * @returns {Function} the newly created sub-class.
+             */                                                                
+            extendClass(...args) {
+                let constraints = args, decorators = [];
+                if (type === Protocol) {
+                    decorators.push(protocol);
+                } if ($isProtocol(type)) {
+                    decorators.push(protocol, conformsTo(type));
+                }
+                if (args.length > 0 && Array.isArray(args[0])) {
+                    constraints = args.shift();
+                }
+                while (constraints.length > 0) {
+                    const constraint = constraints[0];
+                    if (!constraint) {
+                        break;
+                    } else if (constraint.prototype instanceof Protocol) {
+                        decorators.push(conformsTo(constraint));
+                    } else if (constraint.prototype instanceof Base ||
+                               constraint.prototype instanceof Module) {
+                        decorators.push(mixin(constraint));
+                    } else if ($isFunction(constraint)) {
+                        decorators.push(constraint);
+                    }
+                    else {
+                        break;
+                    }
+                    constraints.shift();
+                }
+                let members      = args.shift() || {},
+                    classMembers = args.shift() || {},
+                    derived      = baseExtend.call(type, members, classMembers),
+                    parentMeta   = $meta(Object.getPrototypeOf(derived.prototype)),
+                    derivedMeta  = $meta(members);
+                derivedMeta[ParentSymbol] = parentMeta;
+                defineMetadata(derived.prototype, derivedMeta);
+                if (decorators.length > 0) {
+                    for (let decorator of decorators) {
+                        derived = decorator(derived) || derived;
+                    }                    
+                }                
+                return derived;                    
+            },
+            /**
+             * Enhances the class represented by this metadata.
+             * @method enhanceClass
+             * @param   {Any} source  -  class function or object literal
+             * @returns {Function} the class.
+             */
+            enhanceClass(source) {
+                if (source) {
+                    if (this.isProtocol && !(source instanceof Base)) {
+                        source = protocol(source) || source;
+                    }
+                    this.addExtension($meta(source));
+                }
+                return baseImplement.call(type, source);
+            }            
+        });
+    }
+});
+
 const SUPPRESS_METADATA = [ Object, Function, Array ];
 
 Base.extend = function () {
     const meta = $meta(this);
-    return meta? meta.subClass(...arguments)
+    return meta? meta.extendClass(...arguments)
          : baseExtend.apply(this, arguments);
 };
 
 Base.implement = function () {
     const meta = $meta(this);
-    return meta ? meta.extendClass(...arguments)
+    return meta ? meta.enhanceClass(...arguments)
          : baseImplement.apply(this, arguments);
 }
-
-Base.conformsTo = Base.prototype.conformsTo = function (protocol) {
-    return $meta(this).conformsTo(protocol);
-};
 
 Base.prototype.extend = function () {
     const meta = $meta(this);
@@ -2218,8 +2249,7 @@ export function $meta(target) {
     }
     let meta;    
     if ($isFunction(target)) {
-        meta = $meta(target.prototype);
-        if (meta) meta.type = target;
+        meta = new ClassMetadata(target);
     } else if ($isObject(target)) {
         const parent = Object.getPrototypeOf(target);
         meta = new Metadata($meta(parent));
@@ -2238,15 +2268,6 @@ function defineMetadata(target, metadata) {
         value:        metadata
     });
 }
-
-/**
- * Determines if `protocol` is a protocol.
- * @method $isProtocol
- * @param    {Any}     protocol  - target to test
- * @returns  {boolean} true if a protocol.
- * @for miruken-core.$
- */
-export const $isProtocol = Protocol.isProtocol;
 
 /**
  * Determines if `clazz` is a class.
@@ -2839,20 +2860,17 @@ metadata.get = function (metaKey, criteria, source, key, fn, own) {
         [key, fn] = [null, key];
     }
     if (!fn) return;
-    const meta = source instanceof Metadata
-               ? source
-               : $meta(source);
-    if (meta) {
-        const match = own
-              ? meta.getOwnMetadata(key, criteria)
-              : meta.getMetadata(key, criteria);
-        if (match) {
-            if (key) {
-                fn(match[metaKey], Metadata.getExternalKey(key));
-            } else {
-                Reflect.ownKeys(match).forEach(
-                    k => fn(match[k][metaKey], Metadata.getExternalKey(k)));
-            }
+    const meta = source instanceof Metadata ? source : $meta(source);
+    if (!meta) return;
+    const match = own
+                ? meta.getOwnMetadata(key, criteria)
+                : meta.getMetadata(key, criteria);
+    if (match) {
+        if (key) {
+            fn(match[metaKey], Metadata.getExternalKey(key));
+        } else {
+            Reflect.ownKeys(match).forEach(
+                k => fn(match[k][metaKey], Metadata.getExternalKey(k)));
         }
     }
 }
