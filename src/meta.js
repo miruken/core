@@ -15,12 +15,12 @@ import {
     $flatten, $merge, $match
 } from './util';
 
-const baseExtend        = Base.extend,
-      baseImplement     = Base.implement,
-      baseProtoExtend   = Base.prototype.extend,
-      MetadataSymbol    = Symbol.for('miruken.$meta');
+const baseExtend      = Base.extend,
+      baseImplement   = Base.implement,
+      baseProtoExtend = Base.prototype.extend,
+      metadataMap     = new WeakMap();
 
-const { defineProperty, getOwnPropertyDescriptor, isFrozen } = Object,
+const { defineProperty, getOwnPropertyDescriptor } = Object,
       { ownKeys } = Reflect;
 
 /**
@@ -441,14 +441,28 @@ export const Metadata = Base.extend({
             /**
              * Defines metadata to a property `key`.
              * @method defineMetadata
-             * @param    {string | Symbol}  key       -  property key
-             * @param    {Object}           metadata  -  metadata
-             * @param    {boolean}          replace   -  true if replace
+             * @param    {Any}      [key]       -  property key
+             * @param    {Object}   [metadata]  -  metadata
+             * @param    {boolean}  [replace]   -  true if replace
              * @returns  {Metadata} current metadata.
              * @chainable
              */
             defineMetadata(key, metadata, replace) {
-                if (key && metadata) {
+                if ($isObject(key)) {
+                    metadata = key;
+                    replace  = metadata;
+                    key      = null;
+                }
+                if (metadata) {
+                    if (key) {
+                        defineKey(key, metadata, replace);
+                    } else {
+                        ownKeys(metadata).forEach(
+                            k => defineKey(k, metadata[k], replace));
+                    }
+                }
+                function defineKey(key, metadata, replace)
+                {
                     key = Metadata.getInternalKey(key);
                     const meta = _metadata || (_metadata = {});
                     if (replace) {
@@ -457,7 +471,7 @@ export const Metadata = Base.extend({
                         });
                     } else {
                         $merge(meta, { [key]: metadata });
-                    }
+                    }                    
                 }
                 return this;
             },
@@ -565,9 +579,7 @@ export const ClassMetadata = Metadata.extend({
                 derivedMeta.parent = parentMeta;
                 defineMetadata(derivedProto, derivedMeta);
                 if (decorators.length > 0) {
-                    for (let decorator of decorators) {
-                        derived = decorator(derived) || derived;
-                    }                    
+                    decorators.forEach(d => derived = d(derived) || derived);
                 }                
                 return derived;                    
             },
@@ -582,7 +594,7 @@ export const ClassMetadata = Metadata.extend({
                     if ($isProtocol(type) && $isObject(source)) {
                         source = protocol(source) || source;
                     }
-                    this.addExtension($meta(source));
+                    $meta(type.prototype).addExtension($meta(source));
                 }
                 return baseImplement.call(type, source);
             }            
@@ -632,13 +644,10 @@ export const StrictProtocol = Protocol.extend({
  */
 export function $meta(target) {
     if (target == null) return;
-    if (target.hasOwnProperty(MetadataSymbol)) {
-        return target[MetadataSymbol];
-    }
-    if (isFrozen(target)) return;
+    const metadata = metadataMap.get(target);
+    if (metadata) return metadata;
     if (target === Metadata || target instanceof Metadata ||
-        target.prototype instanceof Metadata)
-        return;    
+        target.prototype instanceof Metadata) return;    
     let i = SUPPRESS_METADATA.length;
     while (i--) {
         const ignore = SUPPRESS_METADATA[i];
@@ -660,12 +669,7 @@ export function $meta(target) {
 }
 
 function defineMetadata(target, metadata) {
-    defineProperty(target, MetadataSymbol, {
-        enumerable:   false,
-        configurable: false,
-        writable:     false,
-        value:        metadata
-    });
+    metadataMap.set(target, metadata);
 }
 
 /**
@@ -681,10 +685,6 @@ export function $isClass(clazz) {
     return name && $isFunction(clazz) && isUpperCase(name.charAt(0));
 }
 
-function isUpperCase(char) {
-    return char.toUpperCase() === char;
-}
-
 /**
  * Gets the class `instance` belongs to.
  * @method $classOf
@@ -693,4 +693,8 @@ function isUpperCase(char) {
  */
 export function $classOf(instance) {
     return instance && instance.constructor;
+}
+
+function isUpperCase(char) {
+    return char.toUpperCase() === char;
 }

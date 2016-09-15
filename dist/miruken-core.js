@@ -225,7 +225,6 @@ const _subclass = function(_instance, _static) {
   Object.setPrototypeOf(_class, this);
   if (_static) extend(_class, _static);
   _class.ancestor = this;
-  _class.base = _prototype.base;
   _class.prototype = _prototype;
   if (_class.init) _class.init();
   
@@ -238,11 +237,7 @@ export let Base = _subclass.call(Object, {
       this.extend(arguments[0]);
     }
   },
-    
-  base: function() {
-    // call this method from any other method to invoke that method's ancestor
-  },
-    
+        
   extend: delegate(extend),
   
   toString: function() {
@@ -268,6 +263,10 @@ export let Base = _subclass.call(Object, {
     return this;
   }
 });
+
+Base.base = Base.prototype.base = function() {
+  // call this method from any other method to invoke that method's ancestor
+};
 
 // =========================================================================
 // base2/Package.js
@@ -1495,8 +1494,7 @@ export function $flatten(arr, prune) {
  * @returns  {Object} the original `target`.
  */
 export function $merge(target, ...sources) {
-    if (!$isObject(target) ||
-        Object.isFrozen(target)) {
+    if (!$isObject(target) || Object.isFrozen(target)) {
         return target;
     }
     sources.forEach(source => {
@@ -1618,12 +1616,12 @@ export function $debounce(fn, wait, immediate, defaultReturnValue) {
     };
 };
 
-const baseExtend        = Base.extend,
-      baseImplement     = Base.implement,
-      baseProtoExtend   = Base.prototype.extend,
-      MetadataSymbol    = Symbol.for('miruken.$meta');
+const baseExtend      = Base.extend,
+      baseImplement   = Base.implement,
+      baseProtoExtend = Base.prototype.extend,
+      metadataMap     = new WeakMap();
 
-const { defineProperty, getOwnPropertyDescriptor, isFrozen } = Object,
+const { defineProperty, getOwnPropertyDescriptor } = Object,
       { ownKeys } = Reflect;
 
 /**
@@ -1698,6 +1696,9 @@ export const Protocol = Base.extend({
      * @returns {boolean}  true if the target conforms to this protocol.
      */
     isAdoptedBy(target) {
+        if (this === target || (target && target.prototype instanceof this)) {
+            return true;
+        }
         const meta = $meta(target);
         return !!(meta && meta.conformsTo(this));
     },
@@ -1834,8 +1835,6 @@ export function mixin(...behaviors) {
     };
 }
 
-const ParentSymbol = Symbol();
-
 /**
  * Base class for all metadata.
  * @class Metadata
@@ -1849,13 +1848,11 @@ export const Metadata = Base.extend({
             _protocols, _metadata, _extensions;
         this.extend({
             /**
-             * Gets the parent metadata.
+             * Gets/sets the parent metadata.
              * @property {Metadata} parent
              */
             get parent() { return _parent; },
-            set [ParentSymbol](value) {
-                _parent = value;
-            },
+            set parent(value) { _parent = value; },
             /**
              * Gets the own protocols.
              * @property {Array} ownProtocols
@@ -1891,10 +1888,8 @@ export const Metadata = Base.extend({
              * @returns  {boolean} true if not already adopted.
              */
             adoptProtocol(protocol) {
-                if (!(protocol && (protocol.prototype instanceof Protocol))) {
-                    return false;
-                }
-                if (_protocols && _protocols.indexOf(protocol) >= 0) {
+                if (!$isProtocol(protocol) ||
+                    (_protocols && _protocols.indexOf(protocol) >= 0)) {
                     return false;
                 }
                 (_protocols || (_protocols = [])).push(protocol);
@@ -1907,14 +1902,10 @@ export const Metadata = Base.extend({
              * @returns {boolean}  true if the metadata includes the protocol.
              */
             conformsTo(protocol) {
-                if (!(protocol && protocol.prototype instanceof Protocol)) {
-                    return false;
-                }
-                const type = this.type;                
-                return (type && ((protocol === type) || (type.prototype instanceof protocol)))
-                    || (_protocols && _protocols.some(p => protocol === p || Protocol.isAdoptedBy(p)))
-                    || (_extensions && _extensions.some(e => e.conformsTo(protocol)))
-                    || !!(_parent && _parent.conformsTo(protocol));
+                return $isProtocol(protocol)
+                    && ((_protocols && _protocols.some(p => protocol.isAdoptedBy(p)))
+                    ||  (_extensions && _extensions.some(e => e.conformsTo(protocol)))
+                    ||  !!(_parent && _parent.conformsTo(protocol)));
                 
             },
             /**
@@ -1993,18 +1984,18 @@ export const Metadata = Base.extend({
              * @returns  {Object}  matching metadata.
              */
             getOwnMetadata(key, criteria) {
-                let metadata;
+                let metadata,
+                    protocols = this.ownProtocols;
                 if ($isObject(key)) {
                     [key, criteria] = [undefined, key];
                 } else {
                     key = Metadata.getInternalKey(key);
                 }
-                if (_protocols) {
-                    metadata = _protocols.reduce((result, protocol) => {
-                        const protoMeta = $meta(protocol),
-                              keyMeta   = protoMeta.getMetadata(key, criteria);
+                if (protocols) {
+                    metadata = protocols.reduce((result, p) => {
+                        const keyMeta = this.getProtocolMetadata(p, key, criteria);
                         return keyMeta ? $merge(result || {}, keyMeta) : result;
-                    }, metadata);  
+                    }, metadata);
                 }
                 if (_metadata) {
                     const addKey = !key,
@@ -2044,17 +2035,35 @@ export const Metadata = Base.extend({
                       own    = this.getOwnMetadata(key, criteria);
                 return parent ? $merge(parent, own) : own;
             },
+            getProtocolMetadata(protocol, key, criteria) {
+                const protoMeta = $meta(protocol.prototype);
+                return protoMeta.getMetadata(key, criteria);
+            },
             /**
              * Defines metadata to a property `key`.
              * @method defineMetadata
-             * @param    {string | Symbol}  key       -  property key
-             * @param    {Object}           metadata  -  metadata
-             * @param    {boolean}          replace   -  true if replace
+             * @param    {Any}      [key]       -  property key
+             * @param    {Object}   [metadata]  -  metadata
+             * @param    {boolean}  [replace]   -  true if replace
              * @returns  {Metadata} current metadata.
              * @chainable
              */
             defineMetadata(key, metadata, replace) {
-                if (key && metadata) {
+                if ($isObject(key)) {
+                    metadata = key;
+                    replace  = metadata;
+                    key      = null;
+                }
+                if (metadata) {
+                    if (key) {
+                        defineKey(key, metadata, replace);
+                    } else {
+                        ownKeys(metadata).forEach(
+                            k => defineKey(k, metadata[k], replace));
+                    }
+                }
+                function defineKey(key, metadata, replace)
+                {
                     key = Metadata.getInternalKey(key);
                     const meta = _metadata || (_metadata = {});
                     if (replace) {
@@ -2063,7 +2072,7 @@ export const Metadata = Base.extend({
                         });
                     } else {
                         $merge(meta, { [key]: metadata });
-                    }
+                    }                    
                 }
                 return this;
             },
@@ -2096,8 +2105,8 @@ export const Metadata = Base.extend({
  * Class level metadata.
  * @class ClassMetadata
  * @constructor
- * @param  {Function}  [type]  - class type
- * @extends Base
+ * @param  {Function}  type  - class type
+ * @extends Metadata
  */
 export const ClassMetadata = Metadata.extend({
     constructor(type) {
@@ -2112,6 +2121,7 @@ export const ClassMetadata = Metadata.extend({
              * @property {Function} type
              */
             get type() { return type; },
+            get superType() { return superType; },
             get ownProtocols() {
                 return $meta(type.prototype).ownProtocols;
             },
@@ -2125,8 +2135,11 @@ export const ClassMetadata = Metadata.extend({
             conformsTo(protocol) {
                 return $meta(type.prototype).conformsTo(protocol);                
             },
+            getProtocolMetadata(protocol, key, criteria) {
+                // Protocol metadata is for instances
+            },
             /**
-             * Creates a sub-class of the current class metadata.
+             * Creates a sub-class of the represented class.
              * @method extendClass
              * @param   {Array}    args  -  constraints
              * @returns {Function} the newly created sub-class.
@@ -2145,7 +2158,7 @@ export const ClassMetadata = Metadata.extend({
                     const constraint = constraints[0];
                     if (!constraint) {
                         break;
-                    } else if (constraint.prototype instanceof Protocol) {
+                    } else if ($isProtocol(constraint)) {
                         decorators.push(conformsTo(constraint));
                     } else if (constraint.prototype instanceof Base ||
                                constraint.prototype instanceof Module) {
@@ -2161,14 +2174,13 @@ export const ClassMetadata = Metadata.extend({
                 let members      = args.shift() || {},
                     classMembers = args.shift() || {},
                     derived      = baseExtend.call(type, members, classMembers),
-                    parentMeta   = $meta(Object.getPrototypeOf(derived.prototype)),
+                    derivedProto = derived.prototype,
+                    parentMeta   = $meta(Object.getPrototypeOf(derivedProto)),
                     derivedMeta  = $meta(members);
-                derivedMeta[ParentSymbol] = parentMeta;
-                defineMetadata(derived.prototype, derivedMeta);
+                derivedMeta.parent = parentMeta;
+                defineMetadata(derivedProto, derivedMeta);
                 if (decorators.length > 0) {
-                    for (let decorator of decorators) {
-                        derived = decorator(derived) || derived;
-                    }                    
+                    decorators.forEach(d => derived = d(derived) || derived);
                 }                
                 return derived;                    
             },
@@ -2180,10 +2192,10 @@ export const ClassMetadata = Metadata.extend({
              */
             enhanceClass(source) {
                 if (source) {
-                    if (this.isProtocol && !(source instanceof Base)) {
+                    if ($isProtocol(type) && $isObject(source)) {
                         source = protocol(source) || source;
                     }
-                    this.addExtension($meta(source));
+                    $meta(type.prototype).addExtension($meta(source));
                 }
                 return baseImplement.call(type, source);
             }            
@@ -2233,13 +2245,10 @@ export const StrictProtocol = Protocol.extend({
  */
 export function $meta(target) {
     if (target == null) return;
-    if (target.hasOwnProperty(MetadataSymbol)) {
-        return target[MetadataSymbol];
-    }
-    if (isFrozen(target)) return;
+    const metadata = metadataMap.get(target);
+    if (metadata) return metadata;
     if (target === Metadata || target instanceof Metadata ||
-        target.prototype instanceof Metadata)
-        return;    
+        target.prototype instanceof Metadata) return;    
     let i = SUPPRESS_METADATA.length;
     while (i--) {
         const ignore = SUPPRESS_METADATA[i];
@@ -2261,12 +2270,7 @@ export function $meta(target) {
 }
 
 function defineMetadata(target, metadata) {
-    defineProperty(target, MetadataSymbol, {
-        enumerable:   false,
-        configurable: false,
-        writable:     false,
-        value:        metadata
-    });
+    metadataMap.set(target, metadata);
 }
 
 /**
@@ -2282,10 +2286,6 @@ export function $isClass(clazz) {
     return name && $isFunction(clazz) && isUpperCase(name.charAt(0));
 }
 
-function isUpperCase(char) {
-    return char.toUpperCase() === char;
-}
-
 /**
  * Gets the class `instance` belongs to.
  * @method $classOf
@@ -2294,6 +2294,10 @@ function isUpperCase(char) {
  */
 export function $classOf(instance) {
     return instance && instance.constructor;
+}
+
+function isUpperCase(char) {
+    return char.toUpperCase() === char;
 }
 
 export const nothing    = undefined,
