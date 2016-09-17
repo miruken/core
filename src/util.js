@@ -141,7 +141,7 @@ export const ArrayManager = Base.extend({
  * @extends Base
  */
 export const IndexedList = Base.extend({
-    constructor(order) {
+    constructor(order = defaultOrder) {
         let _index = {};
         this.extend({
             /** 
@@ -242,6 +242,10 @@ export const IndexedList = Base.extend({
     }
 });
 
+function defaultOrder(a, b) {
+    return a < b;
+}
+
 /**
  * Determines if `str` is a string.
  * @method $isString
@@ -280,6 +284,16 @@ export function $isFunction(fn) {
  */
 export function $isObject(obj) {
     return typeOf(obj) === 'object';
+}
+
+/**
+ * Determines if `obj` is a plain object or literal.
+ * @method $isPlainObject
+ * @param    {Any}     obj  - object to test
+ * @returns  {boolean} true if a plain object.
+ */
+export function $isPlainObject(obj) {
+    return !!(obj && (obj.constructor === Object))
 }
 
 /**
@@ -397,26 +411,30 @@ export function $flatten(arr, prune) {
  * @returns  {Object} the original `target`.
  */
 export function $merge(target, ...sources) {
-    if (!$isObject(target) || Object.isFrozen(target)) {
-        return target;
+    if ($isNothing(target)) return target;
+    const mergeFn = $isPlainObject(target) ? keyMerge
+        : $isFunction(target.merge) && target.merge;
+    if (mergeFn) {
+        sources.forEach(source => mergeFn.call(target, source));
     }
-    sources.forEach(source => {
-        if (!$isObject(source)) return;
-        const props = getPropertyDescriptors(source);
-        Reflect.ownKeys(props).forEach(key => {
-            if (!props[key].enumerable) return;
-            const newValue = source[key],
-                  curValue = target[key];
-            if ($isObject(curValue) && !Array.isArray(curValue)) {
-                $merge(curValue, newValue);
-            } else {
-                target[key] = Array.isArray(newValue)
-                            ? newValue.slice()
-                            : newValue;
-            }
-        });
-    });
     return target;
+}
+
+function keyMerge(source) {
+    if (!$isPlainObject(source)) return;
+    const props = getPropertyDescriptors(source);
+    Reflect.ownKeys(props).forEach(key => {
+        if (!props[key].enumerable) return;
+        const newValue = source[key],
+              curValue = this[key];
+        if ($isObject(curValue) && !Array.isArray(curValue)) {
+            $merge(curValue, newValue);
+        } else {
+            this[key] = Array.isArray(newValue)
+                ? newValue.slice()
+                : newValue;
+        }
+    });
 }
 
 /**
@@ -428,16 +446,20 @@ export function $merge(target, ...sources) {
  * @returns  {boolean} true if matches.
  */
 export function $match(target, criteria, matched) {
-    if (!$isObject(target) || !$isObject(criteria)) {
-        return false;
-    }
+    if ($isNothing(target)) return false;    
+    return $isPlainObject(target) && $isPlainObject(criteria)
+         ? keyMatch.call(target, criteria, matched)
+         : $isFunction(target.match) && target.match(criteria, matched);
+}
+
+function keyMatch(criteria, matched) {
     const match   = $isFunction(matched) ? {} : null,
           matches = Reflect.ownKeys(criteria).every(key => {
-              if (!target.hasOwnProperty(key)) {
+              if (!this.hasOwnProperty(key)) {
                   return false;
               }
               const constraint = criteria[key],
-                    value      = target[key];              
+                    value      = this[key];              
               if (constraint === undefined) {
                   if (match) {
                       if (Array.isArray(value)) {

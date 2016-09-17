@@ -1,7 +1,7 @@
 import decorate from './decorate';
 import metadata from './metadata';
 import { $flatten } from './util';
-import { $meta } from './meta';
+import { Metadata, $meta } from './meta';
 import { emptyArray } from './core';
 
 const injectKey      = Symbol(),
@@ -27,6 +27,11 @@ inject.get = function () {
 }
 
 function _inject(target, key, descriptor, dependencies) {
+    if (!descriptor) {
+        dependencies = key;
+        target       = target.prototype        
+        key          = Metadata.constructorKey;        
+    }
     dependencies = $flatten(dependencies);
     if (dependencies.length > 0) {
         const meta = $meta(target);

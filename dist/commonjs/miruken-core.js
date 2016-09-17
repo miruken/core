@@ -28,6 +28,7 @@ exports.$isString = $isString;
 exports.$isSymbol = $isSymbol;
 exports.$isFunction = $isFunction;
 exports.$isObject = $isObject;
+exports.$isPlainObject = $isPlainObject;
 exports.$isPromise = $isPromise;
 exports.$isNothing = $isNothing;
 exports.$isSomething = $isSomething;
@@ -1116,6 +1117,10 @@ function $isObject(obj) {
     return typeOf(obj) === 'object';
 }
 
+function $isPlainObject(obj) {
+    return !!(obj && obj.constructor === Object);
+}
+
 function $isPromise(promise) {
     return promise && $isFunction(promise.then);
 }
@@ -1176,42 +1181,52 @@ function $flatten(arr, prune) {
 }
 
 function $merge(target) {
-    if (!$isObject(target) || Object.isFrozen(target)) {
-        return target;
-    }
+    if ($isNothing(target)) return target;
+    var mergeFn = $isPlainObject(target) ? keyMerge : $isFunction(target.merge) && target.merge;
+    if (mergeFn) {
+        for (var _len2 = arguments.length, sources = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+            sources[_key2 - 1] = arguments[_key2];
+        }
 
-    for (var _len2 = arguments.length, sources = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
-        sources[_key2 - 1] = arguments[_key2];
-    }
-
-    sources.forEach(function (source) {
-        if (!$isObject(source)) return;
-        var props = getPropertyDescriptors(source);
-        Reflect.ownKeys(props).forEach(function (key) {
-            if (!props[key].enumerable) return;
-            var newValue = source[key],
-                curValue = target[key];
-            if ($isObject(curValue) && !Array.isArray(curValue)) {
-                $merge(curValue, newValue);
-            } else {
-                target[key] = Array.isArray(newValue) ? newValue.slice() : newValue;
-            }
+        sources.forEach(function (source) {
+            return mergeFn.call(target, source);
         });
-    });
+    }
     return target;
 }
 
+function keyMerge(source) {
+    var _this2 = this;
+
+    if (!$isPlainObject(source)) return;
+    var props = getPropertyDescriptors(source);
+    Reflect.ownKeys(props).forEach(function (key) {
+        if (!props[key].enumerable) return;
+        var newValue = source[key],
+            curValue = _this2[key];
+        if ($isObject(curValue) && !Array.isArray(curValue)) {
+            $merge(curValue, newValue);
+        } else {
+            _this2[key] = Array.isArray(newValue) ? newValue.slice() : newValue;
+        }
+    });
+}
+
 function $match(target, criteria, matched) {
-    if (!$isObject(target) || !$isObject(criteria)) {
-        return false;
-    }
+    if ($isNothing(target)) return false;
+    return $isPlainObject(target) && $isPlainObject(criteria) ? keyMatch.call(target, criteria, matched) : $isFunction(target.match) && target.match(criteria, matched);
+}
+
+function keyMatch(criteria, matched) {
+    var _this3 = this;
+
     var match = $isFunction(matched) ? {} : null,
         matches = Reflect.ownKeys(criteria).every(function (key) {
-        if (!target.hasOwnProperty(key)) {
+        if (!_this3.hasOwnProperty(key)) {
             return false;
         }
         var constraint = criteria[key],
-            value = target[key];
+            value = _this3[key];
         if (constraint === undefined) {
             if (match) {
                 if (Array.isArray(value)) {
@@ -1357,6 +1372,51 @@ var Protocol = exports.Protocol = Base.extend((_Base$extend = {
 
 var $isProtocol = exports.$isProtocol = Protocol.isProtocol;
 
+function protocol() {
+    for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+        args[_key3] = arguments[_key3];
+    }
+
+    if (args.length === 0) {
+        return function () {
+            return _protocol.apply(null, arguments);
+        };
+    }
+    return _protocol.apply(undefined, args);
+}
+
+function conformsTo() {
+    for (var _len4 = arguments.length, protocols = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+        protocols[_key4] = arguments[_key4];
+    }
+
+    protocols = $flatten(protocols, true);
+    if (!protocols.every($isProtocol)) {
+        throw new TypeError("Only Protocols can be conformed to");
+    }
+    return protocols.length === 0 ? Undefined : adopt;
+    function adopt(target) {
+        protocols.forEach(function (protocol) {
+            return protocol.adoptBy(target);
+        });
+    }
+}
+
+function mixin() {
+    for (var _len5 = arguments.length, behaviors = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+        behaviors[_key5] = arguments[_key5];
+    }
+
+    behaviors = $flatten(behaviors, true);
+    return function (target) {
+        if (behaviors.length > 0 && $isFunction(target.implement)) {
+            behaviors.forEach(function (b) {
+                return target.implement(b);
+            });
+        }
+    };
+}
+
 function _protocol(target) {
     if ($isFunction(target)) {
         target = target.prototype;
@@ -1367,8 +1427,8 @@ function _protocol(target) {
         if (!descriptor.enumerable) return;
         if ($isFunction(descriptor.value)) {
             descriptor.value = function () {
-                for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-                    args[_key3] = arguments[_key3];
+                for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+                    args[_key6] = arguments[_key6];
                 }
 
                 return this[ProtocolInvoke](key, args);
@@ -1392,51 +1452,6 @@ function _protocol(target) {
         }
         defineProperty(target, key, descriptor);
     });
-}
-
-function protocol() {
-    for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-        args[_key4] = arguments[_key4];
-    }
-
-    if (args.length === 0) {
-        return function () {
-            return _protocol.apply(null, arguments);
-        };
-    }
-    return _protocol.apply(undefined, args);
-}
-
-function conformsTo() {
-    for (var _len5 = arguments.length, protocols = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-        protocols[_key5] = arguments[_key5];
-    }
-
-    protocols = $flatten(protocols, true);
-    if (!protocols.every($isProtocol)) {
-        throw new TypeError("Only Protocols can be conformed to");
-    }
-    return protocols.length === 0 ? Undefined : adopt;
-    function adopt(target) {
-        protocols.forEach(function (protocol) {
-            return protocol.adoptBy(target);
-        });
-    }
-}
-
-function mixin() {
-    for (var _len6 = arguments.length, behaviors = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-        behaviors[_key6] = arguments[_key6];
-    }
-
-    behaviors = $flatten(behaviors, true);
-    return function (target) {
-        if (behaviors.length > 0 && $isFunction(target.implement)) {
-            behaviors.forEach(function (b) {
-                return target.implement(b);
-            });
-        }
-    };
 }
 
 var Metadata = exports.Metadata = Base.extend({
@@ -1543,7 +1558,7 @@ var Metadata = exports.Metadata = Base.extend({
                 }
             },
             getOwnMetadata: function getOwnMetadata(key, criteria) {
-                var _this2 = this;
+                var _this4 = this;
 
                 var metadata = void 0,
                     protocols = this.ownProtocols;
@@ -1556,7 +1571,7 @@ var Metadata = exports.Metadata = Base.extend({
                 }
                 if (protocols) {
                     metadata = protocols.reduce(function (result, p) {
-                        var keyMeta = _this2.getProtocolMetadata(p, key, criteria);
+                        var keyMeta = _this4.getProtocolMetadata(p, key, criteria);
                         return keyMeta ? $merge(result || {}, keyMeta) : result;
                     }, metadata);
                 }
@@ -1607,20 +1622,20 @@ var Metadata = exports.Metadata = Base.extend({
                 }
                 if (metadata) {
                     if (key) {
-                        defineKey(key, metadata, replace);
+                        defineKey(key, metadata);
                     } else {
                         ownKeys(metadata).forEach(function (k) {
-                            return defineKey(k, metadata[k], replace);
+                            return defineKey(k, metadata[k]);
                         });
                     }
                 }
-                function defineKey(key, metadata, replace) {
-                    key = Metadata.getInternalKey(key);
+                function defineKey(k, m) {
+                    k = Metadata.getInternalKey(k);
                     var meta = _metadata || (_metadata = {});
                     if (replace) {
-                        Object.assign(meta, _defineProperty({}, key, Object.assign(meta[key] || {}, metadata)));
+                        Object.assign(meta, _defineProperty({}, key, Object.assign(meta[key] || {}, m)));
                     } else {
-                        $merge(meta, _defineProperty({}, key, metadata));
+                        $merge(meta, _defineProperty({}, k, m));
                     }
                 }
                 return this;
@@ -1781,11 +1796,11 @@ function defineMetadata(target, metadata) {
     metadataMap.set(target, metadata);
 }
 
-function $isClass(clazz) {
-    if (!clazz || $isProtocol(clazz)) return false;
-    if (clazz.prototype instanceof Base) return true;
-    var name = clazz.name;
-    return name && $isFunction(clazz) && isUpperCase(name.charAt(0));
+function $isClass(target) {
+    if (!target || $isProtocol(target)) return false;
+    if (target.prototype instanceof Base) return true;
+    var name = target.name;
+    return name && $isFunction(target) && isUpperCase(name.charAt(0));
 }
 
 function $classOf(instance) {
@@ -2047,25 +2062,25 @@ function traverseAncestors(visitor, withSelf, context) {
 }
 
 function traverseDescendants(visitor, withSelf, context) {
-    var _this3 = this;
+    var _this5 = this;
 
     if (withSelf) {
         Traversal.levelOrder(this, visitor, context);
     } else {
         Traversal.levelOrder(this, function (node) {
-            return !$equals(_this3, node) && visitor.call(context, node);
+            return !$equals(_this5, node) && visitor.call(context, node);
         }, context);
     }
 }
 
 function traverseDescendantsReverse(visitor, withSelf, context) {
-    var _this4 = this;
+    var _this6 = this;
 
     if (withSelf) {
         Traversal.reverseLevelOrder(this, visitor, context);
     } else {
         Traversal.reverseLevelOrder(this, function (node) {
-            return !$equals(_this4, node) && visitor.call(context, node);
+            return !$equals(_this6, node) && visitor.call(context, node);
         }, context);
     }
 }
@@ -2447,7 +2462,7 @@ function proxyMethod(key, method, source, type) {
 }
 
 function extendProxyInstance(key, value) {
-    var _this5 = this;
+    var _this7 = this;
 
     var proxy = this.constructor,
         overrides = arguments.length === 1 ? key : _defineProperty({}, key, value),
@@ -2458,7 +2473,7 @@ function extendProxyInstance(key, value) {
         var value = descriptor.value;
         var get = descriptor.get;
         var set = descriptor.set;
-        var baseDescriptor = getPropertyDescriptors(_this5, key);
+        var baseDescriptor = getPropertyDescriptors(_this7, key);
         if (!baseDescriptor) return;
         if (value) {
             if ($isFunction(value)) {
@@ -2478,7 +2493,7 @@ function extendProxyInstance(key, value) {
                 baseDescriptor.set = set.baseMethod;
             }
         }
-        Object.defineProperty(_this5, key, baseDescriptor);
+        Object.defineProperty(_this7, key, baseDescriptor);
     });
     this.base(overrides);
     Reflect.ownKeys(props).forEach(function (key) {
@@ -2502,7 +2517,7 @@ function extendProxyInstance(key, value) {
                 descriptor.set = proxyMethod(key, set, proxy, MethodType.Set);
             }
         }
-        Object.defineProperty(_this5, key, descriptor);
+        Object.defineProperty(_this7, key, descriptor);
     });
     return this;
 }
@@ -2527,6 +2542,11 @@ inject.get = function () {
 };
 
 function _inject(target, key, descriptor, dependencies) {
+    if (!descriptor) {
+        dependencies = key;
+        target = target.prototype;
+        key = Metadata.constructorKey;
+    }
     dependencies = $flatten(dependencies);
     if (dependencies.length > 0) {
         var meta = $meta(target);

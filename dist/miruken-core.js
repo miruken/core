@@ -1380,6 +1380,16 @@ export function $isObject(obj) {
 }
 
 /**
+ * Determines if `obj` is a plain object or literal.
+ * @method $isPlainObject
+ * @param    {Any}     obj  - object to test
+ * @returns  {boolean} true if a plain object.
+ */
+export function $isPlainObject(obj) {
+    return !!(obj && (obj.constructor === Object))
+}
+
+/**
  * Determines if `promise` is a promise.
  * @method $isPromise
  * @param    {Any}     promise  - promise to test
@@ -1494,26 +1504,30 @@ export function $flatten(arr, prune) {
  * @returns  {Object} the original `target`.
  */
 export function $merge(target, ...sources) {
-    if (!$isObject(target) || Object.isFrozen(target)) {
-        return target;
+    if ($isNothing(target)) return target;
+    const mergeFn = $isPlainObject(target) ? keyMerge
+        : $isFunction(target.merge) && target.merge;
+    if (mergeFn) {
+        sources.forEach(source => mergeFn.call(target, source));
     }
-    sources.forEach(source => {
-        if (!$isObject(source)) return;
-        const props = getPropertyDescriptors(source);
-        Reflect.ownKeys(props).forEach(key => {
-            if (!props[key].enumerable) return;
-            const newValue = source[key],
-                  curValue = target[key];
-            if ($isObject(curValue) && !Array.isArray(curValue)) {
-                $merge(curValue, newValue);
-            } else {
-                target[key] = Array.isArray(newValue)
-                            ? newValue.slice()
-                            : newValue;
-            }
-        });
-    });
     return target;
+}
+
+function keyMerge(source) {
+    if (!$isPlainObject(source)) return;
+    const props = getPropertyDescriptors(source);
+    Reflect.ownKeys(props).forEach(key => {
+        if (!props[key].enumerable) return;
+        const newValue = source[key],
+              curValue = this[key];
+        if ($isObject(curValue) && !Array.isArray(curValue)) {
+            $merge(curValue, newValue);
+        } else {
+            this[key] = Array.isArray(newValue)
+                ? newValue.slice()
+                : newValue;
+        }
+    });
 }
 
 /**
@@ -1525,16 +1539,20 @@ export function $merge(target, ...sources) {
  * @returns  {boolean} true if matches.
  */
 export function $match(target, criteria, matched) {
-    if (!$isObject(target) || !$isObject(criteria)) {
-        return false;
-    }
+    if ($isNothing(target)) return false;    
+    return $isPlainObject(target) && $isPlainObject(criteria)
+         ? keyMatch.call(target, criteria, matched)
+         : $isFunction(target.match) && target.match(criteria, matched);
+}
+
+function keyMatch(criteria, matched) {
     const match   = $isFunction(matched) ? {} : null,
           matches = Reflect.ownKeys(criteria).every(key => {
-              if (!target.hasOwnProperty(key)) {
+              if (!this.hasOwnProperty(key)) {
                   return false;
               }
               const constraint = criteria[key],
-                    value      = target[key];              
+                    value      = this[key];              
               if (constraint === undefined) {
                   if (match) {
                       if (Array.isArray(value)) {
@@ -1754,40 +1772,6 @@ export const Protocol = Base.extend({
  */
 export const $isProtocol = Protocol.isProtocol;
 
-function _protocol(target) {
-    if ($isFunction(target)) {
-        target = target.prototype;
-    }
-    ownKeys(target).forEach(key => {
-        if (key === 'constructor') return;
-        const descriptor = getOwnPropertyDescriptor(target, key);
-        if (!descriptor.enumerable) return;
-        if ($isFunction(descriptor.value)) {
-            descriptor.value = function (...args) {
-                return this[ProtocolInvoke](key, args);
-            };
-        } else {
-            const isSimple = descriptor.hasOwnProperty('value')
-                          || descriptor.hasOwnProperty('initializer');
-            if (isSimple) {
-                delete descriptor.value;
-                delete descriptor.writable;
-            }
-            if (descriptor.get || isSimple) {
-                descriptor.get = function () {
-                    return this[ProtocolGet](key);
-                };
-            }
-            if (descriptor.set || isSimple) {
-                descriptor.set = function (value) {
-                    return this[ProtocolSet](key, value);
-                }
-            }
-        }
-        defineProperty(target, key, descriptor);                
-    });
-}
-
 /**
  * Marks a class as a {{#crossLink "Protocol"}}{{/crossLink}}.
  * @method protocol
@@ -1833,6 +1817,40 @@ export function mixin(...behaviors) {
             behaviors.forEach(b => target.implement(b));
         }
     };
+}
+
+function _protocol(target) {
+    if ($isFunction(target)) {
+        target = target.prototype;
+    }
+    ownKeys(target).forEach(key => {
+        if (key === 'constructor') return;
+        const descriptor = getOwnPropertyDescriptor(target, key);
+        if (!descriptor.enumerable) return;
+        if ($isFunction(descriptor.value)) {
+            descriptor.value = function (...args) {
+                return this[ProtocolInvoke](key, args);
+            };
+        } else {
+            const isSimple = descriptor.hasOwnProperty('value')
+                          || descriptor.hasOwnProperty('initializer');
+            if (isSimple) {
+                delete descriptor.value;
+                delete descriptor.writable;
+            }
+            if (descriptor.get || isSimple) {
+                descriptor.get = function () {
+                    return this[ProtocolGet](key);
+                };
+            }
+            if (descriptor.set || isSimple) {
+                descriptor.set = function (value) {
+                    return this[ProtocolSet](key, value);
+                }
+            }
+        }
+        defineProperty(target, key, descriptor);                
+    });
 }
 
 /**
@@ -2056,22 +2074,22 @@ export const Metadata = Base.extend({
                 }
                 if (metadata) {
                     if (key) {
-                        defineKey(key, metadata, replace);
+                        defineKey(key, metadata);
                     } else {
                         ownKeys(metadata).forEach(
-                            k => defineKey(k, metadata[k], replace));
+                            k => defineKey(k, metadata[k]));
                     }
                 }
-                function defineKey(key, metadata, replace)
+                function defineKey(k, m)
                 {
-                    key = Metadata.getInternalKey(key);
+                    k = Metadata.getInternalKey(k);
                     const meta = _metadata || (_metadata = {});
                     if (replace) {
                         Object.assign(meta, {
-                            [key]: Object.assign(meta[key] || {}, metadata)
+                            [key]: Object.assign(meta[key] || {}, m)
                         });
                     } else {
-                        $merge(meta, { [key]: metadata });
+                        $merge(meta, { [k]: m });
                     }                    
                 }
                 return this;
@@ -2274,23 +2292,23 @@ function defineMetadata(target, metadata) {
 }
 
 /**
- * Determines if `clazz` is a class.
+ * Determines if `target` is a class.
  * @method $isClass
- * @param    {Any}     clazz  - class to test
+ * @param    {Any}     target  - target to test
  * @returns  {boolean} true if a class (and not a protocol).
  */
-export function $isClass(clazz) {
-    if (!clazz || $isProtocol(clazz)) return false;    
-    if (clazz.prototype instanceof Base) return true;
-    const name = clazz.name;  // use Capital name convention
-    return name && $isFunction(clazz) && isUpperCase(name.charAt(0));
+export function $isClass(target) {
+    if (!target || $isProtocol(target)) return false;    
+    if (target.prototype instanceof Base) return true;
+    const name = target.name;  // use Capital name convention
+    return name && $isFunction(target) && isUpperCase(name.charAt(0));
 }
 
 /**
- * Gets the class `instance` belongs to.
+ * Gets the class `instance` is a member of.
  * @method $classOf
  * @param    {Object}  instance  - object
- * @returns  {Function} class of instance. 
+ * @returns  {Function} instance class. 
  */
 export function $classOf(instance) {
     return instance && instance.constructor;
@@ -3195,6 +3213,11 @@ inject.get = function () {
 }
 
 function _inject(target, key, descriptor, dependencies) {
+    if (!descriptor) {
+        dependencies = key;
+        target       = target.prototype        
+        key          = Metadata.constructorKey;        
+    }
     dependencies = $flatten(dependencies);
     if (dependencies.length > 0) {
         const meta = $meta(target);

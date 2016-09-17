@@ -9,8 +9,9 @@ import metadata from '../src/metadata';
 import inject from '../src/inject';
 
 import {
-    $isFunction, $isString, $flatten, $merge,
-    $match, $decorator, $decorate, $decorated
+    IndexedList, $isFunction, $isString,
+    $flatten, $merge, $match, $decorator,
+    $decorate, $decorated
 } from '../src/util';
 
 import '../src/promise';
@@ -29,6 +30,28 @@ const Animal = Protocol.extend({
     talk() {},
     eat(food) {},
     [Breed]() {}
+});
+
+const Person = Base.extend({
+    firstName: '',
+    lastName:  '',
+    dob: undefined,
+    @metadata({map: Animal})
+    pet: undefined,
+    
+    get fullName() {
+        return this.firstName + ' ' + this.lastName;
+    },
+    set fullname(value) {
+        const parts = value.split(' ');
+        if (parts.length > 0) {
+            this.firstName = parts[0];
+        }
+        if (parts.length > 1) {
+            this.lastName = parts[1];
+        }
+    },
+    get age() { return ~~((Date.now() - +this.dob) / (31557600000)); }
 });
 
 const Tricks = Protocol.extend({
@@ -311,27 +334,6 @@ describe("$isFunction", () => {
 });
 
 describe("$meta", () => {
-    const Person = Base.extend({
-        firstName: '',
-        lastName:  '',
-        dob: undefined,
-        @metadata({map: Animal})
-        pet: undefined,
-        
-        get fullName() {
-            return this.firstName + ' ' + this.lastName;
-        },
-        set fullname(value) {
-            const parts = value.split(' ');
-            if (parts.length > 0) {
-                this.firstName = parts[0];
-            }
-            if (parts.length > 1) {
-                this.lastName = parts[1];
-            }
-        },
-        get age() { return ~~((Date.now() - +this.dob) / (31557600000)); }
-    });
     const Doctor = Person.extend({
         @metadata({map: Person})        
         patient: undefined,
@@ -482,6 +484,14 @@ describe("$meta", () => {
         expect(Employment(manager).id).to.equal("Manager" + assignID(manager));
         expect(Employment(manager).name = "Joe Girardi").to.equal("Joe Girardi");
         expect(Employment(manager).name).to.equal("Joe Girardi");
+    });
+
+    it.only("should store complex property metadata", () => {
+        const meta = $meta(new Object),
+              list = new IndexedList(),
+              key  = Symbol();
+        meta.defineMetadata(key, list);
+        expect(meta.getMetadata(key)).to.equal(list);
     });    
 });
 
@@ -1312,7 +1322,7 @@ describe("ProxyBuilder", () => {
 describe("inject", () => {
     const Circus = Base.extend({
               @inject($every(Animal))        
-              constructor() {},
+              constructor(animals) {},
         
               @inject(Dog)
               dancingDog(Dance) {},
@@ -1320,7 +1330,9 @@ describe("inject", () => {
               @inject($every(Elephant))
               elpehantParade(elephant) {}
           }),
-          RingBrothers = Circus.extend();          
+          RingBrothers = Circus.extend(inject(undefined, Person), {
+              constructor(animals, ringMaster) {}
+          });
     
     it("should get class dependencies", () => {
         let dep;
@@ -1349,6 +1361,15 @@ describe("inject", () => {
         });
         expect($every.test(dep[0])).to.be.true;
         expect(Modifier.unwrap(dep[0])).to.equal(Animal);
+    });
+
+    it("should apply class dependencies to constructor", () => {
+        let dep;
+        inject.get(RingBrothers.prototype, 'constructor', (d, k) => {
+            expect(k).to.eql('constructor');
+            dep = d;
+        });
+        expect(dep).to.eql([undefined, Person]);
     });
 
     it("should get own class dependencies", () => {
