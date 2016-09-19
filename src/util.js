@@ -1,6 +1,4 @@
-import {
-    Base, typeOf, getPropertyDescriptors
-} from './base2';
+import { Base, typeOf } from "./base2";
 
 /**
  * Helper class to simplify array manipulation.
@@ -253,7 +251,7 @@ function defaultOrder(a, b) {
  * @returns  {boolean} true if a string.
  */
 export function $isString(str) {
-    return typeOf(str) === 'string';
+    return typeOf(str) === "string";
 }
 
 /**
@@ -283,7 +281,7 @@ export function $isFunction(fn) {
  * @returns  {boolean} true if an object.
  */
 export function $isObject(obj) {
-    return typeOf(obj) === 'object';
+    return typeOf(obj) === "object";
 }
 
 /**
@@ -349,7 +347,7 @@ export function $decorator(decorations) {
             throw new TypeError("No decoratee specified.");
         }
         const decorator = Object.create(decoratee);
-        Object.defineProperty(decorator, 'decoratee', {
+        Object.defineProperty(decorator, "decoratee", {
             configurable: false,
             value:        decoratee
         });
@@ -401,92 +399,6 @@ export function $flatten(arr, prune) {
     let items = arr.map(item => $flatten(item, prune));
     if (prune) items = items.filter($isSomething);
     return [].concat(...items);
-}
-
-/**
- * Recursively merges `sources` into `target`.
- * @method $merge
- * @param    {Object}  target   -  object to merge into
- * @param    {Array}   sources  -  objects to merge from
- * @returns  {Object} the original `target`.
- */
-export function $merge(target, ...sources) {
-    if ($isNothing(target)) return target;
-    const mergeFn = $isPlainObject(target) ? keyMerge
-        : $isFunction(target.merge) && target.merge;
-    if (mergeFn) {
-        sources.forEach(source => mergeFn.call(target, source));
-    }
-    return target;
-}
-
-function keyMerge(source) {
-    if (!$isPlainObject(source)) return;
-    const props = getPropertyDescriptors(source);
-    Reflect.ownKeys(props).forEach(key => {
-        if (!props[key].enumerable) return;
-        const newValue = source[key],
-              curValue = this[key];
-        if ($isObject(curValue) && !Array.isArray(curValue)) {
-            $merge(curValue, newValue);
-        } else {
-            this[key] = Array.isArray(newValue)
-                ? newValue.slice()
-                : newValue;
-        }
-    });
-}
-
-/**
- * Determines if 'criteria' is satisfied by 'target'.
- * @method $match
- * @param    {Object}    target     -  object to match
- * @param    {Object}    criteria   -  criteria to match
- * @param    {Function}  [matched]  -  receives matched output
- * @returns  {boolean} true if matches.
- */
-export function $match(target, criteria, matched) {
-    if ($isNothing(target)) return false;    
-    return $isPlainObject(target) && $isPlainObject(criteria)
-         ? keyMatch.call(target, criteria, matched)
-         : $isFunction(target.match) && target.match(criteria, matched);
-}
-
-function keyMatch(criteria, matched) {
-    const match   = $isFunction(matched) ? {} : null,
-          matches = Reflect.ownKeys(criteria).every(key => {
-              if (!this.hasOwnProperty(key)) {
-                  return false;
-              }
-              const constraint = criteria[key],
-                    value      = this[key];              
-              if (constraint === undefined) {
-                  if (match) {
-                      if (Array.isArray(value)) {
-                          match[key] = value.slice();
-                      } else if ($isObject(value)) {
-                          match[key] = $merge({}, value);
-                      } else {
-                          match[key] = value;
-                      }
-                  }
-                  return true;
-              }
-              if ($isObject(value) && !Array.isArray(value)) {
-                  return $match(value, constraint, match ? m => match[key] = m : null);
-              }
-              if (value === constraint) {
-                  if (match) {
-                      match[key] = value;
-                  }
-                  return true;
-              }
-              return false;
-          });
-    if (matches && match) {
-        matched(match);
-    }
-    return matches;
 }
 
 /**

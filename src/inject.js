@@ -1,11 +1,8 @@
-import decorate from './decorate';
-import metadata from './metadata';
-import { $flatten } from './util';
-import { Metadata, $meta } from './meta';
-import { emptyArray } from './core';
+import decorate from "./decorate";
+import Metadata from "./metadata";
+import { $flatten } from "./util";
 
-const injectKey      = Symbol(),
-      injectCriteria = { [injectKey]: undefined };
+const injectMetadataKey = Symbol();
 
 /**
  * Specifies dependencies on properties and methods.
@@ -16,28 +13,18 @@ export function inject(...dependencies) {
     return decorate(_inject, dependencies);
 }
 
-inject.getOwn = function () {
-    return metadata.getOwn(injectKey, injectCriteria, ...arguments)
-        || emptyArray;
-}
-
-inject.get = function () {
-    return metadata.get(injectKey, injectCriteria, ...arguments)
-        || emptyArray;
-}
+inject.getOwn = Metadata.getter(injectMetadataKey, true);
+inject.get    = Metadata.getter(injectMetadataKey);
 
 function _inject(target, key, descriptor, dependencies) {
     if (!descriptor) {
         dependencies = key;
         target       = target.prototype        
-        key          = Metadata.constructorKey;        
+        key          = "constructor"
     }
     dependencies = $flatten(dependencies);
     if (dependencies.length > 0) {
-        const meta = $meta(target);
-        if (meta) {
-            meta.defineMetadata(key, { [injectKey]: dependencies });
-        }
+        Metadata.define(injectMetadataKey, dependencies, target, key);
     }
 }
 

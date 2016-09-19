@@ -1,8 +1,8 @@
-import { Base, getPropertyDescriptors } from './base2';
-import { $meta, $isClass, $isProtocol } from './meta';
-import { $isNothing, $isFunction } from './util';
-import { MethodType } from './core';
-import { Enum } from './enum';
+import { Base, getPropertyDescriptors } from "./base2";
+import { $isProtocol,$protocols } from "./protocol";
+import { MethodType, $isClass } from "./core";
+import { $isFunction } from "./util";
+import Enum from "./enum";
 
 /**
  * Facet choices for proxies.
@@ -12,19 +12,19 @@ export const Facet = Object.freeze({
     /**
      * @property {string} Parameters
      */
-    Parameters: 'parameters',
+    Parameters: "parameters",
     /**
      * @property {string} Interceptors
      */        
-    Interceptors: 'interceptors',
+    Interceptors: "interceptors",
     /**
      * @property {string} InterceptorSelectors
      */                
-    InterceptorSelectors: 'interceptorSelectors',
+    InterceptorSelectors: "interceptorSelectors",
     /**
      * @property {string} Delegate
      */                        
-    Delegate: 'delegate'
+    Delegate: "delegate"
 });
 
 /**
@@ -90,18 +90,18 @@ function buildProxy(classes, protocols, options) {
                 const spec = {};
                 spec.value = facets[Facet.InterceptorSelectors]
                 if (spec.value && spec.value.length > 0) {
-                    Object.defineProperty(this, 'selectors', spec);
+                    Object.defineProperty(this, "selectors", spec);
                 }
                 spec.value = facets[Facet.Interceptors];
                 if (spec.value && spec.value.length > 0) {
-                    Object.defineProperty(this, 'interceptors', spec);
+                    Object.defineProperty(this, "interceptors", spec);
                 }
                 spec.value = facets[Facet.Delegate];
                 if (spec.value) {
                     spec.writable = true;
-                    Object.defineProperty(this, 'delegate', spec);
+                    Object.defineProperty(this, "delegate", spec);
                 }
-                const ctor = proxyMethod('constructor', this.base, base);
+                const ctor = proxyMethod("constructor", this.base, base);
                 ctor.apply(this, facets[Facet.Parameters]);
                 delete spec.writable;
                 delete spec.value;
@@ -133,7 +133,7 @@ const noProxyMethods = {
 };
 
 function proxyClass(proxy, protocols) {
-    const sources = [proxy].concat($meta(proxy).protocols, protocols),
+    const sources = [proxy].concat($protocols(proxy), protocols),
           proxied = {};
     for (let i = 0; i < sources.length; ++i) {
         const source     = sources[i],
@@ -149,7 +149,7 @@ function proxyClass(proxy, protocols) {
                 if (isProtocol) value = null;
                 descriptor.value = proxyMethod(key, value, proxy);
             } else {
-                if (descriptor.hasOwnProperty('value')) {
+                if (descriptor.hasOwnProperty("value")) {
                     const field = Symbol();
                     get = function () { return this[field]; },
                     set = function (value) { this[field] = value; };

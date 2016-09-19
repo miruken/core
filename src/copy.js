@@ -1,4 +1,4 @@
-import decorate from './decorate';
+import decorate from "./decorate";
 
 /**
  * Applies copy semantics on properties and return values.

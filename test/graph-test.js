@@ -1,10 +1,10 @@
-import { Base } from '../src/base2';
-
+import { Base } from "../src/base2";
 import {
     Traversal, Traversing, TraversingAxis, TraversingMixin
-} from '../src/graph';
+} from "../src/graph";
+import "../src/core";
 
-import { expect } from 'chai';
+import { expect } from "chai";
 
 export const TreeNode = Base.extend(Traversing, TraversingMixin, {
     constructor(data) { 
@@ -28,7 +28,7 @@ export const TreeNode = Base.extend(Traversing, TraversingMixin, {
 describe("Traversing", () => {
     describe("#traverse", () => {
         it("should traverse self", () => {
-            const root    = new TreeNode('root'),
+            const root    = new TreeNode("root"),
                   visited = [];
             root.traverse(TraversingAxis.Self, node => {
                 visited.push(node);
@@ -37,10 +37,10 @@ describe("Traversing", () => {
         });
 
         it("should traverse root", () => {
-            const root    = new TreeNode('root'),
-                  child1  = new TreeNode('child 1'),
-                  child2  = new TreeNode('child 2'),
-                  child3  = new TreeNode('child 3'),
+            const root    = new TreeNode("root"),
+                  child1  = new TreeNode("child 1"),
+                  child2  = new TreeNode("child 2"),
+                  child3  = new TreeNode("child 3"),
                   visited = [];
             root.addChild(child1, child2, child3);
             root.traverse(TraversingAxis.Root, node => {
@@ -50,11 +50,11 @@ describe("Traversing", () => {
         });
 
         it("should traverse children", () => {
-            const root    = new TreeNode('root'),
-                  child1  = new TreeNode('child 1'),
-                  child2  = new TreeNode('child 2'),
-                  child3  = new TreeNode('child 3')
-                  .addChild(new TreeNode('child 3 1')),
+            const root    = new TreeNode("root"),
+                  child1  = new TreeNode("child 1"),
+                  child2  = new TreeNode("child 2"),
+                  child3  = new TreeNode("child 3")
+                  .addChild(new TreeNode("child 3 1")),
                   visited = [];
             root.addChild(child1, child2, child3);
             root.traverse(TraversingAxis.Child, node => {
@@ -64,11 +64,11 @@ describe("Traversing", () => {
         });
 
         it("should traverse siblings", () => {
-            const root    = new TreeNode('root'),
-                  child1  = new TreeNode('child 1'),
-                  child2  = new TreeNode('child 2'),
-                  child3  = new TreeNode('child 3')
-                  .addChild(new TreeNode('child 3 1')),
+            const root    = new TreeNode("root"),
+                  child1  = new TreeNode("child 1"),
+                  child2  = new TreeNode("child 2"),
+                  child3  = new TreeNode("child 3")
+                  .addChild(new TreeNode("child 3 1")),
                   visited = [];
             root.addChild(child1, child2, child3);
             child2.traverse(TraversingAxis.Sibling, node => {
@@ -78,11 +78,11 @@ describe("Traversing", () => {
         });
 
         it("should traverse children and self", () => {
-            const root    = new TreeNode('root'),
-                  child1  = new TreeNode('child 1'),
-                  child2  = new TreeNode('child 2'),
-                  child3  = new TreeNode('child 3')
-                  .addChild(new TreeNode('child 3 1')),
+            const root    = new TreeNode("root"),
+                  child1  = new TreeNode("child 1"),
+                  child2  = new TreeNode("child 2"),
+                  child3  = new TreeNode("child 3")
+                  .addChild(new TreeNode("child 3 1")),
                   visited = [];
             root.addChild(child1, child2, child3);
             root.traverse(TraversingAxis.ChildOrSelf, node => {
@@ -92,11 +92,11 @@ describe("Traversing", () => {
         });
 
         it("should traverse siblings and self", () => {
-            const root    = new TreeNode('root'),
-                  child1  = new TreeNode('child 1'),
-                  child2  = new TreeNode('child 2'),
-                  child3  = new TreeNode('child 3')
-                  .addChild(new TreeNode('child 3 1')),
+            const root    = new TreeNode("root"),
+                  child1  = new TreeNode("child 1"),
+                  child2  = new TreeNode("child 2"),
+                  child3  = new TreeNode("child 3")
+                  .addChild(new TreeNode("child 3 1")),
                   visited = [];
             root.addChild(child1, child2, child3);
             child2.traverse(TraversingAxis.SiblingOrSelf, node => {
@@ -106,9 +106,9 @@ describe("Traversing", () => {
         });
 
         it("should traverse ancestors", () => {
-            const root       = new TreeNode('root'),
-                  child      = new TreeNode('child'),
-                  grandChild = new TreeNode('grandChild'),
+            const root       = new TreeNode("root"),
+                  child      = new TreeNode("child"),
+                  grandChild = new TreeNode("grandChild"),
                   visited    = [];
             root.addChild(child);
             child.addChild(grandChild);
@@ -119,9 +119,9 @@ describe("Traversing", () => {
         });
 
         it("should traverse ancestors or self", () => {
-            const root       = new TreeNode('root'),
-                  child      = new TreeNode('child'),
-                  grandChild = new TreeNode('grandChild'),
+            const root       = new TreeNode("root"),
+                  child      = new TreeNode("child"),
+                  grandChild = new TreeNode("grandChild"),
                   visited    = [];
             root.addChild(child);
             child.addChild(grandChild);
@@ -132,11 +132,11 @@ describe("Traversing", () => {
         });
 
         it("should traverse descendants", () => {
-            const root     = new TreeNode('root'),
-                  child1   = new TreeNode('child 1'),
-                  child2   = new TreeNode('child 2'),
-                  child3   = new TreeNode('child 3'),
-                  child3_1 = new TreeNode('child 3 1'),
+            const root     = new TreeNode("root"),
+                  child1   = new TreeNode("child 1"),
+                  child2   = new TreeNode("child 2"),
+                  child3   = new TreeNode("child 3"),
+                  child3_1 = new TreeNode("child 3 1"),
                   visited  = [];
             child3.addChild(child3_1);
             root.addChild(child1, child2, child3);
@@ -147,11 +147,11 @@ describe("Traversing", () => {
         });
 
         it("should traverse descendants reverse", () => {
-            const root     = new TreeNode('root'),
-                  child1   = new TreeNode('child 1'),
-                  child2   = new TreeNode('child 2'),
-                  child3   = new TreeNode('child 3'),
-                  child3_1 = new TreeNode('child 3 1'),
+            const root     = new TreeNode("root"),
+                  child1   = new TreeNode("child 1"),
+                  child2   = new TreeNode("child 2"),
+                  child3   = new TreeNode("child 3"),
+                  child3_1 = new TreeNode("child 3 1"),
                   visited  = [];
             child3.addChild(child3_1);
             root.addChild(child1, child2, child3);
@@ -162,11 +162,11 @@ describe("Traversing", () => {
         });
 
         it("should traverse descendants or self", () => {
-            const root     = new TreeNode('root'),
-                  child1   = new TreeNode('child 1'),
-                  child2   = new TreeNode('child 2'),
-                  child3   = new TreeNode('child 3'),
-                  child3_1 = new TreeNode('child 3 1'),
+            const root     = new TreeNode("root"),
+                  child1   = new TreeNode("child 1"),
+                  child2   = new TreeNode("child 2"),
+                  child3   = new TreeNode("child 3"),
+                  child3_1 = new TreeNode("child 3 1"),
                   visited  = [];
             child3.addChild(child3_1);
             root.addChild(child1, child2, child3);
@@ -177,11 +177,11 @@ describe("Traversing", () => {
         });
 
         it("should traverse descendants or self reverse", () => {
-            const root     = new TreeNode('root'),
-                  child1   = new TreeNode('child 1'),
-                  child2   = new TreeNode('child 2'),
-                  child3   = new TreeNode('child 3'),
-                  child3_1 = new TreeNode('child 3 1'),
+            const root     = new TreeNode("root"),
+                  child1   = new TreeNode("child 1"),
+                  child2   = new TreeNode("child 2"),
+                  child3   = new TreeNode("child 3"),
+                  child3_1 = new TreeNode("child 3 1"),
                   visited  = [];
             child3.addChild(child3_1);
             root.addChild(child1, child2, child3);
@@ -192,12 +192,12 @@ describe("Traversing", () => {
         });
 
         it("should traverse ancestor, siblings or self", () => {
-            const root     = new TreeNode('root'),
-                  parent   = new TreeNode('parent'),
-                  child1   = new TreeNode('child 1'),
-                  child2   = new TreeNode('child 2'),
-                  child3   = new TreeNode('child 3'),
-                  child3_1 = new TreeNode('child 3 1'),
+            const root     = new TreeNode("root"),
+                  parent   = new TreeNode("parent"),
+                  child1   = new TreeNode("child 1"),
+                  child2   = new TreeNode("child 2"),
+                  child3   = new TreeNode("child 3"),
+                  child3_1 = new TreeNode("child 3 1"),
                   visited  = [];
             child3.addChild(child3_1);
             parent.addChild(child1, child2, child3);
@@ -239,16 +239,16 @@ describe("Traversing", () => {
 });
 
 describe("Traversal", () => {
-    const root     = new TreeNode('root'),
-          child1   = new TreeNode('child 1'),
-          child1_1 = new TreeNode('child 1 1'),
-          child2   = new TreeNode('child 2'),
-          child2_1 = new TreeNode('child 2 1'),
-          child2_2 = new TreeNode('child 2 2'),
-          child3   = new TreeNode('child 3'),
-          child3_1 = new TreeNode('child 3 1'),
-          child3_2 = new TreeNode('child 3 2'),
-          child3_3 = new TreeNode('child 3 3');
+    const root     = new TreeNode("root"),
+          child1   = new TreeNode("child 1"),
+          child1_1 = new TreeNode("child 1 1"),
+          child2   = new TreeNode("child 2"),
+          child2_1 = new TreeNode("child 2 1"),
+          child2_2 = new TreeNode("child 2 2"),
+          child3   = new TreeNode("child 3"),
+          child3_1 = new TreeNode("child 3 1"),
+          child3_2 = new TreeNode("child 3 2"),
+          child3_3 = new TreeNode("child 3 3");
           child1.addChild(child1_1);
           child2.addChild(child2_1, child2_2);
           child3.addChild(child3_1, child3_2, child3_3);

@@ -1,4 +1,4 @@
-import { Base } from './base2';
+import { Base } from "./base2";
 
 /**
  * Defines an enumeration.
@@ -128,3 +128,5 @@ export const Flags = Enum.extend({
         return new this(value, name);
     }
 });
+
+export default Enum;

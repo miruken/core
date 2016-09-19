@@ -12,7 +12,7 @@ export function isDescriptor(desc) {
         return false;
     }
 
-    const keys = ['value', 'initializer', 'get', 'set'];
+    const keys = ["value", "initializer", "get", "set"];
 
     for (let i = 0, l = keys.length; i < l; i++) {
         if (desc.hasOwnProperty(keys[i])) {

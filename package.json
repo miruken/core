@@ -17,25 +17,26 @@
     "url": "http://github.com/miruken/core"
   },
   "jspm": {
-    "registry": "npm",
-    "jspmPackage": true,
     "main": "miruken-core.js",
     "format": "amd",
     "directories": {
       "dist": "dist/amd"
     },
-    "dependencies": {},
+    "dependencies": {
+      "reflect-metadata": "^0.1.8"
+    },
     "devDependencies": {
-      "babel": "npm:babel-core@^5.8.24",
-      "babel-runtime": "npm:babel-runtime@^5.8.24",
-      "chai": "npm:chai@^3.5.0",
-      "core-js": "npm:core-js@^1.1.4",
-      "–latest": "npm:babel-core@^5.8.24",
-      "–latest-runtime": "npm:babel-runtime@^5.8.24"
+      "babel": "babel-core@^5.8.24",
+      "babel-runtime": "^5.8.24",
+      "chai": "^3.5.0",
+      "core-js": "^1.1.4",
+      "–latest": "babel-core@^5.8.24",
+      "–latest-runtime": "babel-runtime@^5.8.24"
     }
   },
   "dependencies": {
-    "chai": "^1.10.0"
+    "chai": "^1.10.0",
+    "reflect-metadata": "^0.1.8"
   },
   "devDependencies": {
     "babel-plugin-syntax-flow": "^6.5.0",

@@ -1,49 +1,47 @@
-import { Base, assignID } from '../src/base2';
-import { Enum, Flags } from '../src/enum';
-import { MethodType } from '../src/core';
-import { Modifier,  $createModifier, $every } from '../src/modifier';
-import { Disposing, DisposingMixin, $using } from '../src/dispose';
-import { Interceptor, InterceptorSelector, ProxyBuilder } from '../src/proxy';
-import { Protocol, $isClass, $meta } from '../src/meta';
-import metadata from '../src/metadata';
-import inject from '../src/inject';
+import { Base, assignID } from "../src/base2";
+import { Enum, Flags } from "../src/enum";
+import { MethodType, $isClass } from "../src/core";
+import { Protocol, $protocols } from "../src/protocol";
+import { Modifier, $createModifier, $every } from "../src/modifier";
+import { Disposing, DisposingMixin, $using } from "../src/dispose";
+import { Interceptor, InterceptorSelector, ProxyBuilder } from "../src/proxy";
+import metadata from "../src/metadata";
+import inject from "../src/inject";
 
 import {
     IndexedList, $isFunction, $isString,
     $flatten, $merge, $match, $decorator,
     $decorate, $decorated
-} from '../src/util';
+} from "../src/util";
 
-import '../src/promise';
+import "reflect-metadata";
+import "../src/promise";
 
-import { expect } from 'chai';
+import { expect } from "chai";
 
 const Code  = Symbol(),
       Breed = Symbol();
 
 const Animal = Protocol.extend({
-    @metadata({required: true})
-    name:   '',
+    name:   "",
     [Code]: undefined,
 
-    @metadata({profile: true})
     talk() {},
     eat(food) {},
     [Breed]() {}
 });
 
 const Person = Base.extend({
-    firstName: '',
-    lastName:  '',
+    firstName: "",
+    lastName:  "",
     dob: undefined,
-    @metadata({map: Animal})
     pet: undefined,
     
     get fullName() {
-        return this.firstName + ' ' + this.lastName;
+        return this.firstName + " " + this.lastName;
     },
     set fullname(value) {
-        const parts = value.split(' ');
+        const parts = value.split(" ");
         if (parts.length > 0) {
             this.firstName = parts[0];
         }
@@ -70,8 +68,8 @@ const Dog = Base.extend(Animal, Tricks, {
            set color(value) { color = value; }
        });
     },
-    talk() { return 'Ruff Ruff'; },
-    fetch(item) { return 'Fetched ' + item; },
+    talk() { return "Ruff Ruff"; },
+    fetch(item) { return "Fetched " + item; },
     get [Code]() { return 1234; }    
 });
     
@@ -333,168 +331,6 @@ describe("$isFunction", () => {
     });
 });
 
-describe("$meta", () => {
-    const Doctor = Person.extend({
-        @metadata({map: Person})        
-        patient: undefined,
-        get age() { return this.base() + 10; }
-    });
-
-    it("should not have metadata for primitives", () => {
-        expect($meta()).to.be.undefined;
-        expect($meta(1)).to.be.undefined;
-        expect($meta(true)).to.be.undefined;
-        expect($meta("hello")).to.be.undefined;
-    });
-
-    it("should not have metadata for Object, Function or Array", () => {
-        expect($meta(Object)).to.be.undefined;
-        expect($meta(Function)).to.be.undefined;
-        expect($meta(Array)).to.be.undefined;
-    });
-
-    it("should have class metadata", () => {
-        expect($meta(Dog)).to.be.ok;
-    });
-
-    it("should have instance metadata", () => {
-        const dog = new Dog();
-        expect($meta(dog)).to.be.ok;
-        expect($meta(dog)).to.not.equal($meta(Dog));
-    });
-
-    it("should support properties", () => {
-        const person = new Person();
-        person.dob = new Date(2003, 4, 9);
-        expect(person.dob).to.eql(new Date(2003, 4, 9));
-        expect(person.age).to.be.at.least(12);
-    });
-
-    it("should override standard properties", () => {
-        const doctor = new Doctor();
-        doctor.dob = new Date();
-        expect(doctor.age).to.be.at.least(10);
-    });
-    
-    it("should retrieve property metadata", () => {
-        const meta = $meta(Doctor.prototype).getMetadata('patient');
-        expect(meta).to.eql({ map: Person });
-    });
-
-    it("should retrieve all property metadata", () => {
-        const meta = $meta(Doctor.prototype).getMetadata();
-        expect(meta).to.eql({
-            pet:     { map: Animal },
-            patient: { map: Person }
-        });
-    });
-
-    it("should filter all property metadata", () => {
-        let meta = $meta(Doctor.prototype).getMetadata({ map: undefined });
-        expect(meta).to.eql({
-            pet:     { map: Animal },
-            patient: { map: Person }
-        });
-        meta = $meta(Doctor.prototype).getMetadata({ map: Person });
-        expect(meta).to.eql({
-            patient: { map: Person }
-        });        
-    });
-
-    it("should merge property metadata", () => {
-        const meta = $meta(Base.extend({
-            @metadata({required: true})
-            age: undefined
-        }).prototype);
-        let age = meta.getMetadata("age");
-        expect(age).to.eql({required: true});
-        meta.defineMetadata("age", {length: 1});
-        age = meta.getMetadata("age");        
-        expect(age).to.eql({required: true, length: 1});        
-    });
-
-    it("should merge property metadata with getter/setter", () => {
-        const Hospital = Base.extend({
-                @metadata({map: Doctor})            
-                get chiefDoctor() {
-                    return new Doctor({firstName: "Phil"});
-                }
-            }),
-            chiefDoctor = $meta(Hospital.prototype).getMetadata('chiefDoctor'),
-            hospital = new Hospital();
-        expect(hospital.chiefDoctor.firstName).to.equal("Phil");
-        expect(chiefDoctor.map).to.equal(Doctor);        
-    });
-
-    it("should retrieve inherited property metadata", () => {
-        const pet = $meta(Doctor.prototype).getMetadata('pet');
-        expect(pet.map).to.equal(Animal);
-    });
-
-    it("should retrieve all property metadata", () => {
-        const meta = $meta(Doctor.prototype).getMetadata();
-        expect(meta['pet'].map).to.equal(Animal);
-        expect(meta['patient'].map).to.equal(Person);
-    });
-    
-    it("should inherit protocol metadata", () => {
-        const meta = $meta(Dog.prototype).getMetadata();
-        expect(meta['name']).to.eql({required: true});
-        expect(meta['talk']).to.eql({profile: true});        
-    });    
-
-    it("should synthesize instance properties", () => {
-        const person = (new Person).extend({
-            hairColor: 'brown',
-            glasses:    true
-        });
-        expect(person.hairColor).to.equal('brown');
-        expect(person.glasses).to.equal(true);
-    });
-
-    it("should retrieve instance property metadata", () => {
-        const person = (new Person).extend({
-            @metadata({ map: Person })
-            friend: undefined
-        });
-        const friend = $meta(person).getMetadata('friend');
-        expect(friend.map).to.equal(Person);
-        expect($meta(Person.prototype).getMetadata('friend')).to.be.undefined;
-    });
-
-    it("should synthesize protocol properties", () => {
-        const Employment = Protocol.extend({
-                get id() {},
-                get name() {},
-                set name(value) {}
-            }),
-            Manager = Base.extend(Employment, {
-                constructor(name) {
-                    this.extend({
-                        get name() { return name; },
-                        set name(value) { name = value; }
-                    });
-                },
-                get id() {
-                    return "Manager" + assignID(this);
-                }
-            }),
-            manager = new Manager("Bill Lumbergh");
-        expect(Employment(manager).name).to.equal("Bill Lumbergh");
-        expect(Employment(manager).id).to.equal("Manager" + assignID(manager));
-        expect(Employment(manager).name = "Joe Girardi").to.equal("Joe Girardi");
-        expect(Employment(manager).name).to.equal("Joe Girardi");
-    });
-
-    it.only("should store complex property metadata", () => {
-        const meta = $meta(new Object),
-              list = new IndexedList(),
-              key  = Symbol();
-        meta.defineMetadata(key, list);
-        expect(meta.getMetadata(key)).to.equal(list);
-    });    
-});
-
 describe("DisposingMixin", () => {
     describe("dispose", () => {
         it("should provide dispose", () => {
@@ -637,7 +473,7 @@ describe("$decorator", () => {
         const dog  = new Dog("Snuffy"),
               echo = $decorator({
                 get name() {
-                    return this.base() + ' ' + this.base();
+                    return this.base() + " " + this.base();
                 }
             }),
             dogEcho = echo(dog);
@@ -650,7 +486,7 @@ describe("$decorate", () => {
         const dog     = new Dog("Sparky"),
               reverse = $decorate(dog, {
                 get name() {
-                    return this.base().split('').reverse().join('');
+                    return this.base().split("").reverse().join("");
                 }
             });
         expect(reverse.name).to.equal("ykrapS");
@@ -687,7 +523,7 @@ describe("$flatten", () => {
     });
 
     it("should flatten deep arrays", () => {
-        expect($flatten([[[1,'a'],[2,'b']],[[3,'c'],4]])).to.eql([1,'a',2,'b',3,'c',4]);
+        expect($flatten([[[1,"a"],[2,"b"]],[[3,"c"],4]])).to.eql([1,"a",2,"b",3,"c",4]);
     });
 
     it("should prune arrays", () => {
@@ -699,121 +535,29 @@ describe("$flatten", () => {
     });    
 });
 
-describe("$merge", () => {
-    it("should merge nothing", () => {
-        const target = {a: 1};
-        expect($merge()).is.undefined;
-        expect($merge(target)).eq(target);
-        expect($merge(target, {})).eql({a: 1});
-    });
-
-    it("should  new properties", () => {
-        const target = {};
-        expect($merge(target, {a: 1})).to.eql({a: 1});
-    });
-    
-    it("should merge new properties", () => {
-        const target = {a: 1};
-        expect($merge(target, {b: 2, c: {x: 'a'}}))
-            .eql({a: 1, b: 2, c: {x:'a'}});
-    });
-
-    it("should replace properties", () => {
-        const target = {a: 1};
-        expect($merge(target, {a: {x:'a', y:'z'}})).eql({a: {x:'a', y:'z'}});
-    });
-
-    it("should replace nested properties", () => {
-        const target = {a: {b: {c: 1}}, x: {y: 2}};
-        expect($merge(target, {a: {b: {c: 3}, d: 'x'}, x: {z: 4}, u: {r: 6}}))
-        	.eql({a: {b: {c: 3}, d: 'x'}, x: {y: 2, z: 4}, u: {r: 6}});
-    });
-});
-
-describe("$match", () => {
-    const source = {
-        a: {
-            b: 2
-        },
-        c: 3,
-        d: { e: { f: 4 }, g: 5 },
-        h: Animal
-    };
-
-    it("should provide match if requested", () => {
-        let match;
-        expect($match(source, { c: undefined }, m => match = m)).to.be.true;
-        expect(match).to.eql({ c: 3 });
-    });
-
-    it("should match if key present", () => {
-        expect($match(source, {
-            c: undefined,
-            h: undefined
-        }, match => expect(match).to.eql({
-            c: 3,
-            h: Animal
-        }))).to.be.true;
-        expect($match(source, {
-            a : undefined,
-            d: {
-                e: {
-                    f: undefined
-                }
-            }
-        }, match => expect(match).to.eql({
-            a: {
-                b: 2
-            },
-            d: {
-                e: { f: 4 }
-            }
-        }))).to.be.true;
-        expect($match(source, {
-            d: {
-                e: {
-                    f: undefined
-                },
-                l: undefined
-            }
-        })).to.be.false;
-    });
-
-    it("should match simple properties", () => {
-        expect($match(source, { c: 1 })).to.be.false;
-        expect($match(source, { c: 3 })).to.be.true;
-    });
-
-    it("should match nested properties", () => {
-        expect($match(source, { a: { b: 5 } })).to.be.false;
-        expect($match(source, { a: { b: 2 } })).to.be.true;
-    });    
-    
-});
-
 describe("Modifier", () => {
     describe("$createModifier", () => {
         it("should create a new modifier", () => {
-            const wrap    = $createModifier('wrap');
+            const wrap    = $createModifier("wrap");
             expect(wrap.prototype).to.be.instanceOf(Modifier);
         });
 
         it("should apply a  modifier using function call", () => {
-            const wrap    = $createModifier('wrap'),
+            const wrap    = $createModifier("wrap"),
                   wrapped = wrap(22);
             expect(wrap.test(wrapped)).to.be.true;
             expect(wrapped.getSource()).to.equal(22);
         });
         
         it("should not apply a modifier the using new operator", () => {
-            const wrap    = $createModifier('wrap');
+            const wrap    = $createModifier("wrap");
             expect(() => { 
                 new wrap(22);
             }).to.throw(Error, /Modifiers should not be called with the new operator./);
         });
         
         it("should ignore modifier if already present", () => {
-            const wrap    = $createModifier('wrap'),
+            const wrap    = $createModifier("wrap"),
                 wrapped = wrap(wrap("soccer"));
             expect(wrapped.getSource()).to.equal("soccer");
         });
@@ -821,9 +565,9 @@ describe("Modifier", () => {
 
     describe("#test", () => {
         it("should test chained modifiers", () => {
-            const shape = $createModifier('shape'),
-                  wrap  = $createModifier('wrap'),
-                  roll  = $createModifier('roll'),
+            const shape = $createModifier("shape"),
+                  wrap  = $createModifier("wrap"),
+                  roll  = $createModifier("roll"),
                   chain = shape(wrap(roll(19)));
             expect(shape.test(chain)).to.be.true;
             expect(wrap.test(chain)).to.be.true;
@@ -833,9 +577,9 @@ describe("Modifier", () => {
 
     describe("#unwrap", () => {
         it("should unwrap source when modifiers chained", () => {
-            const shape = $createModifier('shape'),
-                  wrap  = $createModifier('wrap'),
-                  roll  = $createModifier('roll'),
+            const shape = $createModifier("shape"),
+                  wrap  = $createModifier("wrap"),
+                  roll  = $createModifier("roll"),
                   chain = shape(wrap(roll(19)));
             expect(Modifier.unwrap(chain)).to.equal(19);
         });
@@ -844,13 +588,13 @@ describe("Modifier", () => {
 
 describe("Protocol", () => {
     it("should proxy calls to properties", () => {
-        const dog = Animal(new Dog('Bowser'));
-        expect(dog.name).to.equal('Bowser');
+        const dog = Animal(new Dog("Bowser"));
+        expect(dog.name).to.equal("Bowser");
     });
     
     it("should proxy calls to methods", () => {
         const dog = Animal(new Dog());
-        expect(dog.talk()).to.equal('Ruff Ruff');
+        expect(dog.talk()).to.equal("Ruff Ruff");
     });
     
     it("should ignore null or undefined target", () => {
@@ -860,18 +604,18 @@ describe("Protocol", () => {
     
     it("should ignore missing methods", () => {
         const dog = Animal(new Dog());
-        dog.eat('bug');
+        dog.eat("bug");
     });
     
     it("should support specialization", () => {
-        expect(CircusAnimal(new Dog()).fetch("bone")).to.equal('Fetched bone');
+        expect(CircusAnimal(new Dog()).fetch("bone")).to.equal("Fetched bone");
     });
     
     it("should ignore if strict and protocol not adopted", () => {
         const Toy = Base.extend({
-            talk() { return 'To infinity and beyond'; }
+            talk() { return "To infinity and beyond"; }
         });
-        expect(Animal(new Toy()).talk()).to.equal('To infinity and beyond');
+        expect(Animal(new Toy()).talk()).to.equal("To infinity and beyond");
         expect(Animal(new Toy(), true).talk()).to.be.undefined;
     });
     
@@ -888,20 +632,18 @@ describe("Protocol", () => {
         });
     });
 
-    describe("#ownProtocols", () => {
+    describe("$protocols", () => {
         it("should retrieve own protocols", () => {
-            expect($meta(Dog).ownProtocols).to.eql([Animal, Tricks]);
+            expect($protocols(Dog, true)).to.eql([Animal, Tricks]);
         });
-    });
 
-    describe("#protocols", () => {
         it("should retrieve all protocol protocols", () => {
-            expect($meta(CircusAnimal).protocols).to.eql([Animal, Tricks]);
+            expect($protocols(CircusAnimal)).to.eql([Animal, Tricks]);
         });
 
         it("should retrieve all class protocols", () => {
-            expect($meta(AsianElephant).protocols).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
-        });
+            expect($protocols(AsianElephant)).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
+        });        
     });
 
     describe("#implement", () => {
@@ -913,10 +655,10 @@ describe("Protocol", () => {
             expect(Animal(dog).reproduce()).to.be.undefined;
             dog.extend({
                 reproduce() {
-                    return new Dog('Hazel');
+                    return new Dog("Hazel");
                 }
             });
-            expect(Animal(dog).reproduce().name).to.equal('Hazel');
+            expect(Animal(dog).reproduce().name).to.equal("Hazel");
         });
     });
 
@@ -929,10 +671,10 @@ describe("Protocol", () => {
             expect(animal.reproduce()).to.be.undefined;
             dog.extend({
                 reproduce() {
-                    return new Dog('Hazel');
+                    return new Dog("Hazel");
                 }
             });
-            expect(animal.reproduce().name).to.equal('Hazel');
+            expect(animal.reproduce().name).to.equal("Hazel");
         });
     });
 
@@ -972,18 +714,18 @@ describe("Protocol", () => {
         it("should only list protocol once", () => {
             const Cat = Base.extend(Animal, Animal);
             expect(Animal.isAdoptedBy(Cat)).to.be.true;
-            expect($meta(Cat).ownProtocols).to.eql([Animal]);
+            expect($protocols(Cat, true)).to.eql([Animal]);
         });
 
         it("should only list protocol once if extended", () => {
             const Cat = Animal.extend(Animal);
             expect(Animal.isAdoptedBy(Cat)).to.be.true;
-            expect($meta(Cat).ownProtocols).to.eql([Animal]);
+            expect($protocols(Cat, true)).to.eql([Animal]);
         });
 
         it("should support protocol inheritance", () => {
             expect(Animal.isAdoptedBy(Elephant)).to.be.true;
-            expect($meta(CircusAnimal).ownProtocols).to.eql([Animal, Tricks]);
+            expect($protocols(CircusAnimal, true)).to.eql([Animal, Tricks]);
         });
 
         it("should inherit protocol conformance", () => {
@@ -995,7 +737,7 @@ describe("Protocol", () => {
             const EndangeredAnimal = Base.extend([Animal, Tracked]);
             expect(Animal.isAdoptedBy(EndangeredAnimal)).to.be.true;
             expect(Tracked.isAdoptedBy(EndangeredAnimal)).to.be.true;
-            expect($meta(EndangeredAnimal).ownProtocols).to.eql([Animal, Tracked]);
+            expect($protocols(EndangeredAnimal, true)).to.eql([Animal, Tracked]);
         });
 
         it("should allow redefining method", () => {
@@ -1003,10 +745,10 @@ describe("Protocol", () => {
                     fetch(item) {}
                 }),
                 SmartDog = Dog.extend({
-                    fetch(item) { return 'Buried ' + item; }
+                    fetch(item) { return "Buried " + item; }
                 }),
                 dog = new SmartDog();
-            expect(SmartTricks(dog).fetch('bone')).to.equal('Buried bone');
+            expect(SmartTricks(dog).fetch("bone")).to.equal("Buried bone");
         });
 
         it("should support strict when redefining method", () => {
@@ -1017,11 +759,11 @@ describe("Protocol", () => {
                     fetch(item) {}
                 }),
                 SmartDog = Dog.extend({
-                    fetch(item) { return 'Buried ' + item; }
+                    fetch(item) { return "Buried " + item; }
                 }),
                 dog = new SmartDog();
-            expect(Tricks(dog).fetch('bone')).to.equal('Buried bone');
-            expect(SmartTricks(dog).fetch('bone')).to.be.undefined;
+            expect(Tricks(dog).fetch("bone")).to.equal("Buried bone");
+            expect(SmartTricks(dog).fetch("bone")).to.be.undefined;
         });
     });
 
@@ -1050,8 +792,8 @@ describe("Protocol", () => {
 
     describe("#delegate", () => {
         it("should delegate invocations to object", () => {
-            const dog = new Dog('Fluffy');
-            expect(Animal(dog).talk()).to.equal('Ruff Ruff');
+            const dog = new Dog("Fluffy");
+            expect(Animal(dog).talk()).to.equal("Ruff Ruff");
         });
 
         it("should delegate invocations to array", () => {
@@ -1062,18 +804,18 @@ describe("Protocol", () => {
                           return this.base();
                       }
                   }),
-                  dogs = [new Dog2('Fluffy'), new Dog2('Max')];
-            expect(Animal(dogs).talk()).to.equal('Ruff Ruff');
+                  dogs = [new Dog2("Fluffy"), new Dog2("Max")];
+            expect(Animal(dogs).talk()).to.equal("Ruff Ruff");
             expect(count).to.equal(2);
         });        
     });
 
     describe("#delegateGet", () => {
         it("should delegate property gets to object", () => {
-            const dog  = new Dog('Franky');
-            expect(Animal(dog).name).to.equal('Franky');
+            const dog  = new Dog("Franky");
+            expect(Animal(dog).name).to.equal("Franky");
             // expect(Animal(dog)[Code]).to.equal(1234); Babel bug
-            expect(CircusAnimal(dog).name).to.equal('Franky');
+            expect(CircusAnimal(dog).name).to.equal("Franky");
         });
         
         it("should delegate property gets to array", () => {
@@ -1089,17 +831,17 @@ describe("Protocol", () => {
                           });
                       }
                   }),            
-                  dogs = [new Dog2('Franky'), new Dog2('Spot')];
-            expect(Animal(dogs).name).to.equal('Spot');
+                  dogs = [new Dog2("Franky"), new Dog2("Spot")];
+            expect(Animal(dogs).name).to.equal("Spot");
             expect(count).to.equal(2);
         });        
     });
 
     describe("#delegateSet", () => {
         it("should delegate property sets to object", () => {
-            const dog = new Dog('Franky');
-            Animal(dog).name = 'Ralphy';
-            expect(dog.name).to.equal('Ralphy');
+            const dog = new Dog("Franky");
+            Animal(dog).name = "Ralphy";
+            expect(dog.name).to.equal("Ralphy");
         });
 
         it("should delegate property sets to array", () => {
@@ -1115,23 +857,23 @@ describe("Protocol", () => {
                           });
                       }
                   }),
-                  dogs = [new Dog2('Franky'), new Dog2('Pebbles')];
-            Animal(dogs).name = 'Ralphy';
-            expect(dogs[0].name).to.equal('Ralphy');
-            expect(dogs[1].name).to.equal('Ralphy');
+                  dogs = [new Dog2("Franky"), new Dog2("Pebbles")];
+            Animal(dogs).name = "Ralphy";
+            expect(dogs[0].name).to.equal("Ralphy");
+            expect(dogs[1].name).to.equal("Ralphy");
             expect(count).to.equal(2);            
         });
         
         it("should delegate extended property sets", () => {
-            const dog  = new Dog('Franky');
+            const dog  = new Dog("Franky");
             Animal.implement({
                 nickname: undefined
             });
             dog.extend({
-                nickname: ''
+                nickname: ""
             });
-            Animal(dog).nickname = 'HotDog';
-            expect(dog.nickname).to.equal('HotDog');
+            Animal(dog).nickname = "HotDog";
+            expect(dog.nickname).to.equal("HotDog");
         });
     });
 });
@@ -1158,20 +900,20 @@ describe("ProxyBuilder", () => {
             const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
-                                     parameters:   ['Patches', "red"],
+                                     parameters:   ["Patches", "red"],
                                      interceptors: [new LogInterceptor()]
                   });
-            expect(dog.name).to.equal('Patches');
+            expect(dog.name).to.equal("Patches");
             expect(dog.color).to.equal("red");            
-            expect(dog.talk()).to.equal('Ruff Ruff');
-            expect(dog.fetch("bone")).to.equal('Fetched bone');
+            expect(dog.talk()).to.equal("Ruff Ruff");
+            expect(dog.fetch("bone")).to.equal("Fetched bone");
         });
 
         it("should proxy protocol", () => {
             const proxyBuilder = new ProxyBuilder(),
                   AnimalProxy  = proxyBuilder.buildProxy([Animal]),
                   AnimalInterceptor = Interceptor.extend({
-                      name : '',
+                      name : "",
                       intercept(invocation) {
                           const method = invocation.method,
                                 type   = invocation.methodType,
@@ -1197,7 +939,7 @@ describe("ProxyBuilder", () => {
             animal.name = "Pluto";
             expect(animal.name).to.equal("Pluto");
             expect(animal.talk()).to.equal("I don't know what to say.");
-            expect(animal.eat('pizza')).to.equal("I don't like pizza.");
+            expect(animal.eat("pizza")).to.equal("I don't like pizza.");
         });
 
         it("should proxy classes and protocols", () => {
@@ -1205,19 +947,19 @@ describe("ProxyBuilder", () => {
                   Flying         = Protocol.extend({ fly() {} }),
                   FlyingInterceptor = Interceptor.extend({
                       intercept(invocation) {
-                          if (invocation.method !== 'fly') {
+                          if (invocation.method !== "fly") {
                               return invocation.proceed();
                           }
                       }
                   }),
                   FlyingDogProxy = proxyBuilder.buildProxy([Dog, Flying, DisposingMixin]);
             $using(new FlyingDogProxy({
-                       parameters:   ['Wonder Dog'],
+                       parameters:   ["Wonder Dog"],
                        interceptors: [new FlyingInterceptor(), new LogInterceptor()]
                    }), wonderDog => {
-                expect(wonderDog.name).to.equal('Wonder Dog');
-                expect(wonderDog.talk()).to.equal('Ruff Ruff');
-                expect(wonderDog.fetch("purse")).to.equal('Fetched purse');
+                expect(wonderDog.name).to.equal("Wonder Dog");
+                expect(wonderDog.talk()).to.equal("Ruff Ruff");
+                expect(wonderDog.fetch("purse")).to.equal("Fetched purse");
                 wonderDog.fly();
                 }
             );
@@ -1227,29 +969,29 @@ describe("ProxyBuilder", () => {
             const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
-                                     parameters:   ['Patches'],
+                                     parameters:   ["Patches"],
                                      interceptors: [new ToUpperInterceptor()]
                                  });
-            expect(dog.name).to.equal('PATCHES');
-            expect(dog.talk()).to.equal('RUFF RUFF');
-            expect(dog.fetch("bone")).to.equal('FETCHED BONE');
+            expect(dog.name).to.equal("PATCHES");
+            expect(dog.talk()).to.equal("RUFF RUFF");
+            expect(dog.fetch("bone")).to.equal("FETCHED BONE");
         });
 
         it("should restrict proxied method with interceptor selector options", () => {
             const proxyBuilder = new ProxyBuilder(),
                   selector     =  (new InterceptorSelector()).extend({
                       selectInterceptors(type, method, interceptors) {
-                          return method === 'name' ? interceptors : [];
+                          return method === "name" ? interceptors : [];
                   }}),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
-                                     parameters:           ['Patches'],
+                                     parameters:           ["Patches"],
                                      interceptors:         [new ToUpperInterceptor()],
                                      interceptorSelectors: [selector]
                                  });
-            expect(dog.name).to.equal('PATCHES');
-            expect(dog.talk()).to.equal('Ruff Ruff');
-            expect(dog.fetch("bone")).to.equal('Fetched bone');
+            expect(dog.name).to.equal("PATCHES");
+            expect(dog.talk()).to.equal("Ruff Ruff");
+            expect(dog.fetch("bone")).to.equal("Fetched bone");
         });
 
         it("should fail if no types array provided", () => {
@@ -1282,7 +1024,7 @@ describe("ProxyBuilder", () => {
             const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
-                                    parameters:  ['Patches'],
+                                    parameters:  ["Patches"],
                                     interceptors:[new ToUpperInterceptor()]
                                  });
             dog.extend("getColor", () => { return "white with brown spots"; });
@@ -1297,7 +1039,7 @@ describe("ProxyBuilder", () => {
             const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
-                                    parameters:  ['Patches'],
+                                    parameters:  ["Patches"],
                                     interceptors:[new ToUpperInterceptor()]
                                  });
             expect(dog.name).to.equal("PATCHES");
@@ -1336,8 +1078,8 @@ describe("inject", () => {
     
     it("should get class dependencies", () => {
         let dep;
-        inject.get(Circus.prototype, 'dancingDog', (d, k) => {
-            expect(k).to.eql('dancingDog');
+        inject.get(Circus.prototype, "dancingDog", (d, k) => {
+            expect(k).to.eql("dancingDog");
             dep = d;
         });
         expect(dep).to.eql([Dog]);
@@ -1345,8 +1087,8 @@ describe("inject", () => {
 
     it("should get dependencies with modifiers", () => {
         let dep;
-        inject.get(Circus.prototype, 'elpehantParade', (d, k) => {
-            expect(k).to.eql('elpehantParade');
+        inject.get(Circus.prototype, "elpehantParade", (d, k) => {
+            expect(k).to.eql("elpehantParade");
             dep = d;            
         });
         expect($every.test(dep[0])).to.be.true;
@@ -1355,8 +1097,8 @@ describe("inject", () => {
 
     it("should get constructor dependencies", () => {
         let dep;
-        inject.get(Circus.prototype, 'constructor', (d, k) => {
-            expect(k).to.eql('constructor');
+        inject.get(Circus.prototype, "constructor", (d, k) => {
+            expect(k).to.eql("constructor");
             dep = d;
         });
         expect($every.test(dep[0])).to.be.true;
@@ -1365,8 +1107,8 @@ describe("inject", () => {
 
     it("should apply class dependencies to constructor", () => {
         let dep;
-        inject.get(RingBrothers.prototype, 'constructor', (d, k) => {
-            expect(k).to.eql('constructor');
+        inject.get(RingBrothers.prototype, "constructor", (d, k) => {
+            expect(k).to.eql("constructor");
             dep = d;
         });
         expect(dep).to.eql([undefined, Person]);
@@ -1374,7 +1116,26 @@ describe("inject", () => {
 
     it("should get own class dependencies", () => {
         let dep;
-        inject.getOwn(RingBrothers.prototype, 'dancingDog', (d, k) =>  dep = d);
+        inject.getOwn(RingBrothers.prototype, "dancingDog", (d, k) =>  dep = d);
         expect(dep).to.be.undefined;
-    });    
+    });
+
+    it("should get all dependencies", () => {
+        const deps = new Map();
+        inject.get(RingBrothers.prototype, (d, k) => deps.set(k,d));
+        expect(deps.get("dancingDog")).to.eql([Dog]);
+        expect($every.test(deps.get("elpehantParade")[0])).to.be.true;
+        expect(Modifier.unwrap(deps.get("elpehantParade")[0])).to.equal(Elephant);
+        expect(deps.get("constructor")).to.eql([undefined, Person]);        
+    });
+
+    it("should get own dependencies", () => {
+        const deps = new Map();
+        inject.getOwn(RingBrothers.prototype, (d, k) => deps.set(k,d));
+        expect(deps.get("dancingDog")).to.be.undefined;
+        expect(deps.get("elpehantParade")).to.be.undefined;
+        expect(deps.get("constructor")).to.eql([undefined, Person]);
+        inject.getOwn(Circus.prototype, (d, k) => deps.set(k,d));
+        expect(deps.get("dancingDog")).to.eql([Dog]);
+    });            
 });

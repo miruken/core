@@ -1,4 +1,4 @@
-import { Base  } from './base2';
+import { Base  } from "./base2";
 
 /**
  * Delegates properties and methods to another object.<br/>
@@ -46,7 +46,7 @@ export const Delegate = Base.extend({
  */
 export const ObjectDelegate = Delegate.extend({
     constructor(object) {
-        Object.defineProperty(this, 'object', { value: object });
+        Object.defineProperty(this, "object", { value: object });
     },
     get(protocol, key, strict) {
         const object = this.object;
@@ -78,7 +78,7 @@ export const ObjectDelegate = Delegate.extend({
  */
 export const ArrayDelegate = Delegate.extend({
     constructor(array) {
-        Object.defineProperty(this, 'array', { value: array });
+        Object.defineProperty(this, "array", { value: array });
     },
     get(protocol, key, strict) {
         const array = this.array;
