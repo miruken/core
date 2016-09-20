@@ -1029,11 +1029,22 @@ var IndexedList = exports.IndexedList = Base.extend({
             isEmpty: function isEmpty() {
                 return !this.head;
             },
-            getIndex: function getIndex(index) {
+            has: function has(node) {
+                var index = node.index;
+                var indexedNode = this.getFirst(index);
+                while (indexedNode && indexedNode.index === index) {
+                    if ($equals(indxedNode, node)) {
+                        return true;
+                    }
+                    indexedNode = indexedNode.next;
+                }
+                return false;
+            },
+            getFirst: function getFirst(index) {
                 return index && _index[index];
             },
             insert: function insert(node, index) {
-                var indexedNode = this.getIndex(index);
+                var indexedNode = this.getFirst(index);
                 var insert = indexedNode;
                 if (index) {
                     insert = insert || this.head;
@@ -1070,6 +1081,7 @@ var IndexedList = exports.IndexedList = Base.extend({
                         _index[index] = node;
                     }
                 }
+                return this;
             },
             remove: function remove(node) {
                 var prev = node.prev,
@@ -1090,13 +1102,31 @@ var IndexedList = exports.IndexedList = Base.extend({
                     delete this.tail;
                 }
                 var index = node.index;
-                if (this.getIndex(index) === node) {
+                if (this.getFirst(index) === node) {
                     if (next && next.index === index) {
                         _index[index] = next;
                     } else {
                         delete _index[index];
                     }
                 }
+                return this;
+            },
+            merge: function merge(list) {
+                if (!list) {
+                    return this;
+                }
+                if (list.constructor !== this.constructor) {
+                    throw new TypeError("merge expects lists of equal type");
+                }
+                var node = list.head;
+                while (node) {
+                    var next = node.next;
+                    if (!this.has(node)) {
+                        this.insert(node, node.index);
+                    }
+                    node = next;
+                }
+                return this;
             }
         });
     }
@@ -1189,9 +1219,9 @@ function $equals(obj1, obj2) {
     if (obj1 === obj2) {
         return true;
     }
-    if ($isFunction(obj1.equals)) {
+    if (obj1 && $isFunction(obj1.equals)) {
         return obj1.equals(obj2);
-    } else if ($isFunction(obj2.equals)) {
+    } else if (obj2 && $isFunction(obj2.equals)) {
         return obj2.equals(obj1);
     }
     return false;
@@ -1225,10 +1255,17 @@ var Metadata = exports.Metadata = Base.extend(null, {
     getOwn: function getOwn(metadataKey, target, targetKey) {
         return target && Reflect.getOwnMetadata(metadataKey, target, targetKey);
     },
-    getOrCreateOwn: function getOrCreateOwn(metadataKey, metadataType, target, targetKey) {
+    getOrCreateOwn: function getOrCreateOwn(metadataKey, target, targetKey, creator) {
+        if (arguments.length === 3) {
+            creator = targetKey;
+            targetKey = undefined;
+        }
+        if (!$isFunction(creator)) {
+            throw new TypeError("creator must be a function");
+        }
         var metadata = Reflect.getOwnMetadata(metadataKey, target, targetKey);
         if (metadata === undefined) {
-            metadata = new metadataType();
+            metadata = creator(metadataKey, target, targetKey);
             Reflect.defineMetadata(metadataKey, metadata, target, targetKey);
         }
         return metadata;
@@ -1236,19 +1273,42 @@ var Metadata = exports.Metadata = Base.extend(null, {
     define: function define(metadataKey, metadata, target, targetKey) {
         Reflect.defineMetadata(metadataKey, metadata, target, targetKey);
     },
-    copy: function copy(source, target) {
+    remove: function remove(metadataKey, target, targetKey) {
+        Reflect.deleteMetadata(metadataKey, target, targetKey);
+    },
+    copyOwn: function copyOwn(target, source) {
         var _this2 = this;
 
-        this.copyKey(source, target);
-        Reflect.ownKeys(source).forEach(function (targetKey) {
-            return _this2.copyKey(source, target, targetKey);
+        this.copyOwnKey(target, source);
+        Reflect.ownKeys(source).forEach(function (sourceKey) {
+            return _this2.copyOwnKey(target, source, sourceKey);
         });
     },
-    copyKey: function copyKey(source, target, targetKey) {
-        var metadataKeys = Reflect.getOwnMetadataKeys(source, targetKey);
+    copyOwnKey: function copyOwnKey(target, source, sourceKey) {
+        var metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(function (metadataKey) {
-            var metadata = Reflect.getOwnMetadata(metadataKey, source, targetKey);
-            Reflect.defineMetadata(metadataKey, metadata, target, targetKey);
+            var metadata = Reflect.getOwnMetadata(metadataKey, source, sourceKey);
+            Reflect.defineMetadata(metadataKey, metadata, target, sourceKey);
+        });
+    },
+    mergeOwn: function mergeOwn(target, source) {
+        var _this3 = this;
+
+        this.mergeOwnKey(target, source);
+        Reflect.ownKeys(source).forEach(function (sourceKey) {
+            return _this3.mergeOwnKey(target, source, sourceKey);
+        });
+    },
+    mergeOwnKey: function mergeOwnKey(target, source, sourceKey) {
+        var metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
+        metadataKeys.forEach(function (metadataKey) {
+            var targetMetadata = Reflect.getOwnMetadata(metadataKey, target, sourceKey),
+                sourceMetadata = Reflect.getOwnMetadata(metadataKey, source, sourceKey);
+            if (targetMetadata && targetMetadata.merge) {
+                targetMetadata.merge(sourceMetadata);x;
+            } else {
+                Reflect.defineMetadata(metadataKey, sourceMetadata, target, sourceKey);
+            }
         });
     },
     match: function match(metadataKey, target, targetKey, matcher) {
@@ -1374,7 +1434,7 @@ var Protocol = exports.Protocol = Base.extend((_Base$extend = {
         return target && target.prototype instanceof Protocol;
     },
     isAdoptedBy: function isAdoptedBy(target) {
-        var _this3 = this;
+        var _this4 = this;
 
         if (!target) return false;
         if (this === target || target && target.prototype instanceof this) {
@@ -1382,22 +1442,24 @@ var Protocol = exports.Protocol = Base.extend((_Base$extend = {
         }
         var metaTarget = $isFunction(target) ? target.prototype : target;
         return Metadata.match(ProtocolsMetadataKey, metaTarget, function (protocols) {
-            return protocols.has(_this3) || [].concat(_toConsumableArray(protocols)).some(function (p) {
-                return _this3.isAdoptedBy(p);
+            return protocols.has(_this4) || [].concat(_toConsumableArray(protocols)).some(function (p) {
+                return _this4.isAdoptedBy(p);
             });
         });
     },
     adoptBy: function adoptBy(target) {
-        var _this4 = this;
+        var _this5 = this;
 
         if (!target) return;
         var metaTarget = $isFunction(target) ? target.prototype : target;
         if (Metadata.match(ProtocolsMetadataKey, metaTarget, function (p) {
-            return p.has(_this4);
+            return p.has(_this5);
         })) {
             return false;
         }
-        var protocols = Metadata.getOrCreateOwn(ProtocolsMetadataKey, Set, metaTarget);
+        var protocols = Metadata.getOrCreateOwn(ProtocolsMetadataKey, metaTarget, function () {
+            return new Set();
+        });
         protocols.add(this);
         if ($isFunction(target.protocolAdopted)) {
             target.protocolAdopted(this);
@@ -1538,24 +1600,9 @@ var Variance = exports.Variance = Enum({
     Invariant: 3
 });
 
-function mixin() {
-    for (var _len6 = arguments.length, behaviors = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-        behaviors[_key6] = arguments[_key6];
-    }
-
-    behaviors = $flatten(behaviors, true);
-    return function (target) {
-        if (behaviors.length > 0 && $isFunction(target.implement)) {
-            behaviors.forEach(function (b) {
-                return target.implement(b);
-            });
-        }
-    };
-}
-
 Base.extend = function () {
-    for (var _len7 = arguments.length, args = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
-        args[_key7] = arguments[_key7];
+    for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+        args[_key6] = arguments[_key6];
     }
 
     var constraints = args,
@@ -1586,8 +1633,8 @@ Base.extend = function () {
     var members = args.shift() || {},
         classMembers = args.shift() || {},
         derived = baseExtend.call(this, members, classMembers);
-    Metadata.copy(classMembers, derived);
-    Metadata.copy(members, derived.prototype);
+    Metadata.copyOwn(derived, classMembers);
+    Metadata.copyOwn(derived.prototype, members);
     if (decorators.length > 0) {
         decorators.forEach(function (d) {
             return derived = d(derived) || derived;
@@ -1597,12 +1644,12 @@ Base.extend = function () {
 };
 
 Base.implement = function (source) {
-    if (source) {
-        if ($isProtocol(this) && $isObject(source)) {
-            source = protocol(source) || source;
-        }
+    if (source && $isProtocol(this) && $isObject(source)) {
+        source = protocol(source) || source;
     }
-    return baseImplement.call(this, source);
+    var type = baseImplement.call(this, source);
+    Metadata.mergeOwn(type.prototype, source);
+    return type;
 };
 
 Base.prototype.extend = function (key, value) {
@@ -1612,10 +1659,27 @@ Base.prototype.extend = function (key, value) {
         if (this instanceof Protocol) {
             key = protocol(key) || key;
         }
-        return baseProtoExtend.call(this, key);
+        var instance = baseProtoExtend.call(this, key);
+        Metadata.mergeOwn(instance, key);
+        return instance;
     }
     return baseProtoExtend.call(this, key, value);
 };
+
+function mixin() {
+    for (var _len7 = arguments.length, behaviors = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
+        behaviors[_key7] = arguments[_key7];
+    }
+
+    behaviors = $flatten(behaviors, true);
+    return function (target) {
+        if (behaviors.length > 0 && $isFunction(target.implement)) {
+            behaviors.forEach(function (b) {
+                return target.implement(b);
+            });
+        }
+    };
+}
 
 var Initializing = exports.Initializing = Protocol.extend({
     initialize: function initialize() {}
@@ -1864,25 +1928,25 @@ function traverseAncestors(visitor, withSelf, context) {
 }
 
 function traverseDescendants(visitor, withSelf, context) {
-    var _this5 = this;
+    var _this6 = this;
 
     if (withSelf) {
         Traversal.levelOrder(this, visitor, context);
     } else {
         Traversal.levelOrder(this, function (node) {
-            return !$equals(_this5, node) && visitor.call(context, node);
+            return !$equals(_this6, node) && visitor.call(context, node);
         }, context);
     }
 }
 
 function traverseDescendantsReverse(visitor, withSelf, context) {
-    var _this6 = this;
+    var _this7 = this;
 
     if (withSelf) {
         Traversal.reverseLevelOrder(this, visitor, context);
     } else {
         Traversal.reverseLevelOrder(this, function (node) {
-            return !$equals(_this6, node) && visitor.call(context, node);
+            return !$equals(_this7, node) && visitor.call(context, node);
         }, context);
     }
 }
@@ -2217,7 +2281,7 @@ function proxyMethod(key, method, source, type) {
 }
 
 function extendProxyInstance(key, value) {
-    var _this7 = this;
+    var _this8 = this;
 
     var proxy = this.constructor,
         overrides = arguments.length === 1 ? key : _defineProperty({}, key, value),
@@ -2228,7 +2292,7 @@ function extendProxyInstance(key, value) {
         var value = descriptor.value;
         var get = descriptor.get;
         var set = descriptor.set;
-        var baseDescriptor = getPropertyDescriptors(_this7, key);
+        var baseDescriptor = getPropertyDescriptors(_this8, key);
         if (!baseDescriptor) return;
         if (value) {
             if ($isFunction(value)) {
@@ -2248,7 +2312,7 @@ function extendProxyInstance(key, value) {
                 baseDescriptor.set = set.baseMethod;
             }
         }
-        Object.defineProperty(_this7, key, baseDescriptor);
+        Object.defineProperty(_this8, key, baseDescriptor);
     });
     this.base(overrides);
     Reflect.ownKeys(props).forEach(function (key) {
@@ -2272,7 +2336,7 @@ function extendProxyInstance(key, value) {
                 descriptor.set = proxyMethod(key, set, proxy, MethodType.Set);
             }
         }
-        Object.defineProperty(_this7, key, descriptor);
+        Object.defineProperty(_this8, key, descriptor);
     });
     return this;
 }

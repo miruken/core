@@ -135,7 +135,7 @@ export const ArrayManager = Base.extend({
  * Indexes are partially ordered according to the order comparator.
  * @class IndexedList
  * @constructor
- * @param  {Function}  order  -  orders items
+ * @param  {Function}  order  -  partially orders items
  * @extends Base
  */
 export const IndexedList = Base.extend({
@@ -151,22 +151,39 @@ export const IndexedList = Base.extend({
                 return !this.head;
             },
             /** 
-             * Gets the node at an `index`.
-             * @method getIndex
-             * @param    {number} index - index of node
-             * @returns  {Any}  the node at index.
+             * Determines if `node` is present in list using `$equals`.
+             * @method has
+             * @param   {Any} node  -  node to test for
+             * @returns  {boolean}  true if `node` exists.
+             */            
+            has(node) {
+                const index = node.index;
+                let   indexedNode = this.getFirst(index);
+                while (indexedNode && indexedNode.index === index) {
+                    if ($equals(indxedNode, node)) { return true; }
+                    indexedNode = indexedNode.next;
+                }
+                return false;
+            },
+            /** 
+             * Gets the first node at `index`.
+             * @method getFirst
+             * @param    {number} index  -  index of node
+             * @returns  {Any}  the first node at index.
              */
-            getIndex(index) {
+            getFirst(index) {
                 return index && _index[index];
             },
             /** 
              * Inserts `node` at `index`.
              * @method insert
-             * @param  {Any}     node   - node to insert
-             * @param  {number}  index  - index to insert at
+             * @param  {Any}     node   -  node to insert
+             * @param  {number}  index  -  index to insert at
+             * @returns  {IndexedList}  the updated list.
+             * @chainable
              */
             insert(node, index) {
-                const indexedNode = this.getIndex(index);
+                const indexedNode = this.getFirst(index);
                 let insert = indexedNode;
                 if (index) {
                     insert = insert || this.head;
@@ -203,11 +220,14 @@ export const IndexedList = Base.extend({
                         _index[index] = node;
                     }
                 }
+                return this;
             },
             /** 
              * Removes `node` from the list.
              * @method remove
-             * @param  {Any}  node  - node to remove
+             * @param  {Any}  node  -  node to remove
+             * @returns  {IndexedList}  the updated list.
+             * @chainable
              */
             remove(node) {
                 const prev = node.prev,
@@ -228,13 +248,36 @@ export const IndexedList = Base.extend({
                     delete this.tail;
                 }
                 const index = node.index;
-                if (this.getIndex(index) === node) {
+                if (this.getFirst(index) === node) {
                     if (next && next.index === index) {
                         _index[index] = next;
                     } else {
                         delete _index[index];
                     }
                 }
+                return this;
+            },
+            /** 
+             * Merges `list` into this list.
+             * @method list
+             * @param  {IndexedList}  list  -  list to merge
+             * @returns  {IndexedList}  the updated list.
+             * @chainable
+             */
+            merge(list) {
+                if (!list) { return this; }
+                if (list.constructor !== this.constructor) {
+                    throw new TypeError("merge expects lists of equal type");
+                }
+                let node = list.head;
+                while (node) {
+                    const next = node.next;
+                    if (!this.has(node)) {
+                        this.insert(node, node.index);
+                    }
+                    node = next;
+                }
+                return this;
             }
         });
     }
@@ -247,7 +290,7 @@ function defaultOrder(a, b) {
 /**
  * Determines if `str` is a string.
  * @method $isString
- * @param    {Any}     str  - string to test
+ * @param    {Any}     str  -  string to test
  * @returns  {boolean} true if a string.
  */
 export function $isString(str) {
@@ -257,7 +300,7 @@ export function $isString(str) {
 /**
  * Determines if `sym` is a symbol.
  * @method $isSymbol
- * @param    {Symbole} sym  - symbol to test
+ * @param    {Symbole} sym  -  symbol to test
  * @returns  {boolean} true if a symbol.
  */
 export function $isSymbol(str) {
@@ -267,7 +310,7 @@ export function $isSymbol(str) {
 /**
  * Determines if `fn` is a function.
  * @method $isFunction
- * @param    {Any}     fn  - function to test
+ * @param    {Any}     fn  -  function to test
  * @returns  {boolean} true if a function.
  */
 export function $isFunction(fn) {
@@ -287,7 +330,7 @@ export function $isObject(obj) {
 /**
  * Determines if `obj` is a plain object or literal.
  * @method $isPlainObject
- * @param    {Any}     obj  - object to test
+ * @param    {Any}     obj  -  object to test
  * @returns  {boolean} true if a plain object.
  */
 export function $isPlainObject(obj) {
@@ -297,7 +340,7 @@ export function $isPlainObject(obj) {
 /**
  * Determines if `promise` is a promise.
  * @method $isPromise
- * @param    {Any}     promise  - promise to test
+ * @param    {Any}     promise  -  promise to test
  * @returns  {boolean} true if a promise. 
  */
 export function $isPromise(promise) {
@@ -307,7 +350,7 @@ export function $isPromise(promise) {
 /**
  * Determines if `value` is null or undefined.
  * @method $isNothing
- * @param    {Any}     value  - value to test
+ * @param    {Any}     value  -  value to test
  * @returns  {boolean} true if value null or undefined.
  */
 export function $isNothing(value) {
@@ -317,7 +360,7 @@ export function $isNothing(value) {
 /**
  * Determines if `value` is not null or undefined.
  * @method $isSomething
- * @param    {Any}     value  - value to test
+ * @param    {Any}     value  -  value to test
  * @returns  {boolean} true if value not null or undefined.
  */
 export function $isSomething(value) {
@@ -327,7 +370,7 @@ export function $isSomething(value) {
 /**
  * Returns a function that returns `value`.
  * @method $lift
- * @param    {Any}      value  - any value
+ * @param    {Any}      value  -  any value
  * @returns  {Function} function that returns value.
  */
 export function $lift(value) {
@@ -408,17 +451,17 @@ export function $flatten(arr, prune) {
  * either object has an equals method accepting other object that returns true.
  * </p>
  * @method $equals
- * @param    {Any}     obj1  - first object
- * @param    {Any}     obj2  - second object
+ * @param    {Any}     obj1  -  first object
+ * @param    {Any}     obj2  -  second object
  * @returns  {boolean} true if the obejcts are considered equal, false otherwise.
  */
 export function $equals(obj1, obj2) {
     if (obj1 === obj2) {
         return true;
     }
-    if ($isFunction(obj1.equals)) {
+    if (obj1 && $isFunction(obj1.equals)) {
         return obj1.equals(obj2);
-    } else if ($isFunction(obj2.equals)) {
+    } else if (obj2 && $isFunction(obj2.equals)) {
         return obj2.equals(obj1);
     }
     return false;

@@ -9,10 +9,17 @@ export const Metadata = Base.extend(null, {
     getOwn(metadataKey, target, targetKey) {
         return target && Reflect.getOwnMetadata(metadataKey, target, targetKey);
     },    
-    getOrCreateOwn(metadataKey, metadataType, target, targetKey) {
+    getOrCreateOwn(metadataKey, target, targetKey, creator) {
+        if (arguments.length === 3) {
+            creator   = targetKey;
+            targetKey = undefined;
+        }        
+        if (!$isFunction(creator)) {
+            throw new TypeError("creator must be a function");
+        }
         let metadata = Reflect.getOwnMetadata(metadataKey, target, targetKey);
         if (metadata === undefined) {
-            metadata = new metadataType();
+            metadata = creator(metadataKey, target, targetKey);
             Reflect.defineMetadata(metadataKey, metadata, target, targetKey);
         }
         return metadata;
@@ -20,17 +27,36 @@ export const Metadata = Base.extend(null, {
     define(metadataKey, metadata, target, targetKey) {
         Reflect.defineMetadata(metadataKey, metadata, target, targetKey);
     },
-    copy(source, target) {
-        this.copyKey(source, target);
-        Reflect.ownKeys(source).forEach(targetKey => this.copyKey(source, target, targetKey));
+    remove(metadataKey, target, targetKey) {
+        Reflect.deleteMetadata(metadataKey, target, targetKey);
+    },    
+    copyOwn(target, source) {
+        this.copyOwnKey(target, source);
+        Reflect.ownKeys(source).forEach(sourceKey => this.copyOwnKey(target, source, sourceKey));
     },
-    copyKey(source, target, targetKey) {
-        const metadataKeys = Reflect.getOwnMetadataKeys(source, targetKey);
+    copyOwnKey(target, source, sourceKey) {
+        const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(metadataKey => {
-            const metadata = Reflect.getOwnMetadata(metadataKey, source, targetKey);
-            Reflect.defineMetadata(metadataKey, metadata, target, targetKey);
+            const metadata = Reflect.getOwnMetadata(metadataKey, source, sourceKey);
+            Reflect.defineMetadata(metadataKey, metadata, target, sourceKey);
         });
     },
+    mergeOwn(target, source) {
+        this.mergeOwnKey(target, source);
+        Reflect.ownKeys(source).forEach(sourceKey => this.mergeOwnKey(target, source, sourceKey));
+    },
+    mergeOwnKey(target, source, sourceKey) {
+        const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
+        metadataKeys.forEach(metadataKey => {
+            const targetMetadata = Reflect.getOwnMetadata(metadataKey, target, sourceKey),
+                  sourceMetadata = Reflect.getOwnMetadata(metadataKey, source, sourceKey);
+            if (targetMetadata && targetMetadata.merge) {
+                targetMetadata.merge(sourceMetadata);x
+            } else {
+                Reflect.defineMetadata(metadataKey, sourceMetadata, target, sourceKey);                
+            }
+        });
+    },    
     match(metadataKey, target, targetKey, matcher) {
         if (arguments.length === 3) {
             matcher   = targetKey;

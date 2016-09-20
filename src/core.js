@@ -90,8 +90,8 @@ Base.extend = function (...args) {
     let members      = args.shift() || {},
         classMembers = args.shift() || {},
         derived      = baseExtend.call(this, members, classMembers);
-    Metadata.copy(classMembers, derived);
-    Metadata.copy(members, derived.prototype);
+    Metadata.copyOwn(derived, classMembers);
+    Metadata.copyOwn(derived.prototype, members);
     if (decorators.length > 0) {
         decorators.forEach(d => derived = d(derived) || derived);
     }
@@ -99,12 +99,12 @@ Base.extend = function (...args) {
 };
 
 Base.implement = function (source) {
-    if (source) {
-        if ($isProtocol(this) && $isObject(source)) {
-            source = protocol(source) || source;
-        }
+    if (source && $isProtocol(this) && $isObject(source)) {
+        source = protocol(source) || source;
     }
-    return baseImplement.call(this, source);
+    var type = baseImplement.call(this, source);
+    Metadata.mergeOwn(type.prototype, source);
+    return type;
 }
 
 Base.prototype.extend = function (key, value) {
@@ -114,7 +114,9 @@ Base.prototype.extend = function (key, value) {
         if (this instanceof Protocol) {
             key = protocol(key) || key;
         }
-        return baseProtoExtend.call(this, key);
+        const instance = baseProtoExtend.call(this, key);
+        Metadata.mergeOwn(instance, key);            
+        return instance;
     }
     return baseProtoExtend.call(this, key, value);
 }

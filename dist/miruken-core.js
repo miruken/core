@@ -1237,7 +1237,7 @@ export const ArrayManager = Base.extend({
  * Indexes are partially ordered according to the order comparator.
  * @class IndexedList
  * @constructor
- * @param  {Function}  order  -  orders items
+ * @param  {Function}  order  -  partially orders items
  * @extends Base
  */
 export const IndexedList = Base.extend({
@@ -1253,22 +1253,39 @@ export const IndexedList = Base.extend({
                 return !this.head;
             },
             /** 
-             * Gets the node at an `index`.
-             * @method getIndex
-             * @param    {number} index - index of node
-             * @returns  {Any}  the node at index.
+             * Determines if `node` is present in list using `$equals`.
+             * @method has
+             * @param   {Any} node  -  node to test for
+             * @returns  {boolean}  true if `node` exists.
+             */            
+            has(node) {
+                const index = node.index;
+                let   indexedNode = this.getFirst(index);
+                while (indexedNode && indexedNode.index === index) {
+                    if ($equals(indxedNode, node)) { return true; }
+                    indexedNode = indexedNode.next;
+                }
+                return false;
+            },
+            /** 
+             * Gets the first node at `index`.
+             * @method getFirst
+             * @param    {number} index  -  index of node
+             * @returns  {Any}  the first node at index.
              */
-            getIndex(index) {
+            getFirst(index) {
                 return index && _index[index];
             },
             /** 
              * Inserts `node` at `index`.
              * @method insert
-             * @param  {Any}     node   - node to insert
-             * @param  {number}  index  - index to insert at
+             * @param  {Any}     node   -  node to insert
+             * @param  {number}  index  -  index to insert at
+             * @returns  {IndexedList}  the updated list.
+             * @chainable
              */
             insert(node, index) {
-                const indexedNode = this.getIndex(index);
+                const indexedNode = this.getFirst(index);
                 let insert = indexedNode;
                 if (index) {
                     insert = insert || this.head;
@@ -1305,11 +1322,14 @@ export const IndexedList = Base.extend({
                         _index[index] = node;
                     }
                 }
+                return this;
             },
             /** 
              * Removes `node` from the list.
              * @method remove
-             * @param  {Any}  node  - node to remove
+             * @param  {Any}  node  -  node to remove
+             * @returns  {IndexedList}  the updated list.
+             * @chainable
              */
             remove(node) {
                 const prev = node.prev,
@@ -1330,13 +1350,36 @@ export const IndexedList = Base.extend({
                     delete this.tail;
                 }
                 const index = node.index;
-                if (this.getIndex(index) === node) {
+                if (this.getFirst(index) === node) {
                     if (next && next.index === index) {
                         _index[index] = next;
                     } else {
                         delete _index[index];
                     }
                 }
+                return this;
+            },
+            /** 
+             * Merges `list` into this list.
+             * @method list
+             * @param  {IndexedList}  list  -  list to merge
+             * @returns  {IndexedList}  the updated list.
+             * @chainable
+             */
+            merge(list) {
+                if (!list) { return this; }
+                if (list.constructor !== this.constructor) {
+                    throw new TypeError("merge expects lists of equal type");
+                }
+                let node = list.head;
+                while (node) {
+                    const next = node.next;
+                    if (!this.has(node)) {
+                        this.insert(node, node.index);
+                    }
+                    node = next;
+                }
+                return this;
             }
         });
     }
@@ -1349,7 +1392,7 @@ function defaultOrder(a, b) {
 /**
  * Determines if `str` is a string.
  * @method $isString
- * @param    {Any}     str  - string to test
+ * @param    {Any}     str  -  string to test
  * @returns  {boolean} true if a string.
  */
 export function $isString(str) {
@@ -1359,7 +1402,7 @@ export function $isString(str) {
 /**
  * Determines if `sym` is a symbol.
  * @method $isSymbol
- * @param    {Symbole} sym  - symbol to test
+ * @param    {Symbole} sym  -  symbol to test
  * @returns  {boolean} true if a symbol.
  */
 export function $isSymbol(str) {
@@ -1369,7 +1412,7 @@ export function $isSymbol(str) {
 /**
  * Determines if `fn` is a function.
  * @method $isFunction
- * @param    {Any}     fn  - function to test
+ * @param    {Any}     fn  -  function to test
  * @returns  {boolean} true if a function.
  */
 export function $isFunction(fn) {
@@ -1389,7 +1432,7 @@ export function $isObject(obj) {
 /**
  * Determines if `obj` is a plain object or literal.
  * @method $isPlainObject
- * @param    {Any}     obj  - object to test
+ * @param    {Any}     obj  -  object to test
  * @returns  {boolean} true if a plain object.
  */
 export function $isPlainObject(obj) {
@@ -1399,7 +1442,7 @@ export function $isPlainObject(obj) {
 /**
  * Determines if `promise` is a promise.
  * @method $isPromise
- * @param    {Any}     promise  - promise to test
+ * @param    {Any}     promise  -  promise to test
  * @returns  {boolean} true if a promise. 
  */
 export function $isPromise(promise) {
@@ -1409,7 +1452,7 @@ export function $isPromise(promise) {
 /**
  * Determines if `value` is null or undefined.
  * @method $isNothing
- * @param    {Any}     value  - value to test
+ * @param    {Any}     value  -  value to test
  * @returns  {boolean} true if value null or undefined.
  */
 export function $isNothing(value) {
@@ -1419,7 +1462,7 @@ export function $isNothing(value) {
 /**
  * Determines if `value` is not null or undefined.
  * @method $isSomething
- * @param    {Any}     value  - value to test
+ * @param    {Any}     value  -  value to test
  * @returns  {boolean} true if value not null or undefined.
  */
 export function $isSomething(value) {
@@ -1429,7 +1472,7 @@ export function $isSomething(value) {
 /**
  * Returns a function that returns `value`.
  * @method $lift
- * @param    {Any}      value  - any value
+ * @param    {Any}      value  -  any value
  * @returns  {Function} function that returns value.
  */
 export function $lift(value) {
@@ -1510,17 +1553,17 @@ export function $flatten(arr, prune) {
  * either object has an equals method accepting other object that returns true.
  * </p>
  * @method $equals
- * @param    {Any}     obj1  - first object
- * @param    {Any}     obj2  - second object
+ * @param    {Any}     obj1  -  first object
+ * @param    {Any}     obj2  -  second object
  * @returns  {boolean} true if the obejcts are considered equal, false otherwise.
  */
 export function $equals(obj1, obj2) {
     if (obj1 === obj2) {
         return true;
     }
-    if ($isFunction(obj1.equals)) {
+    if (obj1 && $isFunction(obj1.equals)) {
         return obj1.equals(obj2);
-    } else if ($isFunction(obj2.equals)) {
+    } else if (obj2 && $isFunction(obj2.equals)) {
         return obj2.equals(obj1);
     }
     return false;
@@ -1562,10 +1605,17 @@ export const Metadata = Base.extend(null, {
     getOwn(metadataKey, target, targetKey) {
         return target && Reflect.getOwnMetadata(metadataKey, target, targetKey);
     },    
-    getOrCreateOwn(metadataKey, metadataType, target, targetKey) {
+    getOrCreateOwn(metadataKey, target, targetKey, creator) {
+        if (arguments.length === 3) {
+            creator   = targetKey;
+            targetKey = undefined;
+        }        
+        if (!$isFunction(creator)) {
+            throw new TypeError("creator must be a function");
+        }
         let metadata = Reflect.getOwnMetadata(metadataKey, target, targetKey);
         if (metadata === undefined) {
-            metadata = new metadataType();
+            metadata = creator(metadataKey, target, targetKey);
             Reflect.defineMetadata(metadataKey, metadata, target, targetKey);
         }
         return metadata;
@@ -1573,17 +1623,36 @@ export const Metadata = Base.extend(null, {
     define(metadataKey, metadata, target, targetKey) {
         Reflect.defineMetadata(metadataKey, metadata, target, targetKey);
     },
-    copy(source, target) {
-        this.copyKey(source, target);
-        Reflect.ownKeys(source).forEach(targetKey => this.copyKey(source, target, targetKey));
+    remove(metadataKey, target, targetKey) {
+        Reflect.deleteMetadata(metadataKey, target, targetKey);
+    },    
+    copyOwn(target, source) {
+        this.copyOwnKey(target, source);
+        Reflect.ownKeys(source).forEach(sourceKey => this.copyOwnKey(target, source, sourceKey));
     },
-    copyKey(source, target, targetKey) {
-        const metadataKeys = Reflect.getOwnMetadataKeys(source, targetKey);
+    copyOwnKey(target, source, sourceKey) {
+        const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(metadataKey => {
-            const metadata = Reflect.getOwnMetadata(metadataKey, source, targetKey);
-            Reflect.defineMetadata(metadataKey, metadata, target, targetKey);
+            const metadata = Reflect.getOwnMetadata(metadataKey, source, sourceKey);
+            Reflect.defineMetadata(metadataKey, metadata, target, sourceKey);
         });
     },
+    mergeOwn(target, source) {
+        this.mergeOwnKey(target, source);
+        Reflect.ownKeys(source).forEach(sourceKey => this.mergeOwnKey(target, source, sourceKey));
+    },
+    mergeOwnKey(target, source, sourceKey) {
+        const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
+        metadataKeys.forEach(metadataKey => {
+            const targetMetadata = Reflect.getOwnMetadata(metadataKey, target, sourceKey),
+                  sourceMetadata = Reflect.getOwnMetadata(metadataKey, source, sourceKey);
+            if (targetMetadata && targetMetadata.merge) {
+                targetMetadata.merge(sourceMetadata);x
+            } else {
+                Reflect.defineMetadata(metadataKey, sourceMetadata, target, sourceKey);                
+            }
+        });
+    },    
     match(metadataKey, target, targetKey, matcher) {
         if (arguments.length === 3) {
             matcher   = targetKey;
@@ -1763,7 +1832,7 @@ export const Protocol = Base.extend({
         if (Metadata.match(ProtocolsMetadataKey, metaTarget, p => p.has(this))) {
             return false;
         }
-        const protocols = Metadata.getOrCreateOwn(ProtocolsMetadataKey, Set, metaTarget);
+        const protocols = Metadata.getOrCreateOwn(ProtocolsMetadataKey, metaTarget, () => new Set());
         protocols.add(this);
         if ($isFunction(target.protocolAdopted)) {
             target.protocolAdopted(this);
@@ -1961,21 +2030,6 @@ export const Variance = Enum({
     Invariant: 3
 });
 
-/**
- * Decorates a class with behaviors to mix in.
- * @method mixin
- * @param    {Array}    ...behaviors  -  behaviors
- * @returns  {Function} the mixin decorator.
- */
-export function mixin(...behaviors) {
-    behaviors = $flatten(behaviors, true);
-    return function (target) {
-        if (behaviors.length > 0 && $isFunction(target.implement)) {
-            behaviors.forEach(b => target.implement(b));
-        }
-    };
-}
-
 Base.extend = function (...args) {
     let constraints = args, decorators = [];
     if (this === Protocol) {
@@ -2006,8 +2060,8 @@ Base.extend = function (...args) {
     let members      = args.shift() || {},
         classMembers = args.shift() || {},
         derived      = baseExtend.call(this, members, classMembers);
-    Metadata.copy(classMembers, derived);
-    Metadata.copy(members, derived.prototype);
+    Metadata.copyOwn(derived, classMembers);
+    Metadata.copyOwn(derived.prototype, members);
     if (decorators.length > 0) {
         decorators.forEach(d => derived = d(derived) || derived);
     }
@@ -2015,12 +2069,12 @@ Base.extend = function (...args) {
 };
 
 Base.implement = function (source) {
-    if (source) {
-        if ($isProtocol(this) && $isObject(source)) {
-            source = protocol(source) || source;
-        }
+    if (source && $isProtocol(this) && $isObject(source)) {
+        source = protocol(source) || source;
     }
-    return baseImplement.call(this, source);
+    var type = baseImplement.call(this, source);
+    Metadata.mergeOwn(type.prototype, source);
+    return type;
 }
 
 Base.prototype.extend = function (key, value) {
@@ -2030,9 +2084,26 @@ Base.prototype.extend = function (key, value) {
         if (this instanceof Protocol) {
             key = protocol(key) || key;
         }
-        return baseProtoExtend.call(this, key);
+        const instance = baseProtoExtend.call(this, key);
+        Metadata.mergeOwn(instance, key);            
+        return instance;
     }
     return baseProtoExtend.call(this, key, value);
+}
+
+/**
+ * Decorates a class with behaviors to mix in.
+ * @method mixin
+ * @param    {Array}    ...behaviors  -  behaviors
+ * @returns  {Function} the mixin decorator.
+ */
+export function mixin(...behaviors) {
+    behaviors = $flatten(behaviors, true);
+    return function (target) {
+        if (behaviors.length > 0 && $isFunction(target.implement)) {
+            behaviors.forEach(b => target.implement(b));
+        }
+    };
 }
 
 /**
