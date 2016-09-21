@@ -90,9 +90,9 @@ export const Protocol = Base.extend({
             return true;
         }
         const metaTarget = $isFunction(target) ? target.prototype : target;        
-        return Metadata.match(ProtocolsMetadataKey, metaTarget,
-                              protocols => protocols.has(this) ||
-                              [...protocols].some(p => this.isAdoptedBy(p)));
+        return Metadata.collect(ProtocolsMetadataKey, metaTarget,
+                                protocols => protocols.has(this) ||
+                                [...protocols].some(p => this.isAdoptedBy(p)));
     },
     /**
      * Marks `target` as conforming to this protocol.
@@ -104,7 +104,7 @@ export const Protocol = Base.extend({
     adoptBy(target) {
         if (!target) return;
         const metaTarget = $isFunction(target) ? target.prototype : target;
-        if (Metadata.match(ProtocolsMetadataKey, metaTarget, p => p.has(this))) {
+        if (Metadata.collect(ProtocolsMetadataKey, metaTarget, p => p.has(this))) {
             return false;
         }
         const protocols = Metadata.getOrCreateOwn(ProtocolsMetadataKey, metaTarget, () => new Set());

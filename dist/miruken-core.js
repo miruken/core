@@ -1591,13 +1591,45 @@ export function $debounce(fn, wait, immediate, defaultReturnValue) {
     };
 };
 
-export const Metadata = Base.extend(null, {
+/**
+ * Provides an abstraction for meta-data management.
+ * @class Metadata
+ */
+export const Metadata = Abstract.extend(null, {
+    /**
+     * Gets metadata on the prototype chain of an object or property.
+     * @static
+     * @method get
+     * @param   {Any}  metadataKey  -  metadata key
+     * @param   {Any}  target       -  originating target
+     * @param   {Any}  [targetKey]  -  property key
+     * @returns {Any} the metadata for the `metadataKey`. 
+     */
     get(metadataKey, target, targetKey) {
         return target && Reflect.getMetadata(metadataKey, target, targetKey);
     },
+    /**
+     * Gets owning metadata of an object or property.
+     * @static
+     * @method getOwn
+     * @param   {Any}  metadataKey  -  metadata key
+     * @param   {Any}  target       -  owning target
+     * @param   {Any}  [targetKey]  -  property key
+     * @returns {Any} the metadata for the `metadataKey`. 
+     */
     getOwn(metadataKey, target, targetKey) {
         return target && Reflect.getOwnMetadata(metadataKey, target, targetKey);
-    },    
+    },
+    /**
+     * Gets owning metadata of an object or property or lazily creates it.
+     * @static
+     * @method getOrCreateOwn
+     * @param   {Any}       metadataKey  -  metadata key
+     * @param   {Any}       target       -  owning target
+     * @param   {Any}       [targetKey]  -  property key
+     * @param   {Function}  creator      -  creates metadata if missing
+     * @returns {Any} the metadata for the `metadataKey`. 
+     */
     getOrCreateOwn(metadataKey, target, targetKey, creator) {
         if (arguments.length === 3) {
             creator   = targetKey;
@@ -1613,16 +1645,48 @@ export const Metadata = Base.extend(null, {
         }
         return metadata;
     },
+    /**
+     * Defines metadata on an object or property.
+     * @static
+     * @method define
+     * @param   {Any}  metadataKey  -  metadata key
+     * @param   {Any}  metadata     -  metadata value
+     * @param   {Any}  target       -  owning target
+     * @param   {Any}  [targetKey]  -  property key
+     */
     define(metadataKey, metadata, target, targetKey) {
         Reflect.defineMetadata(metadataKey, metadata, target, targetKey);
     },
+    /**
+     * Removes metadata from an object or property.
+     * @static
+     * @method remove
+     * @param   {Any}  metadataKey  -  metadata key
+     * @param   {Any}  target       -  owning target
+     * @param   {Any}  [targetKey]  -  property key
+     */
     remove(metadataKey, target, targetKey) {
         Reflect.deleteMetadata(metadataKey, target, targetKey);
-    },    
+    },
+    /**
+     * Copies or replaces all metadata from `source` onto `target`.
+     * @static
+     * @method copyOwn
+     * @param   {Any}  target  -  recieves metadata
+     * @param   {Any}  source  -  provides metadata
+     */
     copyOwn(target, source) {
         this.copyOwnKey(target, source);
         Reflect.ownKeys(source).forEach(sourceKey => this.copyOwnKey(target, source, sourceKey));
     },
+    /**
+     * Copies or replaces all `sourceKey` metadata from `source` onto `target`.
+     * @static
+     * @method copyOwnKey
+     * @param   {Any}  target     -  recieves metadata
+     * @param   {Any}  source     -  provides metadata
+     * @param   {Any}  sourceKey  -  source property to copy from
+     */
     copyOwnKey(target, source, sourceKey) {
         const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(metadataKey => {
@@ -1630,10 +1694,25 @@ export const Metadata = Base.extend(null, {
             Reflect.defineMetadata(metadataKey, metadata, target, sourceKey);
         });
     },
+    /**
+     * Merges all metadata from `source` onto `target`.
+     * @static
+     * @method mergeOwn
+     * @param   {Any}  target  -  recieves metadata
+     * @param   {Any}  source  -  provides metadata
+     */    
     mergeOwn(target, source) {
         this.mergeOwnKey(target, source);
         Reflect.ownKeys(source).forEach(sourceKey => this.mergeOwnKey(target, source, sourceKey));
     },
+    /**
+     * Merges all `sourceKey` metadata from `source` onto `target`.
+     * @static
+     * @method copyOwnKey
+     * @param   {Any}  target     -  recieves metadata
+     * @param   {Any}  source     -  provides metadata
+     * @param   {Any}  sourceKey  -  source property to copy from
+     */    
     mergeOwnKey(target, source, sourceKey) {
         const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(metadataKey => {
@@ -1645,24 +1724,18 @@ export const Metadata = Base.extend(null, {
                 Reflect.defineMetadata(metadataKey, sourceMetadata, target, sourceKey);                
             }
         });
-    },    
-    match(metadataKey, target, targetKey, matcher) {
-        if (arguments.length === 3) {
-            matcher   = targetKey;
-            targetKey = undefined;
-        }
-        if (!$isFunction(matcher)) {
-            throw new TypeError("matcher must be a function");
-        }
-        while (target) {
-            const metadata = Reflect.getOwnMetadata(metadataKey, target, targetKey);
-            if (metadata && matcher(metadata, metadataKey, target, targetKey)) {
-                return true;
-            }
-            target = Object.getPrototypeOf(target);
-        }
-        return false;
     },
+    /**
+     * Collects metadata on the prototype chain of an object or property.
+     * @static
+     * @method collect
+     * @param   {Any}       metadataKey  -  metadata key
+     * @param   {Any}       target       -  originating target
+     * @param   {Any}       [targetKey]  -  property key
+     * @param   {Function}  collector    -  receives metadata.
+     *                                      stops collecting if true is returned.
+     * @returns {boolean} true if any `collector` returned true, false otherwise.
+     */    
     collect(metadataKey, target, targetKey, collector) {
         if (arguments.length === 3) {
             collector = targetKey;
@@ -1674,13 +1747,22 @@ export const Metadata = Base.extend(null, {
         while (target) {
             const metadata = Reflect.getOwnMetadata(metadataKey, target, targetKey);
             if (metadata && collector(metadata, metadataKey, target, targetKey)) {
-                return;
+                return true;
             }
             target = Object.getPrototypeOf(target);
         }
+        return false;
     },
+    /**
+     * Builds a metadata accessor for `metadataKey`.
+     * @static
+     * @method getter
+     * @param   {Any}      metadataKey  -  metadata key
+     * @param   {boolean}  [own]        -  restrict to owning properties
+     * @returns {Function} metadata accessor bound to `metadataKey`.
+     */
     getter(metadataKey, own) {
-        return function (target, targetKey, callback) {
+        return (target, targetKey, callback) => {
             if (!callback && $isFunction(targetKey)) {
                 [targetKey, callback] = [null, targetKey];
             }
@@ -1696,7 +1778,25 @@ export const Metadata = Base.extend(null, {
                     callback(metadata, key);
                 }                
             });
-        }
+        };
+    },
+    /**
+     * Builds a metadata collector for `metadataKey`.
+     * @static
+     * @method collector
+     * @param   {Any}      metadataKey  -  metadata key
+     * @returns {Function} metadata collector bound to `metadataKey`.
+     */    
+    collector(metadataKey) {
+        return (target, targetKey, callback) => {
+            if (!callback && $isFunction(targetKey)) {
+                [targetKey, callback] = [null, targetKey];
+            }
+            if (!$isFunction(callback)) return;
+            const targetKeys = targetKey ? [targetKey]
+                : Reflect.ownKeys(getPropertyDescriptors(target)).concat("constructor");
+            targetKeys.forEach(key => this.collect(metadataKey, target, key, callback))            
+        };
     }
 });
 
@@ -1713,8 +1813,9 @@ export function inject(...dependencies) {
     return decorate(_inject, dependencies);
 }
 
-inject.getOwn = Metadata.getter(injectMetadataKey, true);
-inject.get    = Metadata.getter(injectMetadataKey);
+inject.get     = Metadata.getter(injectMetadataKey);
+inject.getOwn  = Metadata.getter(injectMetadataKey, true);
+inject.collect = Metadata.collector(injectMetadataKey);
 
 function _inject(target, key, descriptor, dependencies) {
     if (!descriptor) {
@@ -1808,9 +1909,9 @@ export const Protocol = Base.extend({
             return true;
         }
         const metaTarget = $isFunction(target) ? target.prototype : target;        
-        return Metadata.match(ProtocolsMetadataKey, metaTarget,
-                              protocols => protocols.has(this) ||
-                              [...protocols].some(p => this.isAdoptedBy(p)));
+        return Metadata.collect(ProtocolsMetadataKey, metaTarget,
+                                protocols => protocols.has(this) ||
+                                [...protocols].some(p => this.isAdoptedBy(p)));
     },
     /**
      * Marks `target` as conforming to this protocol.
@@ -1822,7 +1923,7 @@ export const Protocol = Base.extend({
     adoptBy(target) {
         if (!target) return;
         const metaTarget = $isFunction(target) ? target.prototype : target;
-        if (Metadata.match(ProtocolsMetadataKey, metaTarget, p => p.has(this))) {
+        if (Metadata.collect(ProtocolsMetadataKey, metaTarget, p => p.has(this))) {
             return false;
         }
         const protocols = Metadata.getOrCreateOwn(ProtocolsMetadataKey, metaTarget, () => new Set());

@@ -13,8 +13,9 @@ export function inject(...dependencies) {
     return decorate(_inject, dependencies);
 }
 
-inject.getOwn = Metadata.getter(injectMetadataKey, true);
-inject.get    = Metadata.getter(injectMetadataKey);
+inject.get     = Metadata.getter(injectMetadataKey);
+inject.getOwn  = Metadata.getter(injectMetadataKey, true);
+inject.collect = Metadata.collector(injectMetadataKey);
 
 function _inject(target, key, descriptor, dependencies) {
     if (!descriptor) {

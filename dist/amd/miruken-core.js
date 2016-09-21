@@ -1271,7 +1271,7 @@ define(["exports", "reflect-metadata"], function (exports) {
         };
     };
 
-    var Metadata = exports.Metadata = Base.extend(null, {
+    var Metadata = exports.Metadata = Abstract.extend(null, {
         get: function get(metadataKey, target, targetKey) {
             return target && Reflect.getMetadata(metadataKey, target, targetKey);
         },
@@ -1334,23 +1334,6 @@ define(["exports", "reflect-metadata"], function (exports) {
                 }
             });
         },
-        match: function match(metadataKey, target, targetKey, matcher) {
-            if (arguments.length === 3) {
-                matcher = targetKey;
-                targetKey = undefined;
-            }
-            if (!$isFunction(matcher)) {
-                throw new TypeError("matcher must be a function");
-            }
-            while (target) {
-                var metadata = Reflect.getOwnMetadata(metadataKey, target, targetKey);
-                if (metadata && matcher(metadata, metadataKey, target, targetKey)) {
-                    return true;
-                }
-                target = Object.getPrototypeOf(target);
-            }
-            return false;
-        },
         collect: function collect(metadataKey, target, targetKey, collector) {
             if (arguments.length === 3) {
                 collector = targetKey;
@@ -1362,10 +1345,11 @@ define(["exports", "reflect-metadata"], function (exports) {
             while (target) {
                 var metadata = Reflect.getOwnMetadata(metadataKey, target, targetKey);
                 if (metadata && collector(metadata, metadataKey, target, targetKey)) {
-                    return;
+                    return true;
                 }
                 target = Object.getPrototypeOf(target);
             }
+            return false;
         },
         getter: function getter(metadataKey, own) {
             return function (target, targetKey, callback) {
@@ -1381,6 +1365,22 @@ define(["exports", "reflect-metadata"], function (exports) {
                     if (metadata) {
                         callback(metadata, key);
                     }
+                });
+            };
+        },
+        collector: function collector(metadataKey) {
+            var _this4 = this;
+
+            return function (target, targetKey, callback) {
+                if (!callback && $isFunction(targetKey)) {
+                    var _ref3 = [null, targetKey];
+                    targetKey = _ref3[0];
+                    callback = _ref3[1];
+                }
+                if (!$isFunction(callback)) return;
+                var targetKeys = targetKey ? [targetKey] : Reflect.ownKeys(getPropertyDescriptors(target)).concat("constructor");
+                targetKeys.forEach(function (key) {
+                    return _this4.collect(metadataKey, target, key, callback);
                 });
             };
         }
@@ -1399,8 +1399,9 @@ define(["exports", "reflect-metadata"], function (exports) {
         return decorate(_inject, dependencies);
     }
 
-    inject.getOwn = Metadata.getter(injectMetadataKey, true);
     inject.get = Metadata.getter(injectMetadataKey);
+    inject.getOwn = Metadata.getter(injectMetadataKey, true);
+    inject.collect = Metadata.collector(injectMetadataKey);
 
     function _inject(target, key, descriptor, dependencies) {
         if (!descriptor) {
@@ -1457,26 +1458,26 @@ define(["exports", "reflect-metadata"], function (exports) {
             return target && target.prototype instanceof Protocol;
         },
         isAdoptedBy: function isAdoptedBy(target) {
-            var _this4 = this;
+            var _this5 = this;
 
             if (!target) return false;
             if (this === target || target && target.prototype instanceof this) {
                 return true;
             }
             var metaTarget = $isFunction(target) ? target.prototype : target;
-            return Metadata.match(ProtocolsMetadataKey, metaTarget, function (protocols) {
-                return protocols.has(_this4) || [].concat(_toConsumableArray(protocols)).some(function (p) {
-                    return _this4.isAdoptedBy(p);
+            return Metadata.collect(ProtocolsMetadataKey, metaTarget, function (protocols) {
+                return protocols.has(_this5) || [].concat(_toConsumableArray(protocols)).some(function (p) {
+                    return _this5.isAdoptedBy(p);
                 });
             });
         },
         adoptBy: function adoptBy(target) {
-            var _this5 = this;
+            var _this6 = this;
 
             if (!target) return;
             var metaTarget = $isFunction(target) ? target.prototype : target;
-            if (Metadata.match(ProtocolsMetadataKey, metaTarget, function (p) {
-                return p.has(_this5);
+            if (Metadata.collect(ProtocolsMetadataKey, metaTarget, function (p) {
+                return p.has(_this6);
             })) {
                 return false;
             }
@@ -1951,25 +1952,25 @@ define(["exports", "reflect-metadata"], function (exports) {
     }
 
     function traverseDescendants(visitor, withSelf, context) {
-        var _this6 = this;
+        var _this7 = this;
 
         if (withSelf) {
             Traversal.levelOrder(this, visitor, context);
         } else {
             Traversal.levelOrder(this, function (node) {
-                return !$equals(_this6, node) && visitor.call(context, node);
+                return !$equals(_this7, node) && visitor.call(context, node);
             }, context);
         }
     }
 
     function traverseDescendantsReverse(visitor, withSelf, context) {
-        var _this7 = this;
+        var _this8 = this;
 
         if (withSelf) {
             Traversal.reverseLevelOrder(this, visitor, context);
         } else {
             Traversal.reverseLevelOrder(this, function (node) {
-                return !$equals(_this7, node) && visitor.call(context, node);
+                return !$equals(_this8, node) && visitor.call(context, node);
             }, context);
         }
     }
@@ -2304,7 +2305,7 @@ define(["exports", "reflect-metadata"], function (exports) {
     }
 
     function extendProxyInstance(key, value) {
-        var _this8 = this;
+        var _this9 = this;
 
         var proxy = this.constructor,
             overrides = arguments.length === 1 ? key : _defineProperty({}, key, value),
@@ -2315,7 +2316,7 @@ define(["exports", "reflect-metadata"], function (exports) {
             var value = descriptor.value;
             var get = descriptor.get;
             var set = descriptor.set;
-            var baseDescriptor = getPropertyDescriptors(_this8, key);
+            var baseDescriptor = getPropertyDescriptors(_this9, key);
             if (!baseDescriptor) return;
             if (value) {
                 if ($isFunction(value)) {
@@ -2335,7 +2336,7 @@ define(["exports", "reflect-metadata"], function (exports) {
                     baseDescriptor.set = set.baseMethod;
                 }
             }
-            Object.defineProperty(_this8, key, baseDescriptor);
+            Object.defineProperty(_this9, key, baseDescriptor);
         });
         this.base(overrides);
         Reflect.ownKeys(props).forEach(function (key) {
@@ -2359,7 +2360,7 @@ define(["exports", "reflect-metadata"], function (exports) {
                     descriptor.set = proxyMethod(key, set, proxy, MethodType.Set);
                 }
             }
-            Object.defineProperty(_this8, key, descriptor);
+            Object.defineProperty(_this9, key, descriptor);
         });
         return this;
     }
