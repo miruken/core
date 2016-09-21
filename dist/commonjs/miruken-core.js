@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.ProxyBuilder = exports.InterceptorSelector = exports.Interceptor = exports.Facet = exports.Traversal = exports.TraversingMixin = exports.Traversing = exports.TraversingAxis = exports.DisposingMixin = exports.Disposing = exports.Startup = exports.Starting = exports.Parenting = exports.Invoking = exports.Resolving = exports.Initializing = exports.Variance = exports.MethodType = exports.nothing = exports.emptyArray = exports.$isProtocol = exports.StrictProtocol = exports.Protocol = exports.Metadata = exports.IndexedList = exports.ArrayManager = exports.Flags = exports.Enum = exports.ArrayDelegate = exports.ObjectDelegate = exports.Delegate = exports.partial = exports.extend = exports.Module = exports.Abstract = exports.Package = exports.Base = exports.False = exports.True = exports.Null = exports.Undefined = exports.$instant = exports.$promise = exports.$optional = exports.$child = exports.$every = exports.$eval = exports.$lazy = exports.$copy = exports.$use = exports.$eq = undefined;
+exports.ProxyBuilder = exports.InterceptorSelector = exports.Interceptor = exports.Facet = exports.Traversal = exports.TraversingMixin = exports.Traversing = exports.TraversingAxis = exports.DisposingMixin = exports.Disposing = exports.Startup = exports.Starting = exports.Parenting = exports.Invoking = exports.Resolving = exports.Initializing = exports.Variance = exports.MethodType = exports.nothing = exports.emptyArray = exports.$isProtocol = exports.StrictProtocol = exports.Protocol = exports.Metadata = exports.IndexedList = exports.ArrayManager = exports.Flags = exports.Enum = exports.ArrayDelegate = exports.ObjectDelegate = exports.Delegate = exports.partial = exports.extend = exports.Module = exports.Abstract = exports.Package = exports.Base = exports.False = exports.True = exports.Null = exports.Undefined = exports.$instant = exports.$promise = exports.$optional = exports.$child = exports.$every = exports.$eval = exports.$lazy = exports.$use = exports.$eq = undefined;
 
 var _Base$extend;
 
@@ -75,8 +75,6 @@ if (Promise.delay === undefined) Promise.delay = function (ms) {
 var $eq = exports.$eq = $createModifier();
 
 var $use = exports.$use = $createModifier();
-
-var $copy = exports.$copy = $createModifier();
 
 var $lazy = exports.$lazy = $createModifier();
 

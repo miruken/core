@@ -3,7 +3,7 @@
 System.register(["reflect-metadata"], function (_export, _context) {
     "use strict";
 
-    var _Base$extend, _typeof, $eq, $use, $copy, $lazy, $eval, $every, $child, $optional, $promise, $instant, Undefined, Null, True, False, __prototyping, _counter, _IGNORE, _BASE, _HIDDEN, _slice, _subclass, Base, Package, Abstract, _moduleCount, Module, _toString, Delegate, ObjectDelegate, ArrayDelegate, Defining, Enum, Flags, ArrayManager, IndexedList, Metadata, injectMetadataKey, ProtocolGet, ProtocolSet, ProtocolInvoke, ProtocolDelegate, ProtocolStrict, ProtocolsMetadataKey, Protocol, StrictProtocol, $isProtocol, baseExtend, baseImplement, baseProtoExtend, emptyArray, nothing, MethodType, Variance, Initializing, Resolving, Invoking, Parenting, Starting, Startup, Disposing, DisposingMixin, TraversingAxis, Traversing, TraversingMixin, Traversal, Facet, Interceptor, InterceptorSelector, ProxyBuilder, noProxyMethods;
+    var _Base$extend, _typeof, $eq, $use, $lazy, $eval, $every, $child, $optional, $promise, $instant, Undefined, Null, True, False, __prototyping, _counter, _IGNORE, _BASE, _HIDDEN, _slice, _subclass, Base, Package, Abstract, _moduleCount, Module, _toString, Delegate, ObjectDelegate, ArrayDelegate, Defining, Enum, Flags, ArrayManager, IndexedList, Metadata, injectMetadataKey, ProtocolGet, ProtocolSet, ProtocolInvoke, ProtocolDelegate, ProtocolStrict, ProtocolsMetadataKey, Protocol, StrictProtocol, $isProtocol, baseExtend, baseImplement, baseProtoExtend, emptyArray, nothing, MethodType, Variance, Initializing, Resolving, Invoking, Parenting, Starting, Startup, Disposing, DisposingMixin, TraversingAxis, Traversing, TraversingMixin, Traversal, Facet, Interceptor, InterceptorSelector, ProxyBuilder, noProxyMethods;
 
     function _defineProperty(obj, key, value) {
         if (key in obj) {
@@ -784,10 +784,6 @@ System.register(["reflect-metadata"], function (_export, _context) {
             _export("$use", $use = $createModifier());
 
             _export("$use", $use);
-
-            _export("$copy", $copy = $createModifier());
-
-            _export("$copy", $copy);
 
             _export("$lazy", $lazy = $createModifier());
 

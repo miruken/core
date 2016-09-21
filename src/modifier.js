@@ -13,13 +13,6 @@ export const $eq = $createModifier();
 export const $use = $createModifier();
 
 /**
- * Annotates copy semantics.
- * @attribute $copy
- * @for Modifier
- */        
-export const $copy = $createModifier();
-
-/**
  * Annotates lazy semantics.
  * @attribute $lazy
  * @for Modifier
