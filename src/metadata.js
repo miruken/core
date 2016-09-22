@@ -1,5 +1,6 @@
 import { Abstract, getPropertyDescriptors } from "./base2";
 import { $isFunction } from "./util";
+import decorate from "./decorate";
 import "reflect-metadata";
 
 /**
@@ -165,50 +166,53 @@ export const Metadata = Abstract.extend(null, {
         return false;
     },
     /**
-     * Builds a metadata accessor for `metadataKey`.
+     * Builds a metadata decorator.
      * @static
-     * @method getter
-     * @param   {Any}      metadataKey  -  metadata key
-     * @param   {boolean}  [own]        -  restrict to owning properties
-     * @returns {Function} metadata accessor bound to `metadataKey`.
-     */
-    getter(metadataKey, own) {
-        return (target, targetKey, callback) => {
-            if (!callback && $isFunction(targetKey)) {
-                [targetKey, callback] = [null, targetKey];
-            }
-            if (!$isFunction(callback)) return;
-            const targetKeys = targetKey ? [targetKey]
-                : Reflect.ownKeys(own ? target : getPropertyDescriptors(target))
-                         .concat("constructor");
-            targetKeys.forEach(key => {
-                const metadata = own
-                    ? Reflect.getOwnMetadata(metadataKey, target, key)
-                    : Reflect.getMetadata(metadataKey, target, key);
-                if (metadata) {
-                    callback(metadata, key);
-                }                
-            });
-        };
-    },
-    /**
-     * Builds a metadata collector for `metadataKey`.
-     * @static
-     * @method collector
-     * @param   {Any}      metadataKey  -  metadata key
-     * @returns {Function} metadata collector bound to `metadataKey`.
+     * @method decorator
+     * @param  {Any}       metadataKey  -  metadata key
+     * @param  {Function}  handler      -  handler function
      */    
-    collector(metadataKey) {
-        return (target, targetKey, callback) => {
-            if (!callback && $isFunction(targetKey)) {
-                [targetKey, callback] = [null, targetKey];
-            }
-            if (!$isFunction(callback)) return;
-            const targetKeys = targetKey ? [targetKey]
-                : Reflect.ownKeys(getPropertyDescriptors(target)).concat("constructor");
-            targetKeys.forEach(key => this.collect(metadataKey, target, key, callback))            
-        };
+    decorator(metadataKey, handler) {
+        function decorator(...args) {
+            return decorate(handler, args);
+        }
+        decorator.get     = _metadataGetter(metadataKey);
+        decorator.getOwn  = _metadataGetter(metadataKey, true);
+        decorator.collect = _metadataCollector(metadataKey);
+        return decorator;
     }
 });
+
+function _metadataGetter(metadataKey, own) {
+    return (target, targetKey, callback) => {
+        if (!callback && $isFunction(targetKey)) {
+            [targetKey, callback] = [null, targetKey];
+        }
+        if (!$isFunction(callback)) return;
+        const targetKeys = targetKey ? [targetKey]
+            : Reflect.ownKeys(own ? target : getPropertyDescriptors(target))
+                  .concat("constructor");
+        targetKeys.forEach(key => {
+            const metadata = own
+                ? Reflect.getOwnMetadata(metadataKey, target, key)
+                : Reflect.getMetadata(metadataKey, target, key);
+            if (metadata) {
+                callback(metadata, key);
+            }                
+        });
+    };
+}
+    
+function _metadataCollector(metadataKey) {
+    return (target, targetKey, callback) => {
+        if (!callback && $isFunction(targetKey)) {
+            [targetKey, callback] = [null, targetKey];
+        }
+        if (!$isFunction(callback)) return;
+        const targetKeys = targetKey ? [targetKey]
+            : Reflect.ownKeys(getPropertyDescriptors(target)).concat("constructor");
+        targetKeys.forEach(key => Metadata.collect(metadataKey, target, key, callback))            
+    };
+}
 
 export default Metadata;

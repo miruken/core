@@ -1754,51 +1754,54 @@ export const Metadata = Abstract.extend(null, {
         return false;
     },
     /**
-     * Builds a metadata accessor for `metadataKey`.
+     * Builds a metadata decorator.
      * @static
-     * @method getter
-     * @param   {Any}      metadataKey  -  metadata key
-     * @param   {boolean}  [own]        -  restrict to owning properties
-     * @returns {Function} metadata accessor bound to `metadataKey`.
-     */
-    getter(metadataKey, own) {
-        return (target, targetKey, callback) => {
-            if (!callback && $isFunction(targetKey)) {
-                [targetKey, callback] = [null, targetKey];
-            }
-            if (!$isFunction(callback)) return;
-            const targetKeys = targetKey ? [targetKey]
-                : Reflect.ownKeys(own ? target : getPropertyDescriptors(target))
-                         .concat("constructor");
-            targetKeys.forEach(key => {
-                const metadata = own
-                    ? Reflect.getOwnMetadata(metadataKey, target, key)
-                    : Reflect.getMetadata(metadataKey, target, key);
-                if (metadata) {
-                    callback(metadata, key);
-                }                
-            });
-        };
-    },
-    /**
-     * Builds a metadata collector for `metadataKey`.
-     * @static
-     * @method collector
-     * @param   {Any}      metadataKey  -  metadata key
-     * @returns {Function} metadata collector bound to `metadataKey`.
+     * @method decorator
+     * @param  {Any}       metadataKey  -  metadata key
+     * @param  {Function}  handler      -  handler function
      */    
-    collector(metadataKey) {
-        return (target, targetKey, callback) => {
-            if (!callback && $isFunction(targetKey)) {
-                [targetKey, callback] = [null, targetKey];
-            }
-            if (!$isFunction(callback)) return;
-            const targetKeys = targetKey ? [targetKey]
-                : Reflect.ownKeys(getPropertyDescriptors(target)).concat("constructor");
-            targetKeys.forEach(key => this.collect(metadataKey, target, key, callback))            
-        };
+    decorator(metadataKey, handler) {
+        function decorator(...args) {
+            return decorate(handler, args);
+        }
+        decorator.get     = _metadataGetter(metadataKey);
+        decorator.getOwn  = _metadataGetter(metadataKey, true);
+        decorator.collect = _metadataCollector(metadataKey);
+        return decorator;
     }
 });
+
+function _metadataGetter(metadataKey, own) {
+    return (target, targetKey, callback) => {
+        if (!callback && $isFunction(targetKey)) {
+            [targetKey, callback] = [null, targetKey];
+        }
+        if (!$isFunction(callback)) return;
+        const targetKeys = targetKey ? [targetKey]
+            : Reflect.ownKeys(own ? target : getPropertyDescriptors(target))
+                  .concat("constructor");
+        targetKeys.forEach(key => {
+            const metadata = own
+                ? Reflect.getOwnMetadata(metadataKey, target, key)
+                : Reflect.getMetadata(metadataKey, target, key);
+            if (metadata) {
+                callback(metadata, key);
+            }                
+        });
+    };
+}
+    
+function _metadataCollector(metadataKey) {
+    return (target, targetKey, callback) => {
+        if (!callback && $isFunction(targetKey)) {
+            [targetKey, callback] = [null, targetKey];
+        }
+        if (!$isFunction(callback)) return;
+        const targetKeys = targetKey ? [targetKey]
+            : Reflect.ownKeys(getPropertyDescriptors(target)).concat("constructor");
+        targetKeys.forEach(key => Metadata.collect(metadataKey, target, key, callback))            
+    };
+}
 
 export default Metadata;
 
@@ -1809,25 +1812,18 @@ const injectMetadataKey = Symbol();
  * @method inject
  * @param  {Array}  ...dependencies  -  property/method dependencies
  */
-export function inject(...dependencies) {
-    return decorate(_inject, dependencies);
-}
-
-inject.get     = Metadata.getter(injectMetadataKey);
-inject.getOwn  = Metadata.getter(injectMetadataKey, true);
-inject.collect = Metadata.collector(injectMetadataKey);
-
-function _inject(target, key, descriptor, dependencies) {
-    if (!descriptor) {
-        dependencies = key;
-        target       = target.prototype        
-        key          = "constructor"
-    }
-    dependencies = $flatten(dependencies);
-    if (dependencies.length > 0) {
-        Metadata.define(injectMetadataKey, dependencies, target, key);
-    }
-}
+export const inject = Metadata.decorator(injectMetadataKey,
+    (target, key, descriptor, dependencies) => {
+        if (!descriptor) {
+            dependencies = key;
+            target       = target.prototype        
+            key          = "constructor"
+        }
+        dependencies = $flatten(dependencies);
+        if (dependencies.length > 0) {
+            Metadata.define(injectMetadataKey, dependencies, target, key);
+        }
+    });
 
 export default inject;
 
@@ -1845,12 +1841,12 @@ export default inject;
  * @param   {boolean}   [strict=false]  -  true if strict, false otherwise
  * @extends Base
  */
-const ProtocolGet          = Symbol(),
-      ProtocolSet          = Symbol(),
-      ProtocolInvoke       = Symbol(),
-      ProtocolDelegate     = Symbol(),
-      ProtocolStrict       = Symbol(),
-      ProtocolsMetadataKey = Symbol();
+const protocolGet         = Symbol(),
+      protocolSet         = Symbol(),
+      protocolInvoke      = Symbol(),
+      protocolDelegate    = Symbol(),
+      protocolStrict      = Symbol(),
+      protocolMetadataKey = Symbol();
 
 export const Protocol = Base.extend({
     constructor(delegate, strict) {
@@ -1869,21 +1865,21 @@ export const Protocol = Base.extend({
             }
         }
         Object.defineProperties(this, {
-            [ProtocolDelegate]: { value: delegate, writable: false },            
-            [ProtocolStrict]:   { value: !!strict, writable: false }
+            [protocolDelegate]: { value: delegate, writable: false },            
+            [protocolStrict]:   { value: !!strict, writable: false }
         });
     },
-    [ProtocolGet](key) {
-        const delegate = this[ProtocolDelegate];
-        return delegate && delegate.get(this.constructor, key, this[ProtocolStrict]);
+    [protocolGet](key) {
+        const delegate = this[protocolDelegate];
+        return delegate && delegate.get(this.constructor, key, this[protocolStrict]);
     },
-    [ProtocolSet](key, value) {
-        const delegate = this[ProtocolDelegate];            
-        return delegate && delegate.set(this.constructor, key, value, this[ProtocolStrict]);
+    [protocolSet](key, value) {
+        const delegate = this[protocolDelegate];            
+        return delegate && delegate.set(this.constructor, key, value, this[protocolStrict]);
     },
-    [ProtocolInvoke](methodName, args) {
-        const delegate = this[ProtocolDelegate];                        
-        return delegate && delegate.invoke(this.constructor, methodName, args, this[ProtocolStrict]);
+    [protocolInvoke](methodName, args) {
+        const delegate = this[protocolDelegate];                        
+        return delegate && delegate.invoke(this.constructor, methodName, args, this[protocolStrict]);
     }
 }, {
     /**
@@ -1909,7 +1905,7 @@ export const Protocol = Base.extend({
             return true;
         }
         const metaTarget = $isFunction(target) ? target.prototype : target;        
-        return Metadata.collect(ProtocolsMetadataKey, metaTarget,
+        return Metadata.collect(protocolMetadataKey, metaTarget,
                                 protocols => protocols.has(this) ||
                                 [...protocols].some(p => this.isAdoptedBy(p)));
     },
@@ -1923,10 +1919,10 @@ export const Protocol = Base.extend({
     adoptBy(target) {
         if (!target) return;
         const metaTarget = $isFunction(target) ? target.prototype : target;
-        if (Metadata.collect(ProtocolsMetadataKey, metaTarget, p => p.has(this))) {
+        if (Metadata.collect(protocolMetadataKey, metaTarget, p => p.has(this))) {
             return false;
         }
-        const protocols = Metadata.getOrCreateOwn(ProtocolsMetadataKey, metaTarget, () => new Set());
+        const protocols = Metadata.getOrCreateOwn(protocolMetadataKey, metaTarget, () => new Set());
         protocols.add(this);
         if ($isFunction(target.protocolAdopted)) {
             target.protocolAdopted(this);
@@ -1994,10 +1990,10 @@ export function $protocols(target, own) {
         target = target.prototype;
     }
     const protocols = !own ? new Set()
-        : Metadata.getOwn(ProtocolsMetadataKey, target);
+        : Metadata.getOwn(protocolMetadataKey, target);
     if (!own) {
         const add = protocols.add.bind(protocols);
-        Metadata.collect(ProtocolsMetadataKey, target,
+        Metadata.collect(protocolMetadataKey, target,
           ps => ps.forEach(p => [p,...$protocols(p)].forEach(add)));
     }
     return (protocols && [...protocols]) || [];
@@ -2045,7 +2041,7 @@ function _protocol(target) {
         if (!descriptor.enumerable) return;
         if ($isFunction(descriptor.value)) {
             descriptor.value = function (...args) {
-                return this[ProtocolInvoke](key, args);
+                return this[protocolInvoke](key, args);
             };
         } else {
             const isSimple = descriptor.hasOwnProperty("value")
@@ -2056,12 +2052,12 @@ function _protocol(target) {
             }
             if (descriptor.get || isSimple) {
                 descriptor.get = function () {
-                    return this[ProtocolGet](key);
+                    return this[protocolGet](key);
                 };
             }
             if (descriptor.set || isSimple) {
                 descriptor.set = function (value) {
-                    return this[ProtocolSet](key, value);
+                    return this[protocolSet](key, value);
                 }
             }
         }
