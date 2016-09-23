@@ -30,7 +30,6 @@ function _copy(target, key, descriptor) {
             return set.call(this, _copyOf(value));
         }
     }
-    return descriptor;
 }
 
 function _copyOf(value) {

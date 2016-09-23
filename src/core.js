@@ -1,11 +1,14 @@
 import { Base, Module } from "./base2";
+
 import {
     Protocol, StrictProtocol, protocol,
     conformsTo, $isProtocol
 } from "./protocol";
+
 import { $isFunction, $isObject, $flatten } from "./util";
 import Metadata from "./metadata";
 import Enum from "./enum";
+import "reflect-metadata";
 
 const baseExtend      = Base.extend,
       baseImplement   = Base.implement,
@@ -93,7 +96,7 @@ Base.extend = function (...args) {
     Metadata.copyOwn(derived, classMembers);
     Metadata.copyOwn(derived.prototype, members);
     if (decorators.length > 0) {
-        decorators.forEach(d => derived = d(derived) || derived);
+        derived = Reflect.decorate(decorators, derived);
     }
     return derived;                    
 };

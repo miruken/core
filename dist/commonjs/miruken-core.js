@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.ProxyBuilder = exports.InterceptorSelector = exports.Interceptor = exports.Facet = exports.Traversal = exports.TraversingMixin = exports.Traversing = exports.TraversingAxis = exports.DisposingMixin = exports.Disposing = exports.Startup = exports.Starting = exports.Parenting = exports.Invoking = exports.Resolving = exports.Initializing = exports.Variance = exports.MethodType = exports.nothing = exports.emptyArray = exports.$isProtocol = exports.StrictProtocol = exports.Protocol = exports.inject = exports.Metadata = exports.IndexedList = exports.ArrayManager = exports.Flags = exports.Enum = exports.ArrayDelegate = exports.ObjectDelegate = exports.Delegate = exports.partial = exports.extend = exports.Module = exports.Abstract = exports.Package = exports.Base = exports.False = exports.True = exports.Null = exports.Undefined = exports.$instant = exports.$promise = exports.$optional = exports.$child = exports.$every = exports.$eval = exports.$lazy = exports.$use = exports.$eq = undefined;
+exports.ProxyBuilder = exports.InterceptorSelector = exports.Interceptor = exports.Facet = exports.Traversal = exports.TraversingMixin = exports.Traversing = exports.TraversingAxis = exports.DisposingMixin = exports.Disposing = exports.Startup = exports.Starting = exports.Parenting = exports.Invoking = exports.Resolving = exports.Initializing = exports.Variance = exports.MethodType = exports.nothing = exports.emptyArray = exports.$isProtocol = exports.StrictProtocol = exports.Protocol = exports.inject = exports.design = exports.Metadata = exports.IndexedList = exports.ArrayManager = exports.Flags = exports.Enum = exports.ArrayDelegate = exports.ObjectDelegate = exports.Delegate = exports.partial = exports.extend = exports.Module = exports.Abstract = exports.Package = exports.Base = exports.False = exports.True = exports.Null = exports.Undefined = exports.$instant = exports.$promise = exports.$optional = exports.$child = exports.$every = exports.$eval = exports.$lazy = exports.$use = exports.$eq = undefined;
 
 var _Base$extend;
 
@@ -786,7 +786,6 @@ function _copy(target, key, descriptor) {
             return set.call(this, _copyOf(value));
         };
     }
-    return descriptor;
 }
 
 function _copyOf(value) {
@@ -1247,10 +1246,14 @@ function $debounce(fn, wait, immediate, defaultReturnValue) {
 
 var Metadata = exports.Metadata = Abstract.extend(null, {
     get: function get(metadataKey, target, targetKey) {
-        return target && Reflect.getMetadata(metadataKey, target, targetKey);
+        if (target) {
+            return targetKey ? Reflect.getMetadata(metadataKey, target, targetKey) : Reflect.getMetadata(metadataKey, target);
+        }
     },
     getOwn: function getOwn(metadataKey, target, targetKey) {
-        return target && Reflect.getOwnMetadata(metadataKey, target, targetKey);
+        if (target) {
+            return targetKey ? Reflect.getOwnMetadata(metadataKey, target, targetKey) : Reflect.getOwnMetadata(metadataKey, target);
+        }
     },
     getOrCreateOwn: function getOrCreateOwn(metadataKey, target, targetKey, creator) {
         if (arguments.length === 3) {
@@ -1260,18 +1263,22 @@ var Metadata = exports.Metadata = Abstract.extend(null, {
         if (!$isFunction(creator)) {
             throw new TypeError("creator must be a function");
         }
-        var metadata = Reflect.getOwnMetadata(metadataKey, target, targetKey);
+        var metadata = this.getOwn(metadataKey, target, targetKey);
         if (metadata === undefined) {
             metadata = creator(metadataKey, target, targetKey);
-            Reflect.defineMetadata(metadataKey, metadata, target, targetKey);
+            this.define(metadataKey, metadata, target, targetKey);
         }
         return metadata;
     },
     define: function define(metadataKey, metadata, target, targetKey) {
-        Reflect.defineMetadata(metadataKey, metadata, target, targetKey);
+        if (target) {
+            return targetKey ? Reflect.defineMetadata(metadataKey, metadata, target, targetKey) : Reflect.defineMetadata(metadataKey, metadata, target);
+        }
     },
     remove: function remove(metadataKey, target, targetKey) {
-        Reflect.deleteMetadata(metadataKey, target, targetKey);
+        if (target) {
+            return targetKey ? Reflect.deleteMetadata(metadataKey, target, targetKey) : Reflect.deleteMetadata(metadataKey, target);
+        }
     },
     copyOwn: function copyOwn(target, source) {
         var _this2 = this;
@@ -1282,29 +1289,33 @@ var Metadata = exports.Metadata = Abstract.extend(null, {
         });
     },
     copyOwnKey: function copyOwnKey(target, source, sourceKey) {
+        var _this3 = this;
+
         var metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(function (metadataKey) {
-            var metadata = Reflect.getOwnMetadata(metadataKey, source, sourceKey);
-            Reflect.defineMetadata(metadataKey, metadata, target, sourceKey);
+            var metadata = _this3.getOwn(metadataKey, source, sourceKey);
+            _this3.define(metadataKey, metadata, target, sourceKey);
         });
     },
     mergeOwn: function mergeOwn(target, source) {
-        var _this3 = this;
+        var _this4 = this;
 
         this.mergeOwnKey(target, source);
         Reflect.ownKeys(source).forEach(function (sourceKey) {
-            return _this3.mergeOwnKey(target, source, sourceKey);
+            return _this4.mergeOwnKey(target, source, sourceKey);
         });
     },
     mergeOwnKey: function mergeOwnKey(target, source, sourceKey) {
+        var _this5 = this;
+
         var metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(function (metadataKey) {
-            var targetMetadata = Reflect.getOwnMetadata(metadataKey, target, sourceKey),
-                sourceMetadata = Reflect.getOwnMetadata(metadataKey, source, sourceKey);
+            var targetMetadata = _this5.getOwn(metadataKey, target, sourceKey),
+                sourceMetadata = _this5.getOwn(metadataKey, source, sourceKey);
             if (targetMetadata && targetMetadata.merge) {
                 targetMetadata.merge(sourceMetadata);x;
             } else {
-                Reflect.defineMetadata(metadataKey, sourceMetadata, target, sourceKey);
+                _this5.define(metadataKey, sourceMetadata, target, sourceKey);
             }
         });
     },
@@ -1317,7 +1328,7 @@ var Metadata = exports.Metadata = Abstract.extend(null, {
             throw new TypeError("collector must be a function");
         }
         while (target) {
-            var metadata = Reflect.getOwnMetadata(metadataKey, target, targetKey);
+            var metadata = this.getOwn(metadataKey, target, targetKey);
             if (metadata && collector(metadata, metadataKey, target, targetKey)) {
                 return true;
             }
@@ -1333,53 +1344,119 @@ var Metadata = exports.Metadata = Abstract.extend(null, {
 
             return decorate(handler, args);
         }
-        decorator.get = _metadataGetter(metadataKey);
-        decorator.getOwn = _metadataGetter(metadataKey, true);
-        decorator.collect = _metadataCollector(metadataKey);
+        decorator.get = _metadataGetter.bind(this, metadataKey, false);
+        decorator.getOwn = _metadataGetter.bind(this, metadataKey, true);
+        decorator.getKeys = _metadataKeyGetter.bind(this, metadataKey, false);
+        decorator.getOwnKeys = _metadataKeyGetter.bind(this, metadataKey, true);
+        decorator.collect = _metadataCollector.bind(this, metadataKey);
+        decorator.collectKeys = _metadataKeyCollector.bind(this, metadataKey);
         return decorator;
     }
 });
 
-function _metadataGetter(metadataKey, own) {
-    return function (target, targetKey, callback) {
-        if (!callback && $isFunction(targetKey)) {
-            var _ref2 = [null, targetKey];
-            targetKey = _ref2[0];
-            callback = _ref2[1];
-        }
-        if (!$isFunction(callback)) return;
-        var targetKeys = targetKey ? [targetKey] : Reflect.ownKeys(own ? target : getPropertyDescriptors(target)).concat("constructor");
-        targetKeys.forEach(function (key) {
-            var metadata = own ? Reflect.getOwnMetadata(metadataKey, target, key) : Reflect.getMetadata(metadataKey, target, key);
-            if (metadata) {
-                callback(metadata, key);
-            }
-        });
-    };
+function _metadataGetter(metadataKey, own, target, targetKey) {
+    return own ? this.getOwn(metadataKey, target, targetKey) : this.get(metadataKey, target, targetKey);
 }
 
-function _metadataCollector(metadataKey) {
-    return function (target, targetKey, callback) {
-        if (!callback && $isFunction(targetKey)) {
-            var _ref3 = [null, targetKey];
-            targetKey = _ref3[0];
-            callback = _ref3[1];
+function _metadataKeyGetter(metadataKey, own, target, callback) {
+    var _this6 = this;
+
+    var found = false;
+    if (!$isFunction(callback)) return false;
+    var keys = Reflect.ownKeys(own ? target : getPropertyDescriptors(target)).concat("constructor");
+    keys.forEach(function (key) {
+        var metadata = own ? _this6.getOwn(metadataKey, target, key) : _this6.get(metadataKey, target, key);
+        if (metadata) {
+            callback(metadata, key);
+            found = true;
         }
-        if (!$isFunction(callback)) return;
-        var targetKeys = targetKey ? [targetKey] : Reflect.ownKeys(getPropertyDescriptors(target)).concat("constructor");
-        targetKeys.forEach(function (key) {
-            return Metadata.collect(metadataKey, target, key, callback);
-        });
-    };
+    });
+    return found;
+}
+
+function _metadataCollector(metadataKey, target, targetKey, callback) {
+    if (!callback && $isFunction(targetKey)) {
+        var _ref2 = [null, targetKey];
+        targetKey = _ref2[0];
+        callback = _ref2[1];
+    }
+    if (!$isFunction(callback)) return;
+    this.collect(metadataKey, target, targetKey, callback);
+}
+
+function _metadataKeyCollector(metadataKey, target, callback) {
+    var _this7 = this;
+
+    if (!$isFunction(callback)) return;
+    var keys = Reflect.ownKeys(getPropertyDescriptors(target)).concat("constructor");
+    keys.forEach(function (key) {
+        return _this7.collect(metadataKey, target, key, callback);
+    });
 }
 
 exports.default = Metadata;
 
 
+var designMetadataKey = Symbol(),
+    paramTypesKey = "design:paramtypes",
+    propertyTypeKey = "design:type";
+
+var DesignMetadata = Metadata.extend(null, {
+    get: function get(metadataKey, target, targetKey) {
+        if (metadataKey === designMetadataKey) {
+            return this.base(paramTypesKey, target, targetKey) || this.base(propertyTypeKey, target, targetKey);
+        }
+        return this.base(metadataKey, target, targetKey);
+    },
+    getOwn: function getOwn(metadataKey, target, targetKey) {
+        if (metadataKey === designMetadataKey) {
+            return this.base(paramTypesKey, target, targetKey) || this.base(propertyTypeKey, target, targetKey);
+        }
+        return this.base(metadataKey, target, targetKey);
+    }
+});
+
+var design = exports.design = DesignMetadata.decorator(designMetadataKey, function (target, key, descriptor, types) {
+    if (!isDescriptor(descriptor)) {
+        if (target.length > key.length) {
+            throw new SyntaxError("@design for constructor expects at least " + target.length + " parameters but only " + key.length + " specified");
+        }
+        _validateTypes(key);
+        Metadata.define(paramTypesKey, key, target.prototype, "constructor");
+        return;
+    }
+    var value = descriptor.value;
+
+    if ($isFunction(value)) {
+        if (value.length > types.length) {
+            throw new SyntaxError("@design for method '" + key + "' expects at least " + value.length + " parameters but only " + types.length + " specified");
+        }
+        _validateTypes(types);
+        Metadata.define(paramTypesKey, types, target, key);
+    } else if (types.length !== 1) {
+        throw new SyntaxError("@design for property '" + key + "' requires a type to be specified");
+    } else {
+        _validateTypes(types);
+        Metadata.define(propertyTypeKey, types[0], target, key);
+    }
+});
+
+function _validateTypes(types) {
+    for (var i = 0; i < types.length; ++i) {
+        var type = types[i];
+        if (Array.isArray(type) && type.length !== 1) {
+            throw new SyntaxError("@design array specification at index " + i + " expects a single type");
+        }
+    }
+}
+
+exports.default = design;
+
+
 var injectMetadataKey = Symbol();
 
 var inject = exports.inject = Metadata.decorator(injectMetadataKey, function (target, key, descriptor, dependencies) {
-    if (!descriptor) {
+    if (!isDescriptor(descriptor)) {
         dependencies = key;
         target = target.prototype;
         key = "constructor";
@@ -1433,7 +1510,7 @@ var Protocol = exports.Protocol = Base.extend((_Base$extend = {
         return target && target.prototype instanceof Protocol;
     },
     isAdoptedBy: function isAdoptedBy(target) {
-        var _this4 = this;
+        var _this8 = this;
 
         if (!target) return false;
         if (this === target || target && target.prototype instanceof this) {
@@ -1441,18 +1518,18 @@ var Protocol = exports.Protocol = Base.extend((_Base$extend = {
         }
         var metaTarget = $isFunction(target) ? target.prototype : target;
         return Metadata.collect(protocolMetadataKey, metaTarget, function (protocols) {
-            return protocols.has(_this4) || [].concat(_toConsumableArray(protocols)).some(function (p) {
-                return _this4.isAdoptedBy(p);
+            return protocols.has(_this8) || [].concat(_toConsumableArray(protocols)).some(function (p) {
+                return _this8.isAdoptedBy(p);
             });
         });
     },
     adoptBy: function adoptBy(target) {
-        var _this5 = this;
+        var _this9 = this;
 
         if (!target) return;
         var metaTarget = $isFunction(target) ? target.prototype : target;
         if (Metadata.collect(protocolMetadataKey, metaTarget, function (p) {
-            return p.has(_this5);
+            return p.has(_this9);
         })) {
             return false;
         }
@@ -1635,9 +1712,7 @@ Base.extend = function () {
     Metadata.copyOwn(derived, classMembers);
     Metadata.copyOwn(derived.prototype, members);
     if (decorators.length > 0) {
-        decorators.forEach(function (d) {
-            return derived = d(derived) || derived;
-        });
+        derived = Reflect.decorate(decorators, derived);
     }
     return derived;
 };
@@ -1927,25 +2002,25 @@ function traverseAncestors(visitor, withSelf, context) {
 }
 
 function traverseDescendants(visitor, withSelf, context) {
-    var _this6 = this;
+    var _this10 = this;
 
     if (withSelf) {
         Traversal.levelOrder(this, visitor, context);
     } else {
         Traversal.levelOrder(this, function (node) {
-            return !$equals(_this6, node) && visitor.call(context, node);
+            return !$equals(_this10, node) && visitor.call(context, node);
         }, context);
     }
 }
 
 function traverseDescendantsReverse(visitor, withSelf, context) {
-    var _this7 = this;
+    var _this11 = this;
 
     if (withSelf) {
         Traversal.reverseLevelOrder(this, visitor, context);
     } else {
         Traversal.reverseLevelOrder(this, function (node) {
-            return !$equals(_this7, node) && visitor.call(context, node);
+            return !$equals(_this11, node) && visitor.call(context, node);
         }, context);
     }
 }
@@ -2280,7 +2355,7 @@ function proxyMethod(key, method, source, type) {
 }
 
 function extendProxyInstance(key, value) {
-    var _this8 = this;
+    var _this12 = this;
 
     var proxy = this.constructor,
         overrides = arguments.length === 1 ? key : _defineProperty({}, key, value),
@@ -2291,7 +2366,7 @@ function extendProxyInstance(key, value) {
         var value = descriptor.value;
         var get = descriptor.get;
         var set = descriptor.set;
-        var baseDescriptor = getPropertyDescriptors(_this8, key);
+        var baseDescriptor = getPropertyDescriptors(_this12, key);
         if (!baseDescriptor) return;
         if (value) {
             if ($isFunction(value)) {
@@ -2311,7 +2386,7 @@ function extendProxyInstance(key, value) {
                 baseDescriptor.set = set.baseMethod;
             }
         }
-        Object.defineProperty(_this8, key, baseDescriptor);
+        Object.defineProperty(_this12, key, baseDescriptor);
     });
     this.base(overrides);
     Reflect.ownKeys(props).forEach(function (key) {
@@ -2335,7 +2410,7 @@ function extendProxyInstance(key, value) {
                 descriptor.set = proxyMethod(key, set, proxy, MethodType.Set);
             }
         }
-        Object.defineProperty(_this8, key, descriptor);
+        Object.defineProperty(_this12, key, descriptor);
     });
     return this;
 }

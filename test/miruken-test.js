@@ -6,6 +6,7 @@ import { Modifier, $createModifier, $every } from "../src/modifier";
 import { Disposing, DisposingMixin, $using } from "../src/dispose";
 import { Interceptor, InterceptorSelector, ProxyBuilder } from "../src/proxy";
 import metadata from "../src/metadata";
+import design from "../src/design";
 import inject from "../src/inject";
 
 import {
@@ -337,7 +338,7 @@ describe("DisposingMixin", () => {
             const shoppingCart = new ShoppingCart();
             shoppingCart.addItem("Sneakers");
             shoppingCart.addItem("Milk");
-            expect(shoppingCart.getItems()).to.eql(["Sneakers", "Milk"]);
+            expect(shoppingCart.getItems()).to.have.members(["Sneakers", "Milk"]);
             shoppingCart.dispose();
             expect(shoppingCart.getItems()).to.eql([]);
         });
@@ -363,7 +364,7 @@ describe("$using", () => {
         shoppingCart.addItem("Halo II");
         shoppingCart.addItem("Porsche");
         $using(shoppingCart, cart => {
-            expect(shoppingCart.getItems()).to.eql(["Halo II", "Porsche"]);
+            expect(shoppingCart.getItems()).to.have.members(["Halo II", "Porsche"]);
         });
         expect(shoppingCart.getItems()).to.eql([]);
     });
@@ -386,7 +387,7 @@ describe("$using", () => {
         shoppingCart.addItem("Porsche");
         $using(shoppingCart, Promise.delay(100).then(() => {
                shoppingCart.addItem("Book");
-               expect(shoppingCart.getItems()).to.eql(["Halo II", "Porsche", "Book"]);
+               expect(shoppingCart.getItems()).to.have.members(["Halo II", "Porsche", "Book"]);
                }) 
         ).finally(() => {
             expect(shoppingCart.getItems()).to.eql([]);
@@ -401,7 +402,7 @@ describe("$using", () => {
         $using(shoppingCart, cart => {
                return Promise.delay(100).then(() => {
                    shoppingCart.addItem("Book");
-                   expect(shoppingCart.getItems()).to.eql(["Halo II", "Porsche", "Book"]);
+                   expect(shoppingCart.getItems()).to.have.members(["Halo II", "Porsche", "Book"]);
                })
         }).finally(() => {
             expect(shoppingCart.getItems()).to.eql([]);
@@ -634,15 +635,15 @@ describe("Protocol", () => {
 
     describe("$protocols", () => {
         it("should retrieve own protocols", () => {
-            expect($protocols(Dog, true)).to.eql([Animal, Tricks]);
+            expect($protocols(Dog, true)).to.have.members([Animal, Tricks]);
         });
 
         it("should retrieve all protocol protocols", () => {
-            expect($protocols(CircusAnimal)).to.eql([Animal, Tricks]);
+            expect($protocols(CircusAnimal)).to.have.members([Animal, Tricks]);
         });
 
         it("should retrieve all class protocols", () => {
-            expect($protocols(AsianElephant)).to.eql([Tracked, CircusAnimal, Animal, Tricks]);
+            expect($protocols(AsianElephant)).to.have.members([Tracked, CircusAnimal, Animal, Tricks]);
         });        
     });
 
@@ -725,7 +726,7 @@ describe("Protocol", () => {
 
         it("should support protocol inheritance", () => {
             expect(Animal.isAdoptedBy(Elephant)).to.be.true;
-            expect($protocols(CircusAnimal, true)).to.eql([Animal, Tricks]);
+            expect($protocols(CircusAnimal, true)).to.have.members([Animal, Tricks]);
         });
 
         it("should inherit protocol conformance", () => {
@@ -737,7 +738,7 @@ describe("Protocol", () => {
             const EndangeredAnimal = Base.extend([Animal, Tracked]);
             expect(Animal.isAdoptedBy(EndangeredAnimal)).to.be.true;
             expect(Tracked.isAdoptedBy(EndangeredAnimal)).to.be.true;
-            expect($protocols(EndangeredAnimal, true)).to.eql([Animal, Tracked]);
+            expect($protocols(EndangeredAnimal, true)).to.have.members([Animal, Tracked]);
         });
 
         it("should allow redefining method", () => {
@@ -1061,6 +1062,74 @@ describe("ProxyBuilder", () => {
     });
 });
 
+describe("design", () => {
+    const Zoo = Base.extend({
+              @design(Person)
+              trainer: undefined,
+        
+              @design(Person, [Animal])
+              constructor(zooKeeper, animals) {},
+        
+              @design(Dog, Elephant, AsianElephant)
+              safari() {}
+          }),
+          PettingZoo = Zoo.extend(design(Person, Person, [Animal]), {
+              constructor(zooKeeper, trainer, animals) {
+                  this.base(zooKeeper, animals);
+              }
+          });
+    
+    it("should get constructor design", () => {
+        const types = design.get(Zoo.prototype, "constructor");
+        expect(types[0]).to.equal(Person);
+        expect(types[1]).to.eql([Animal]);        
+    });
+
+    it("should get method design", () => {
+        const types = design.get(Zoo.prototype, "safari");
+        expect(types).to.eql([Dog, Elephant, AsianElephant]);
+    });
+
+    it("should get property design", () => {
+        const type = design.get(Zoo.prototype, "trainer");
+        expect(type).to.equal(Person);
+    });
+
+    it("should apply class design to constructor", () => {
+        const types = design.get(PettingZoo.prototype, "constructor");
+        expect(types[0]).to.equal(Person);
+        expect(types[1]).to.equal(Person);        
+        expect(types[2]).to.eql([Animal]);
+    });
+
+    it("should reject design if too few method types", () => {
+        expect(() => {
+            Base.extend({
+                @design(Person)
+                constructor(partner, canine) {}
+            });
+        }).to.throw(Error, "@design for method 'constructor' expects at least 2 parameters but only 1 specified");
+    });
+    
+    it("should reject design if missing property type", () => {
+        expect(() => {
+            Base.extend({
+                @design
+                friend: undefined
+            });
+        }).to.throw(Error, "@design for property 'friend' requires a type to be specified");
+    });
+
+    it("should reject invalid array specifications", () => {
+        expect(() => {
+            Base.extend({
+                @design(Person, [Person, Person])
+                sing(conductor, chorus) {} 
+            });
+        }).to.throw(Error, "@design array specification at index 1 expects a single type");
+    });    
+});
+
 describe("inject", () => {
     const Circus = Base.extend({
               @inject($every(Animal))        
@@ -1077,52 +1146,35 @@ describe("inject", () => {
           });
     
     it("should get class dependencies", () => {
-        let dep;
-        inject.get(Circus.prototype, "dancingDog", (d, k) => {
-            expect(k).to.eql("dancingDog");
-            dep = d;
-        });
+        const dep = inject.get(Circus.prototype, "dancingDog");
         expect(dep).to.eql([Dog]);
     });
 
     it("should get dependencies with modifiers", () => {
-        let dep;
-        inject.get(Circus.prototype, "elpehantParade", (d, k) => {
-            expect(k).to.eql("elpehantParade");
-            dep = d;            
-        });
+        const dep = inject.get(Circus.prototype, "elpehantParade");
         expect($every.test(dep[0])).to.be.true;
         expect(Modifier.unwrap(dep[0])).to.equal(Elephant);
     });
 
     it("should get constructor dependencies", () => {
-        let dep;
-        inject.get(Circus.prototype, "constructor", (d, k) => {
-            expect(k).to.eql("constructor");
-            dep = d;
-        });
+        const dep = inject.get(Circus.prototype, "constructor");
         expect($every.test(dep[0])).to.be.true;
         expect(Modifier.unwrap(dep[0])).to.equal(Animal);
     });
 
     it("should apply class dependencies to constructor", () => {
-        let dep;
-        inject.get(RingBrothers.prototype, "constructor", (d, k) => {
-            expect(k).to.eql("constructor");
-            dep = d;
-        });
+        const dep = inject.get(RingBrothers.prototype, "constructor");
         expect(dep).to.eql([undefined, Person]);
     });
 
     it("should get own class dependencies", () => {
-        let dep;
-        inject.getOwn(RingBrothers.prototype, "dancingDog", (d, k) =>  dep = d);
+        const dep = inject.getOwn(RingBrothers.prototype, "dancingDog");
         expect(dep).to.be.undefined;
     });
 
     it("should get all dependencies", () => {
         const deps = new Map();
-        inject.get(RingBrothers.prototype, (d, k) => deps.set(k,d));
+        inject.getKeys(RingBrothers.prototype, (d, k) => deps.set(k, d));
         expect(deps.get("dancingDog")).to.eql([Dog]);
         expect($every.test(deps.get("elpehantParade")[0])).to.be.true;
         expect(Modifier.unwrap(deps.get("elpehantParade")[0])).to.equal(Elephant);
@@ -1131,11 +1183,11 @@ describe("inject", () => {
 
     it("should get own dependencies", () => {
         const deps = new Map();
-        inject.getOwn(RingBrothers.prototype, (d, k) => deps.set(k,d));
+        inject.getOwnKeys(RingBrothers.prototype, (d, k) => deps.set(k, d));
         expect(deps.get("dancingDog")).to.be.undefined;
         expect(deps.get("elpehantParade")).to.be.undefined;
         expect(deps.get("constructor")).to.eql([undefined, Person]);
-        inject.getOwn(Circus.prototype, (d, k) => deps.set(k,d));
+        inject.getOwnKeys(Circus.prototype, (d, k) => deps.set(k,d));
         expect(deps.get("dancingDog")).to.eql([Dog]);
     });            
 });

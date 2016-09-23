@@ -1,4 +1,5 @@
 import Metadata from "./metadata";
+import { isDescriptor } from "./decorate";
 import { $flatten } from "./util";
 
 const injectMetadataKey = Symbol();
@@ -10,7 +11,7 @@ const injectMetadataKey = Symbol();
  */
 export const inject = Metadata.decorator(injectMetadataKey,
     (target, key, descriptor, dependencies) => {
-        if (!descriptor) {
+        if (!isDescriptor(descriptor)) {
             dependencies = key;
             target       = target.prototype        
             key          = "constructor"

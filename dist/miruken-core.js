@@ -849,7 +849,6 @@ function _copy(target, key, descriptor) {
             return set.call(this, _copyOf(value));
         }
     }
-    return descriptor;
 }
 
 function _copyOf(value) {
@@ -1606,7 +1605,11 @@ export const Metadata = Abstract.extend(null, {
      * @returns {Any} the metadata for the `metadataKey`. 
      */
     get(metadataKey, target, targetKey) {
-        return target && Reflect.getMetadata(metadataKey, target, targetKey);
+        if (target) {
+            return targetKey
+                 ? Reflect.getMetadata(metadataKey, target, targetKey)
+                 : Reflect.getMetadata(metadataKey, target);
+        }
     },
     /**
      * Gets owning metadata of an object or property.
@@ -1618,7 +1621,11 @@ export const Metadata = Abstract.extend(null, {
      * @returns {Any} the metadata for the `metadataKey`. 
      */
     getOwn(metadataKey, target, targetKey) {
-        return target && Reflect.getOwnMetadata(metadataKey, target, targetKey);
+        if (target) {
+            return targetKey
+                 ? Reflect.getOwnMetadata(metadataKey, target, targetKey)
+                 : Reflect.getOwnMetadata(metadataKey, target);
+        }
     },
     /**
      * Gets owning metadata of an object or property or lazily creates it.
@@ -1638,10 +1645,10 @@ export const Metadata = Abstract.extend(null, {
         if (!$isFunction(creator)) {
             throw new TypeError("creator must be a function");
         }
-        let metadata = Reflect.getOwnMetadata(metadataKey, target, targetKey);
+        let metadata = this.getOwn(metadataKey, target, targetKey);
         if (metadata === undefined) {
             metadata = creator(metadataKey, target, targetKey);
-            Reflect.defineMetadata(metadataKey, metadata, target, targetKey);
+            this.define(metadataKey, metadata, target, targetKey);
         }
         return metadata;
     },
@@ -1655,7 +1662,11 @@ export const Metadata = Abstract.extend(null, {
      * @param   {Any}  [targetKey]  -  property key
      */
     define(metadataKey, metadata, target, targetKey) {
-        Reflect.defineMetadata(metadataKey, metadata, target, targetKey);
+        if (target) {
+            return targetKey
+                 ? Reflect.defineMetadata(metadataKey, metadata, target, targetKey)
+                 : Reflect.defineMetadata(metadataKey, metadata, target);
+        }
     },
     /**
      * Removes metadata from an object or property.
@@ -1666,7 +1677,11 @@ export const Metadata = Abstract.extend(null, {
      * @param   {Any}  [targetKey]  -  property key
      */
     remove(metadataKey, target, targetKey) {
-        Reflect.deleteMetadata(metadataKey, target, targetKey);
+        if (target) {
+            return targetKey
+                 ? Reflect.deleteMetadata(metadataKey, target, targetKey)
+                 : Reflect.deleteMetadata(metadataKey, target);
+        }
     },
     /**
      * Copies or replaces all metadata from `source` onto `target`.
@@ -1690,8 +1705,8 @@ export const Metadata = Abstract.extend(null, {
     copyOwnKey(target, source, sourceKey) {
         const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(metadataKey => {
-            const metadata = Reflect.getOwnMetadata(metadataKey, source, sourceKey);
-            Reflect.defineMetadata(metadataKey, metadata, target, sourceKey);
+            const metadata = this.getOwn(metadataKey, source, sourceKey);
+            this.define(metadataKey, metadata, target, sourceKey);
         });
     },
     /**
@@ -1716,12 +1731,12 @@ export const Metadata = Abstract.extend(null, {
     mergeOwnKey(target, source, sourceKey) {
         const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(metadataKey => {
-            const targetMetadata = Reflect.getOwnMetadata(metadataKey, target, sourceKey),
-                  sourceMetadata = Reflect.getOwnMetadata(metadataKey, source, sourceKey);
+            const targetMetadata = this.getOwn(metadataKey, target, sourceKey),
+                  sourceMetadata = this.getOwn(metadataKey, source, sourceKey);
             if (targetMetadata && targetMetadata.merge) {
                 targetMetadata.merge(sourceMetadata);x
             } else {
-                Reflect.defineMetadata(metadataKey, sourceMetadata, target, sourceKey);                
+                this.define(metadataKey, sourceMetadata, target, sourceKey);                
             }
         });
     },
@@ -1745,7 +1760,7 @@ export const Metadata = Abstract.extend(null, {
             throw new TypeError("collector must be a function");
         }
         while (target) {
-            const metadata = Reflect.getOwnMetadata(metadataKey, target, targetKey);
+            const metadata = this.getOwn(metadataKey, target, targetKey);
             if (metadata && collector(metadata, metadataKey, target, targetKey)) {
                 return true;
             }
@@ -1764,46 +1779,122 @@ export const Metadata = Abstract.extend(null, {
         function decorator(...args) {
             return decorate(handler, args);
         }
-        decorator.get     = _metadataGetter(metadataKey);
-        decorator.getOwn  = _metadataGetter(metadataKey, true);
-        decorator.collect = _metadataCollector(metadataKey);
+        decorator.get         = _metadataGetter.bind(this, metadataKey, false);
+        decorator.getOwn      = _metadataGetter.bind(this, metadataKey, true);
+        decorator.getKeys     = _metadataKeyGetter.bind(this, metadataKey, false);
+        decorator.getOwnKeys  = _metadataKeyGetter.bind(this, metadataKey, true);        
+        decorator.collect     = _metadataCollector.bind(this, metadataKey);
+        decorator.collectKeys = _metadataKeyCollector.bind(this, metadataKey);
         return decorator;
     }
 });
 
-function _metadataGetter(metadataKey, own) {
-    return (target, targetKey, callback) => {
-        if (!callback && $isFunction(targetKey)) {
-            [targetKey, callback] = [null, targetKey];
-        }
-        if (!$isFunction(callback)) return;
-        const targetKeys = targetKey ? [targetKey]
-            : Reflect.ownKeys(own ? target : getPropertyDescriptors(target))
-                  .concat("constructor");
-        targetKeys.forEach(key => {
-            const metadata = own
-                ? Reflect.getOwnMetadata(metadataKey, target, key)
-                : Reflect.getMetadata(metadataKey, target, key);
-            if (metadata) {
-                callback(metadata, key);
-            }                
-        });
-    };
+function _metadataGetter(metadataKey, own, target, targetKey) {
+    return own
+         ? this.getOwn(metadataKey, target, targetKey)
+         : this.get(metadataKey, target, targetKey);
 }
-    
-function _metadataCollector(metadataKey) {
-    return (target, targetKey, callback) => {
-        if (!callback && $isFunction(targetKey)) {
-            [targetKey, callback] = [null, targetKey];
+
+function _metadataKeyGetter(metadataKey, own,  target, callback) {
+    let found = false;
+    if (!$isFunction(callback)) return false;
+    const keys = Reflect.ownKeys(own ? target : getPropertyDescriptors(target))
+          .concat("constructor");
+    keys.forEach(key => {
+        const metadata = own
+            ? this.getOwn(metadataKey, target, key)
+            : this.get(metadataKey, target, key);
+        if (metadata) {
+            callback(metadata, key);
+            found = true;
         }
-        if (!$isFunction(callback)) return;
-        const targetKeys = targetKey ? [targetKey]
-            : Reflect.ownKeys(getPropertyDescriptors(target)).concat("constructor");
-        targetKeys.forEach(key => Metadata.collect(metadataKey, target, key, callback))            
-    };
+    });
+    return found;
+}
+
+function _metadataCollector(metadataKey, target, targetKey, callback) {
+    if (!callback && $isFunction(targetKey)) {
+        [targetKey, callback] = [null, targetKey];
+    }
+    if (!$isFunction(callback)) return;
+    this.collect(metadataKey, target, targetKey, callback);
+}
+
+function _metadataKeyCollector(metadataKey, target, callback) {
+    if (!$isFunction(callback)) return;
+    const keys = Reflect.ownKeys(getPropertyDescriptors(target))
+          .concat("constructor");
+    keys.forEach(key => this.collect(metadataKey, target, key, callback));
 }
 
 export default Metadata;
+
+const designMetadataKey = Symbol(),
+      paramTypesKey     = "design:paramtypes",
+      propertyTypeKey   = "design:type";
+
+/**
+ * Custom Metadata to bridge Typescript annotations.
+ * @class DesignMetadata
+ */
+const DesignMetadata = Metadata.extend(null, {
+    get(metadataKey, target, targetKey) {
+        if (metadataKey === designMetadataKey) {
+            return this.base(paramTypesKey, target, targetKey)
+                || this.base(propertyTypeKey, target, targetKey);
+        }
+        return this.base(metadataKey, target, targetKey);
+    },
+    getOwn(metadataKey, target, targetKey) {
+        if (metadataKey === designMetadataKey) {
+            return this.base(paramTypesKey, target, targetKey)
+                || this.base(propertyTypeKey, target, targetKey);
+        }
+        return this.base(metadataKey, target, targetKey);        
+    }
+});
+
+/**
+ * Attaches design metadata compatible with Typescript.
+ * @method design
+ */
+export const design = DesignMetadata.decorator(designMetadataKey,
+    (target, key, descriptor, types) => {
+        if (!isDescriptor(descriptor)) {
+            if (target.length > key.length) {
+                throw new SyntaxError(
+                    `@design for constructor expects at least ${target.length} parameters but only ${key.length} specified`);
+            }            
+            _validateTypes(key);
+            Metadata.define(paramTypesKey, key, target.prototype, "constructor");
+            return;
+        }
+        const { value } = descriptor;
+        if ($isFunction(value)) {
+            if (value.length > types.length) {
+                throw new SyntaxError(
+                    `@design for method '${key}' expects at least ${value.length} parameters but only ${types.length} specified`);
+            }
+            _validateTypes(types);
+            Metadata.define(paramTypesKey, types, target, key);        
+        } else if (types.length !== 1) {
+            throw new SyntaxError(`@design for property '${key}' requires a type to be specified`);
+        } else {
+            _validateTypes(types);            
+            Metadata.define(propertyTypeKey, types[0], target, key);
+        }
+    });
+
+function _validateTypes(types) {
+    for (let i = 0; i < types.length; ++i) {
+        const type = types[i];
+        if (Array.isArray(type) && type.length !== 1) {
+            throw new SyntaxError(`@design array specification at index ${i} expects a single type`);            
+        }
+    }
+}
+
+export default design;
 
 const injectMetadataKey = Symbol();
 
@@ -1814,7 +1905,7 @@ const injectMetadataKey = Symbol();
  */
 export const inject = Metadata.decorator(injectMetadataKey,
     (target, key, descriptor, dependencies) => {
-        if (!descriptor) {
+        if (!isDescriptor(descriptor)) {
             dependencies = key;
             target       = target.prototype        
             key          = "constructor"
@@ -2153,7 +2244,7 @@ Base.extend = function (...args) {
     Metadata.copyOwn(derived, classMembers);
     Metadata.copyOwn(derived.prototype, members);
     if (decorators.length > 0) {
-        decorators.forEach(d => derived = d(derived) || derived);
+        derived = Reflect.decorate(decorators, derived);
     }
     return derived;                    
 };
