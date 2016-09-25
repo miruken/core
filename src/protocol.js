@@ -10,6 +10,7 @@ import {
     Delegate, ObjectDelegate, ArrayDelegate
 } from "./delegate";
 
+import { isDescriptor } from "./decorate";
 import Metadata from "./metadata";
 
 /**
@@ -198,24 +199,6 @@ export function protocol(...args) {
     return _protocol(...args);
 }
 
-/**
- * Marks a class or protocol as conforming to one or more
- * {{#crossLink "Protocol"}}{{/crossLink}}s.
- * @method conformsTo
- * @param    {Array}    protocols  -  conforming protocols
- * @returns  {Function} the conformsTo decorator.
- */
-export function conformsTo(...protocols) {
-    protocols = $flatten(protocols, true);
-    if (!protocols.every($isProtocol)) {
-        throw new TypeError("Only Protocols can be conformed to");
-    }
-    return protocols.length === 0 ? Undefined : adopt;
-    function adopt(target) {
-        protocols.forEach(protocol => protocol.adoptBy(target));
-    }
-}
-
 function _protocol(target) {
     if ($isFunction(target)) {
         target = target.prototype;
@@ -248,6 +231,27 @@ function _protocol(target) {
         }
         Object.defineProperty(target, key, descriptor);                
     });
+}
+
+/**
+ * Marks a class or protocol as conforming to one or more
+ * {{#crossLink "Protocol"}}{{/crossLink}}s.
+ * @method conformsTo
+ * @param    {Array}    protocols  -  conforming protocols
+ * @returns  {Function} the conformsTo decorator.
+ */
+export function conformsTo(...protocols) {
+    protocols = $flatten(protocols, true);
+    if (!protocols.every($isProtocol)) {
+        throw new TypeError("Only Protocols can be conformed to");
+    }
+    return protocols.length === 0 ? Undefined : adopt;
+    function adopt(target, key, descriptor) {
+        if (isDescriptor(descriptor)) {
+            throw new SyntaxError("@conformsTo can only be applied to classes");
+        }
+        protocols.forEach(protocol => protocol.adoptBy(target));
+    }
 }
 
 export default Protocol;

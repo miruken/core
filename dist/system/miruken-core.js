@@ -230,6 +230,9 @@ System.register(["reflect-metadata"], function (_export, _context) {
     }
 
     function _copy(target, key, descriptor) {
+        if (!isDescriptor(descriptor)) {
+            throw new SyntaxError("@decoate can only be applied to methods or properties");
+        }
         var get = descriptor.get;
         var set = descriptor.set;
         var value = descriptor.value;
@@ -311,8 +314,17 @@ System.register(["reflect-metadata"], function (_export, _context) {
     function _validateTypes(types) {
         for (var i = 0; i < types.length; ++i) {
             var type = types[i];
-            if (Array.isArray(type) && type.length !== 1) {
-                throw new SyntaxError("@design array specification at index " + i + " expects a single type");
+            if (type == null) {
+                return;
+            };
+            if (Array.isArray(type)) {
+                if (type.length !== 1) {
+                    throw new SyntaxError("@design array specification at index " + i + " expects a single type");
+                }
+                type = type[0];
+            }
+            if (!$isFunction(type)) {
+                throw new SyntaxError("@design expects basic types, classes or protocols");
             }
         }
     }
@@ -327,8 +339,8 @@ System.register(["reflect-metadata"], function (_export, _context) {
             if (!descriptor.enumerable) return;
             if ($isFunction(descriptor.value)) {
                 descriptor.value = function () {
-                    for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-                        args[_key5] = arguments[_key5];
+                    for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+                        args[_key4] = arguments[_key4];
                     }
 
                     return this[protocolInvoke](key, args);
@@ -2041,9 +2053,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
                     key = "constructor";
                 }
                 dependencies = $flatten(dependencies);
-                if (dependencies.length > 0) {
-                    Metadata.define(injectMetadataKey, dependencies, target, key);
-                }
+                Metadata.define(injectMetadataKey, dependencies, target, key);
             }));
 
             _export("inject", inject);
@@ -2184,12 +2194,11 @@ System.register(["reflect-metadata"], function (_export, _context) {
                 }
                 return _protocol.apply(undefined, args);
             }
-
             _export("protocol", protocol);
 
             function conformsTo() {
-                for (var _len4 = arguments.length, protocols = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-                    protocols[_key4] = arguments[_key4];
+                for (var _len5 = arguments.length, protocols = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+                    protocols[_key5] = arguments[_key5];
                 }
 
                 protocols = $flatten(protocols, true);
@@ -2197,12 +2206,16 @@ System.register(["reflect-metadata"], function (_export, _context) {
                     throw new TypeError("Only Protocols can be conformed to");
                 }
                 return protocols.length === 0 ? Undefined : adopt;
-                function adopt(target) {
+                function adopt(target, key, descriptor) {
+                    if (isDescriptor(descriptor)) {
+                        throw new SyntaxError("@conformsTo can only be applied to classes");
+                    }
                     protocols.forEach(function (protocol) {
                         return protocol.adoptBy(target);
                     });
                 }
             }
+
             _export("conformsTo", conformsTo);
 
             _export("default", Protocol);

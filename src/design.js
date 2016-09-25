@@ -60,9 +60,16 @@ export const design = DesignMetadata.decorator(designMetadataKey,
 
 function _validateTypes(types) {
     for (let i = 0; i < types.length; ++i) {
-        const type = types[i];
-        if (Array.isArray(type) && type.length !== 1) {
-            throw new SyntaxError(`@design array specification at index ${i} expects a single type`);            
+        let type = types[i];
+        if (type == null) { return };
+        if (Array.isArray(type)) {
+            if (type.length !== 1) {
+                throw new SyntaxError(`@design array specification at index ${i} expects a single type`);
+            }
+            type = type[0];
+        }
+        if (!$isFunction(type)) {
+            throw new SyntaxError("@design expects basic types, classes or protocols");
         }
     }
 }

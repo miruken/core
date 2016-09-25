@@ -828,6 +828,9 @@ export function copy(...args) {
 }
 
 function _copy(target, key, descriptor) {
+    if (!isDescriptor(descriptor)) {
+        throw new SyntaxError("@decoate can only be applied to methods or properties");
+    }
     const { get, set, value, initializer } = descriptor;
     if ($isFunction(value)) {
         descriptor.value = function () {
@@ -1887,9 +1890,16 @@ export const design = DesignMetadata.decorator(designMetadataKey,
 
 function _validateTypes(types) {
     for (let i = 0; i < types.length; ++i) {
-        const type = types[i];
-        if (Array.isArray(type) && type.length !== 1) {
-            throw new SyntaxError(`@design array specification at index ${i} expects a single type`);            
+        let type = types[i];
+        if (type == null) { return };
+        if (Array.isArray(type)) {
+            if (type.length !== 1) {
+                throw new SyntaxError(`@design array specification at index ${i} expects a single type`);
+            }
+            type = type[0];
+        }
+        if (!$isFunction(type)) {
+            throw new SyntaxError("@design expects basic types, classes or protocols");
         }
     }
 }
@@ -1911,9 +1921,7 @@ export const inject = Metadata.decorator(injectMetadataKey,
             key          = "constructor"
         }
         dependencies = $flatten(dependencies);
-        if (dependencies.length > 0) {
-            Metadata.define(injectMetadataKey, dependencies, target, key);
-        }
+        Metadata.define(injectMetadataKey, dependencies, target, key);
     });
 
 export default inject;
@@ -2104,24 +2112,6 @@ export function protocol(...args) {
     return _protocol(...args);
 }
 
-/**
- * Marks a class or protocol as conforming to one or more
- * {{#crossLink "Protocol"}}{{/crossLink}}s.
- * @method conformsTo
- * @param    {Array}    protocols  -  conforming protocols
- * @returns  {Function} the conformsTo decorator.
- */
-export function conformsTo(...protocols) {
-    protocols = $flatten(protocols, true);
-    if (!protocols.every($isProtocol)) {
-        throw new TypeError("Only Protocols can be conformed to");
-    }
-    return protocols.length === 0 ? Undefined : adopt;
-    function adopt(target) {
-        protocols.forEach(protocol => protocol.adoptBy(target));
-    }
-}
-
 function _protocol(target) {
     if ($isFunction(target)) {
         target = target.prototype;
@@ -2154,6 +2144,27 @@ function _protocol(target) {
         }
         Object.defineProperty(target, key, descriptor);                
     });
+}
+
+/**
+ * Marks a class or protocol as conforming to one or more
+ * {{#crossLink "Protocol"}}{{/crossLink}}s.
+ * @method conformsTo
+ * @param    {Array}    protocols  -  conforming protocols
+ * @returns  {Function} the conformsTo decorator.
+ */
+export function conformsTo(...protocols) {
+    protocols = $flatten(protocols, true);
+    if (!protocols.every($isProtocol)) {
+        throw new TypeError("Only Protocols can be conformed to");
+    }
+    return protocols.length === 0 ? Undefined : adopt;
+    function adopt(target, key, descriptor) {
+        if (isDescriptor(descriptor)) {
+            throw new SyntaxError("@conformsTo can only be applied to classes");
+        }
+        protocols.forEach(protocol => protocol.adoptBy(target));
+    }
 }
 
 export default Protocol;

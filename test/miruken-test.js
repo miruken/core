@@ -1142,7 +1142,7 @@ describe("inject", () => {
               elpehantParade(elephant) {}
           }),
           RingBrothers = Circus.extend(inject(undefined, Person), {
-              constructor(animals, ringMaster) {}
+              constructor(animals, ringMaster) {},
           });
     
     it("should get class dependencies", () => {

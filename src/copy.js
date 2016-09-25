@@ -1,4 +1,4 @@
-import decorate from "./decorate";
+import { decorate, isDescriptor } from "./decorate";
 
 /**
  * Applies copy semantics on properties and return values.
@@ -9,6 +9,9 @@ export function copy(...args) {
 }
 
 function _copy(target, key, descriptor) {
+    if (!isDescriptor(descriptor)) {
+        throw new SyntaxError("@decoate can only be applied to methods or properties");
+    }
     const { get, set, value, initializer } = descriptor;
     if ($isFunction(value)) {
         descriptor.value = function () {

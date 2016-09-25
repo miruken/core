@@ -17,9 +17,7 @@ export const inject = Metadata.decorator(injectMetadataKey,
             key          = "constructor"
         }
         dependencies = $flatten(dependencies);
-        if (dependencies.length > 0) {
-            Metadata.define(injectMetadataKey, dependencies, target, key);
-        }
+        Metadata.define(injectMetadataKey, dependencies, target, key);
     });
 
 export default inject;
