@@ -1,18 +1,27 @@
 import { Base, assignID } from "../src/base2";
 import { Enum, Flags } from "../src/enum";
-import { MethodType, $isClass } from "../src/core";
 import { Protocol, $protocols } from "../src/protocol";
-import { Modifier, $createModifier, $every } from "../src/modifier";
-import { Disposing, DisposingMixin, $using } from "../src/dispose";
-import { Interceptor, InterceptorSelector, ProxyBuilder } from "../src/proxy";
+import {
+    MethodType, $isClass, $decorator,
+    $decorate, $decorated    
+} from "../src/core";
+import {
+    Modifier, $createModifier, $every
+} from "../src/modifier";
+import {
+    Disposing, DisposingMixin, $using
+} from "../src/dispose";
+import {
+    Interceptor, InterceptorSelector, ProxyBuilder
+} from "../src/proxy";
+
 import metadata from "../src/metadata";
 import design from "../src/design";
 import inject from "../src/inject";
 
 import {
     IndexedList, $isFunction, $isString,
-    $flatten, $merge, $match, $decorator,
-    $decorate, $decorated
+    $flatten, $merge, $match
 } from "../src/util";
 
 import "reflect-metadata";

@@ -231,7 +231,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
 
     function _copy(target, key, descriptor) {
         if (!isDescriptor(descriptor)) {
-            throw new SyntaxError("@decoate can only be applied to methods or properties");
+            throw new SyntaxError("@copy can only be applied to methods or properties");
         }
         var get = descriptor.get;
         var set = descriptor.set;
@@ -1796,42 +1796,6 @@ System.register(["reflect-metadata"], function (_export, _context) {
 
             _export("$lift", $lift);
 
-            function $decorator(decorations) {
-                return function (decoratee) {
-                    if ($isNothing(decoratee)) {
-                        throw new TypeError("No decoratee specified.");
-                    }
-                    var decorator = Object.create(decoratee);
-                    Object.defineProperty(decorator, "decoratee", {
-                        configurable: false,
-                        value: decoratee
-                    });
-                    if (decorations && $isFunction(decorator.extend)) {
-                        decorator.extend(decorations);
-                    }
-                    return decorator;
-                };
-            }
-
-            _export("$decorator", $decorator);
-
-            function $decorate(decoratee, decorations) {
-                return $decorator(decorations)(decoratee);
-            }
-
-            _export("$decorate", $decorate);
-
-            function $decorated(decorator, deepest) {
-                var decoratee = void 0;
-                while (decorator && (decoratee = decorator.decoratee)) {
-                    if (!deepest) return decoratee;
-                    decorator = decoratee;
-                }
-                return decorator;
-            }
-
-            _export("$decorated", $decorated);
-
             function $flatten(arr, prune) {
                 var _ref;
 
@@ -2379,7 +2343,43 @@ System.register(["reflect-metadata"], function (_export, _context) {
             function $classOf(instance) {
                 return instance && instance.constructor;
             }
+
             _export("$classOf", $classOf);
+
+            function $decorator(decorations) {
+                return function (decoratee) {
+                    if ($isNothing(decoratee)) {
+                        throw new TypeError("No decoratee specified.");
+                    }
+                    var decorator = Object.create(decoratee);
+                    Object.defineProperty(decorator, "decoratee", {
+                        configurable: false,
+                        value: decoratee
+                    });
+                    if (decorations && $isFunction(decorator.extend)) {
+                        decorator.extend(decorations);
+                    }
+                    return decorator;
+                };
+            }
+
+            _export("$decorator", $decorator);
+
+            function $decorate(decoratee, decorations) {
+                return $decorator(decorations)(decoratee);
+            }
+
+            _export("$decorate", $decorate);
+
+            function $decorated(decorator, deepest) {
+                var decoratee = void 0;
+                while (decorator && (decoratee = decorator.decoratee)) {
+                    if (!deepest) return decoratee;
+                    decorator = decoratee;
+                }
+                return decorator;
+            }
+            _export("$decorated", $decorated);
 
             _export("Disposing", Disposing = Protocol.extend({
                 dispose: function dispose() {}

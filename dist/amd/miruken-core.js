@@ -28,9 +28,6 @@ define(["exports", "reflect-metadata"], function (exports) {
     exports.$isNothing = $isNothing;
     exports.$isSomething = $isSomething;
     exports.$lift = $lift;
-    exports.$decorator = $decorator;
-    exports.$decorate = $decorate;
-    exports.$decorated = $decorated;
     exports.$flatten = $flatten;
     exports.$equals = $equals;
     exports.$debounce = $debounce;
@@ -40,6 +37,9 @@ define(["exports", "reflect-metadata"], function (exports) {
     exports.mixin = mixin;
     exports.$isClass = $isClass;
     exports.$classOf = $classOf;
+    exports.$decorator = $decorator;
+    exports.$decorate = $decorate;
+    exports.$decorated = $decorated;
     exports.$using = $using;
 
     var _Base$extend;
@@ -787,7 +787,7 @@ define(["exports", "reflect-metadata"], function (exports) {
 
     function _copy(target, key, descriptor) {
         if (!isDescriptor(descriptor)) {
-            throw new SyntaxError("@decoate can only be applied to methods or properties");
+            throw new SyntaxError("@copy can only be applied to methods or properties");
         }
         var get = descriptor.get;
         var set = descriptor.set;
@@ -1196,36 +1196,6 @@ define(["exports", "reflect-metadata"], function (exports) {
         return function () {
             return value;
         };
-    }
-
-    function $decorator(decorations) {
-        return function (decoratee) {
-            if ($isNothing(decoratee)) {
-                throw new TypeError("No decoratee specified.");
-            }
-            var decorator = Object.create(decoratee);
-            Object.defineProperty(decorator, "decoratee", {
-                configurable: false,
-                value: decoratee
-            });
-            if (decorations && $isFunction(decorator.extend)) {
-                decorator.extend(decorations);
-            }
-            return decorator;
-        };
-    }
-
-    function $decorate(decoratee, decorations) {
-        return $decorator(decorations)(decoratee);
-    }
-
-    function $decorated(decorator, deepest) {
-        var decoratee = void 0;
-        while (decorator && (decoratee = decorator.decoratee)) {
-            if (!deepest) return decoratee;
-            decorator = decoratee;
-        }
-        return decorator;
     }
 
     function $flatten(arr, prune) {
@@ -1824,6 +1794,36 @@ define(["exports", "reflect-metadata"], function (exports) {
 
     function $classOf(instance) {
         return instance && instance.constructor;
+    }
+
+    function $decorator(decorations) {
+        return function (decoratee) {
+            if ($isNothing(decoratee)) {
+                throw new TypeError("No decoratee specified.");
+            }
+            var decorator = Object.create(decoratee);
+            Object.defineProperty(decorator, "decoratee", {
+                configurable: false,
+                value: decoratee
+            });
+            if (decorations && $isFunction(decorator.extend)) {
+                decorator.extend(decorations);
+            }
+            return decorator;
+        };
+    }
+
+    function $decorate(decoratee, decorations) {
+        return $decorator(decorations)(decoratee);
+    }
+
+    function $decorated(decorator, deepest) {
+        var decoratee = void 0;
+        while (decorator && (decoratee = decorator.decoratee)) {
+            if (!deepest) return decoratee;
+            decorator = decoratee;
+        }
+        return decorator;
     }
 
     function isUpperCase(char) {

@@ -829,7 +829,7 @@ export function copy(...args) {
 
 function _copy(target, key, descriptor) {
     if (!isDescriptor(descriptor)) {
-        throw new SyntaxError("@decoate can only be applied to methods or properties");
+        throw new SyntaxError("@copy can only be applied to methods or properties");
     }
     const { get, set, value, initializer } = descriptor;
     if ($isFunction(value)) {
@@ -1472,59 +1472,6 @@ export function $isSomething(value) {
  */
 export function $lift(value) {
     return function() { return value; };
-}
-
-/**
- * Creates a decorator builder.<br/>
- * See [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern)
- * @method
- * @param   {Object}   decorations  -  object defining decorations
- * @erturns {Function} function to build decorators.
- */
-export function $decorator(decorations) {
-    return function (decoratee) {
-        if ($isNothing(decoratee)) {
-            throw new TypeError("No decoratee specified.");
-        }
-        const decorator = Object.create(decoratee);
-        Object.defineProperty(decorator, "decoratee", {
-            configurable: false,
-            value:        decoratee
-        });
-        if (decorations && $isFunction(decorator.extend)) {
-            decorator.extend(decorations);
-        }
-        return decorator;
-    }
-}
-
-/**
- * Decorates an instance using the 
- * [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern).
- * @method
- * @param   {Object}   decoratee    -  decoratee
- * @param   {Object}   decorations  -  object defining decorations
- * @erturns {Function} function to build decorators.
- */
-export function $decorate(decoratee, decorations) {
-    return $decorator(decorations)(decoratee);
-}
-
-/**
- * Gets the decoratee used in the  
- * [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern).
- * @method
- * @param   {Object}   decorator  -  possible decorator
- * @param   {boolean}  deepest    -  true if deepest decoratee, false if nearest.
- * @erturns {Object}   decoratee if present, otherwise decorator.
- */
-export function $decorated(decorator, deepest) {
-    let decoratee;
-    while (decorator && (decoratee = decorator.decoratee)) {
-        if (!deepest) return decoratee;
-        decorator = decoratee;
-    }
-    return decorator;
 }
 
 /**
@@ -2392,6 +2339,59 @@ export function $isClass(target) {
  */
 export function $classOf(instance) {
     return instance && instance.constructor;
+}
+
+/**
+ * Creates a decorator builder.<br/>
+ * See [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern)
+ * @method
+ * @param   {Object}   decorations  -  object defining decorations
+ * @erturns {Function} function to build decorators.
+ */
+export function $decorator(decorations) {
+    return function (decoratee) {
+        if ($isNothing(decoratee)) {
+            throw new TypeError("No decoratee specified.");
+        }
+        const decorator = Object.create(decoratee);
+        Object.defineProperty(decorator, "decoratee", {
+            configurable: false,
+            value:        decoratee
+        });
+        if (decorations && $isFunction(decorator.extend)) {
+            decorator.extend(decorations);
+        }
+        return decorator;
+    }
+}
+
+/**
+ * Decorates an instance using the 
+ * [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern).
+ * @method
+ * @param   {Object}   decoratee    -  decoratee
+ * @param   {Object}   decorations  -  object defining decorations
+ * @erturns {Function} function to build decorators.
+ */
+export function $decorate(decoratee, decorations) {
+    return $decorator(decorations)(decoratee);
+}
+
+/**
+ * Gets the decoratee used in the  
+ * [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern).
+ * @method
+ * @param   {Object}   decorator  -  possible decorator
+ * @param   {boolean}  deepest    -  true if deepest decoratee, false if nearest.
+ * @erturns {Object}   decoratee if present, otherwise decorator.
+ */
+export function $decorated(decorator, deepest) {
+    let decoratee;
+    while (decorator && (decoratee = decorator.decoratee)) {
+        if (!deepest) return decoratee;
+        decorator = decoratee;
+    }
+    return decorator;
 }
 
 function isUpperCase(char) {
