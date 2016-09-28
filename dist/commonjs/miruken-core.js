@@ -7,7 +7,7 @@ exports.ProxyBuilder = exports.InterceptorSelector = exports.Interceptor = expor
 
 var _Base$extend;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 exports.Modifier = Modifier;
 exports.$createModifier = $createModifier;
@@ -35,6 +35,7 @@ exports.$lift = $lift;
 exports.$flatten = $flatten;
 exports.$equals = $equals;
 exports.$debounce = $debounce;
+exports.optional = optional;
 exports.$protocols = $protocols;
 exports.protocol = protocol;
 exports.conformsTo = conformsTo;
@@ -153,7 +154,6 @@ function isDescriptor(desc) {
     return false;
 }
 
-exports.default = decorate;
 var Undefined = exports.Undefined = K(),
     Null = exports.Null = K(null),
     True = exports.True = K(true),
@@ -753,8 +753,8 @@ function K(k) {
 };
 
 function copy() {
-    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
+    for (var _len = arguments.length, args = Array(_len), _key5 = 0; _key5 < _len; _key5++) {
+        args[_key5] = arguments[_key5];
     }
 
     return decorate(_copy, args);
@@ -798,7 +798,6 @@ function _copyOf(value) {
     return value;
 }
 
-exports.default = copy;
 var Delegate = exports.Delegate = Base.extend({
     get: function get(protocol, key, strict) {},
     set: function set(protocol, key, value, strict) {},
@@ -953,7 +952,6 @@ var Flags = exports.Flags = Enum.extend({
     }
 });
 
-exports.default = Enum;
 var ArrayManager = exports.ArrayManager = Base.extend({
     constructor: function constructor(items) {
         var _items = [];
@@ -1021,7 +1019,7 @@ var ArrayManager = exports.ArrayManager = Base.extend({
 
 var IndexedList = exports.IndexedList = Base.extend({
     constructor: function constructor() {
-        var order = arguments.length <= 0 || arguments[0] === undefined ? defaultOrder : arguments[0];
+        var order = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultOrder;
 
         var _index = {};
         this.extend({
@@ -1311,8 +1309,8 @@ var Metadata = exports.Metadata = Abstract.extend(null, {
     },
     decorator: function decorator(metadataKey, handler) {
         function decorator() {
-            for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-                args[_key2] = arguments[_key2];
+            for (var _len2 = arguments.length, args = Array(_len2), _key19 = 0; _key19 < _len2; _key19++) {
+                args[_key19] = arguments[_key19];
             }
 
             return decorate(handler, args);
@@ -1367,9 +1365,6 @@ function _metadataKeyCollector(metadataKey, target, callback) {
     });
 }
 
-exports.default = Metadata;
-
-
 var designMetadataKey = Symbol(),
     paramTypesKey = "design:paramtypes",
     propertyTypeKey = "design:type";
@@ -1414,9 +1409,13 @@ var design = exports.design = DesignMetadata.decorator(designMetadataKey, functi
     }
 });
 
-function _validateTypes(types) {
-    for (var i = 0; i < types.length; ++i) {
-        var type = types[i];
+function optional() {}
+
+function _validateTypes(_types2) {
+    var _types3 = optional(_types2);
+
+    for (var i = 0; i < _types3.length; ++i) {
+        var type = _types3[i];
         if (type == null) {
             return;
         };
@@ -1432,9 +1431,6 @@ function _validateTypes(types) {
     }
 }
 
-exports.default = design;
-
-
 var injectMetadataKey = Symbol();
 
 var inject = exports.inject = Metadata.decorator(injectMetadataKey, function (target, key, descriptor, dependencies) {
@@ -1446,8 +1442,6 @@ var inject = exports.inject = Metadata.decorator(injectMetadataKey, function (ta
     dependencies = $flatten(dependencies);
     Metadata.define(injectMetadataKey, dependencies, target, key);
 });
-
-exports.default = inject;
 
 var protocolGet = Symbol(),
     protocolSet = Symbol(),
@@ -1564,8 +1558,8 @@ function $protocols(target, own) {
 }
 
 function protocol() {
-    for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-        args[_key3] = arguments[_key3];
+    for (var _len3 = arguments.length, args = Array(_len3), _key31 = 0; _key31 < _len3; _key31++) {
+        args[_key31] = arguments[_key31];
     }
 
     if (args.length === 0) {
@@ -1586,8 +1580,8 @@ function _protocol(target) {
         if (!descriptor.enumerable) return;
         if ($isFunction(descriptor.value)) {
             descriptor.value = function () {
-                for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-                    args[_key4] = arguments[_key4];
+                for (var _len4 = arguments.length, args = Array(_len4), _key33 = 0; _key33 < _len4; _key33++) {
+                    args[_key33] = arguments[_key33];
                 }
 
                 return this[protocolInvoke](key, args);
@@ -1614,8 +1608,8 @@ function _protocol(target) {
 }
 
 function conformsTo() {
-    for (var _len5 = arguments.length, protocols = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-        protocols[_key5] = arguments[_key5];
+    for (var _len5 = arguments.length, protocols = Array(_len5), _key34 = 0; _key34 < _len5; _key34++) {
+        protocols[_key34] = arguments[_key34];
     }
 
     protocols = $flatten(protocols, true);
@@ -1632,9 +1626,6 @@ function conformsTo() {
         });
     }
 }
-
-exports.default = Protocol;
-
 
 var baseExtend = Base.extend,
     baseImplement = Base.implement,
@@ -1660,8 +1651,8 @@ var Variance = exports.Variance = Enum({
 });
 
 Base.extend = function () {
-    for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-        args[_key6] = arguments[_key6];
+    for (var _len6 = arguments.length, args = Array(_len6), _key36 = 0; _key36 < _len6; _key36++) {
+        args[_key36] = arguments[_key36];
     }
 
     var constraints = args,
@@ -1724,8 +1715,8 @@ Base.prototype.extend = function (key, value) {
 };
 
 function mixin() {
-    for (var _len7 = arguments.length, behaviors = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
-        behaviors[_key7] = arguments[_key7];
+    for (var _len7 = arguments.length, behaviors = Array(_len7), _key38 = 0; _key38 < _len7; _key38++) {
+        behaviors[_key38] = arguments[_key38];
     }
 
     behaviors = $flatten(behaviors, true);
@@ -2093,7 +2084,7 @@ var Traversal = exports.Traversal = Abstract.extend({}, {
 });
 
 function _preOrder(node, visitor, context) {
-    var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+    var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
     checkCircularity(visited, node);
     if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
@@ -2106,7 +2097,7 @@ function _preOrder(node, visitor, context) {
 }
 
 function _postOrder(node, visitor, context) {
-    var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+    var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
     checkCircularity(visited, node);
     if (!node || !$isFunction(visitor)) {
@@ -2119,7 +2110,7 @@ function _postOrder(node, visitor, context) {
 }
 
 function _levelOrder(node, visitor, context) {
-    var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+    var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
     if (!node || !$isFunction(visitor)) {
         return;
@@ -2138,7 +2129,7 @@ function _levelOrder(node, visitor, context) {
 }
 
 function _reverseLevelOrder(node, visitor, context) {
-    var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+    var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
     if (!node || !$isFunction(visitor)) {
         return;
@@ -2303,8 +2294,8 @@ function proxyClass(proxy, protocols) {
 function proxyMethod(key, method, source, type) {
     var interceptors = void 0;
     function methodProxy() {
-        for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
-            args[_key8] = arguments[_key8];
+        for (var _len8 = arguments.length, args = Array(_len8), _key41 = 0; _key41 < _len8; _key41++) {
+            args[_key41] = arguments[_key41];
         }
 
         var _this = this;

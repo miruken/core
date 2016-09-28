@@ -1,6 +1,6 @@
 import {isDescriptor } from "./decorate";
 import { $isFunction } from "./util";
-import Metadata from "./metadata";
+import { Metadata } from "./metadata";
 
 const designMetadataKey = Symbol(),
       paramTypesKey     = "design:paramtypes",
@@ -57,7 +57,7 @@ export const design = DesignMetadata.decorator(designMetadataKey,
             Metadata.define(propertyTypeKey, types[0], target, key);
         }
     });
-
+    
 function _validateTypes(types) {
     for (let i = 0; i < types.length; ++i) {
         let type = types[i];
@@ -73,5 +73,3 @@ function _validateTypes(types) {
         }
     }
 }
-
-export default design;

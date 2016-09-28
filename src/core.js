@@ -10,8 +10,8 @@ import {
     $flatten
 } from "./util";
 
-import Metadata from "./metadata";
-import Enum from "./enum";
+import { Metadata }from "./metadata";
+import { Enum } from "./enum";
 import "reflect-metadata";
 
 const baseExtend      = Base.extend,

@@ -11,7 +11,7 @@ import {
 } from "./delegate";
 
 import { isDescriptor } from "./decorate";
-import Metadata from "./metadata";
+import { Metadata } from "./metadata";
 
 /**
  * Declares methods and properties independent of a class.
@@ -254,4 +254,3 @@ export function conformsTo(...protocols) {
     }
 }
 
-export default Protocol;

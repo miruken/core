@@ -41,5 +41,3 @@ function _copyOf(value) {
     }
     return value;
 }
-
-export default copy;

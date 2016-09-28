@@ -128,5 +128,3 @@ export const Flags = Enum.extend({
         return new this(value, name);
     }
 });
-
-export default Enum;

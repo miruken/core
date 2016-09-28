@@ -26,7 +26,8 @@ module.exports = function(config) {
                 sourceMap: 'inline',
                 presets: [ 'es2015'],
                 plugins: [
-                    'transform-decorators-legacy'
+                    'transform-decorators-legacy',
+                    'transform-function-parameter-decorators'
                 ]
             }
         },

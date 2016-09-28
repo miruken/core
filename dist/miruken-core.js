@@ -150,8 +150,6 @@ export function isDescriptor(desc) {
     return false;
 }
 
-export default decorate;
-
 /*
   base2 - copyright 2007-2009, Dean Edwards
   http://code.google.com/p/base2/
@@ -861,8 +859,6 @@ function _copyOf(value) {
     return value;
 }
 
-export default copy;
-
 /**
  * Delegates properties and methods to another object.<br/>
  * See {{#crossLink "Protocol"}}{{/crossLink}}
@@ -1094,8 +1090,6 @@ export const Flags = Enum.extend({
         return new this(value, name);
     }
 });
-
-export default Enum;
 
 /**
  * Helper class to simplify array manipulation.
@@ -1777,7 +1771,6 @@ function _metadataKeyCollector(metadataKey, target, callback) {
     keys.forEach(key => this.collect(metadataKey, target, key, callback));
 }
 
-export default Metadata;
 
 const designMetadataKey = Symbol(),
       paramTypesKey     = "design:paramtypes",
@@ -1835,7 +1828,10 @@ export const design = DesignMetadata.decorator(designMetadataKey,
         }
     });
 
-function _validateTypes(types) {
+export function optional() {
+}
+    
+function _validateTypes(@optional types) {
     for (let i = 0; i < types.length; ++i) {
         let type = types[i];
         if (type == null) { return };
@@ -1850,8 +1846,6 @@ function _validateTypes(types) {
         }
     }
 }
-
-export default design;
 
 const injectMetadataKey = Symbol();
 
@@ -1870,8 +1864,6 @@ export const inject = Metadata.decorator(injectMetadataKey,
         dependencies = $flatten(dependencies);
         Metadata.define(injectMetadataKey, dependencies, target, key);
     });
-
-export default inject;
 
 /**
  * Declares methods and properties independent of a class.
@@ -2114,7 +2106,6 @@ export function conformsTo(...protocols) {
     }
 }
 
-export default Protocol;
 
 const baseExtend      = Base.extend,
       baseImplement   = Base.implement,

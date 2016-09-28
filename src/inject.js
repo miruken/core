@@ -1,4 +1,4 @@
-import Metadata from "./metadata";
+import { Metadata } from "./metadata";
 import { isDescriptor } from "./decorate";
 import { $flatten } from "./util";
 
@@ -19,5 +19,3 @@ export const inject = Metadata.decorator(injectMetadataKey,
         dependencies = $flatten(dependencies);
         Metadata.define(injectMetadataKey, dependencies, target, key);
     });
-
-export default inject;

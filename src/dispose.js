@@ -1,6 +1,6 @@
 import { Base, Module, Undefined } from "./base2";
 import { $isFunction, $isPromise } from "./util";
-import Protocol from "./protocol";
+import { Protocol } from "./protocol";
 
 /**
  * Protocol for targets that manage disposal lifecycle.

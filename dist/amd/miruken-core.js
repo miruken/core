@@ -31,6 +31,7 @@ define(["exports", "reflect-metadata"], function (exports) {
     exports.$flatten = $flatten;
     exports.$equals = $equals;
     exports.$debounce = $debounce;
+    exports.optional = optional;
     exports.$protocols = $protocols;
     exports.protocol = protocol;
     exports.conformsTo = conformsTo;
@@ -62,7 +63,7 @@ define(["exports", "reflect-metadata"], function (exports) {
     var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
         return typeof obj;
     } : function (obj) {
-        return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
+        return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
     };
 
     function _toConsumableArray(arr) {
@@ -178,7 +179,6 @@ define(["exports", "reflect-metadata"], function (exports) {
         return false;
     }
 
-    exports.default = decorate;
     var Undefined = exports.Undefined = K(),
         Null = exports.Null = K(null),
         True = exports.True = K(true),
@@ -778,8 +778,8 @@ define(["exports", "reflect-metadata"], function (exports) {
     };
 
     function copy() {
-        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-            args[_key] = arguments[_key];
+        for (var _len = arguments.length, args = Array(_len), _key5 = 0; _key5 < _len; _key5++) {
+            args[_key5] = arguments[_key5];
         }
 
         return decorate(_copy, args);
@@ -823,7 +823,6 @@ define(["exports", "reflect-metadata"], function (exports) {
         return value;
     }
 
-    exports.default = copy;
     var Delegate = exports.Delegate = Base.extend({
         get: function get(protocol, key, strict) {},
         set: function set(protocol, key, value, strict) {},
@@ -978,7 +977,6 @@ define(["exports", "reflect-metadata"], function (exports) {
         }
     });
 
-    exports.default = Enum;
     var ArrayManager = exports.ArrayManager = Base.extend({
         constructor: function constructor(items) {
             var _items = [];
@@ -1046,7 +1044,7 @@ define(["exports", "reflect-metadata"], function (exports) {
 
     var IndexedList = exports.IndexedList = Base.extend({
         constructor: function constructor() {
-            var order = arguments.length <= 0 || arguments[0] === undefined ? defaultOrder : arguments[0];
+            var order = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultOrder;
 
             var _index = {};
             this.extend({
@@ -1336,8 +1334,8 @@ define(["exports", "reflect-metadata"], function (exports) {
         },
         decorator: function decorator(metadataKey, handler) {
             function decorator() {
-                for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-                    args[_key2] = arguments[_key2];
+                for (var _len2 = arguments.length, args = Array(_len2), _key19 = 0; _key19 < _len2; _key19++) {
+                    args[_key19] = arguments[_key19];
                 }
 
                 return decorate(handler, args);
@@ -1392,9 +1390,6 @@ define(["exports", "reflect-metadata"], function (exports) {
         });
     }
 
-    exports.default = Metadata;
-
-
     var designMetadataKey = Symbol(),
         paramTypesKey = "design:paramtypes",
         propertyTypeKey = "design:type";
@@ -1439,9 +1434,13 @@ define(["exports", "reflect-metadata"], function (exports) {
         }
     });
 
-    function _validateTypes(types) {
-        for (var i = 0; i < types.length; ++i) {
-            var type = types[i];
+    function optional() {}
+
+    function _validateTypes(_types2) {
+        var _types3 = optional(_types2);
+
+        for (var i = 0; i < _types3.length; ++i) {
+            var type = _types3[i];
             if (type == null) {
                 return;
             };
@@ -1457,9 +1456,6 @@ define(["exports", "reflect-metadata"], function (exports) {
         }
     }
 
-    exports.default = design;
-
-
     var injectMetadataKey = Symbol();
 
     var inject = exports.inject = Metadata.decorator(injectMetadataKey, function (target, key, descriptor, dependencies) {
@@ -1471,8 +1467,6 @@ define(["exports", "reflect-metadata"], function (exports) {
         dependencies = $flatten(dependencies);
         Metadata.define(injectMetadataKey, dependencies, target, key);
     });
-
-    exports.default = inject;
 
     var protocolGet = Symbol(),
         protocolSet = Symbol(),
@@ -1589,8 +1583,8 @@ define(["exports", "reflect-metadata"], function (exports) {
     }
 
     function protocol() {
-        for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-            args[_key3] = arguments[_key3];
+        for (var _len3 = arguments.length, args = Array(_len3), _key31 = 0; _key31 < _len3; _key31++) {
+            args[_key31] = arguments[_key31];
         }
 
         if (args.length === 0) {
@@ -1611,8 +1605,8 @@ define(["exports", "reflect-metadata"], function (exports) {
             if (!descriptor.enumerable) return;
             if ($isFunction(descriptor.value)) {
                 descriptor.value = function () {
-                    for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-                        args[_key4] = arguments[_key4];
+                    for (var _len4 = arguments.length, args = Array(_len4), _key33 = 0; _key33 < _len4; _key33++) {
+                        args[_key33] = arguments[_key33];
                     }
 
                     return this[protocolInvoke](key, args);
@@ -1639,8 +1633,8 @@ define(["exports", "reflect-metadata"], function (exports) {
     }
 
     function conformsTo() {
-        for (var _len5 = arguments.length, protocols = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-            protocols[_key5] = arguments[_key5];
+        for (var _len5 = arguments.length, protocols = Array(_len5), _key34 = 0; _key34 < _len5; _key34++) {
+            protocols[_key34] = arguments[_key34];
         }
 
         protocols = $flatten(protocols, true);
@@ -1657,9 +1651,6 @@ define(["exports", "reflect-metadata"], function (exports) {
             });
         }
     }
-
-    exports.default = Protocol;
-
 
     var baseExtend = Base.extend,
         baseImplement = Base.implement,
@@ -1685,8 +1676,8 @@ define(["exports", "reflect-metadata"], function (exports) {
     });
 
     Base.extend = function () {
-        for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-            args[_key6] = arguments[_key6];
+        for (var _len6 = arguments.length, args = Array(_len6), _key36 = 0; _key36 < _len6; _key36++) {
+            args[_key36] = arguments[_key36];
         }
 
         var constraints = args,
@@ -1749,8 +1740,8 @@ define(["exports", "reflect-metadata"], function (exports) {
     };
 
     function mixin() {
-        for (var _len7 = arguments.length, behaviors = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
-            behaviors[_key7] = arguments[_key7];
+        for (var _len7 = arguments.length, behaviors = Array(_len7), _key38 = 0; _key38 < _len7; _key38++) {
+            behaviors[_key38] = arguments[_key38];
         }
 
         behaviors = $flatten(behaviors, true);
@@ -2118,7 +2109,7 @@ define(["exports", "reflect-metadata"], function (exports) {
     });
 
     function _preOrder(node, visitor, context) {
-        var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+        var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
         checkCircularity(visited, node);
         if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
@@ -2131,7 +2122,7 @@ define(["exports", "reflect-metadata"], function (exports) {
     }
 
     function _postOrder(node, visitor, context) {
-        var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+        var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
         checkCircularity(visited, node);
         if (!node || !$isFunction(visitor)) {
@@ -2144,7 +2135,7 @@ define(["exports", "reflect-metadata"], function (exports) {
     }
 
     function _levelOrder(node, visitor, context) {
-        var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+        var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
         if (!node || !$isFunction(visitor)) {
             return;
@@ -2163,7 +2154,7 @@ define(["exports", "reflect-metadata"], function (exports) {
     }
 
     function _reverseLevelOrder(node, visitor, context) {
-        var visited = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+        var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
         if (!node || !$isFunction(visitor)) {
             return;
@@ -2328,8 +2319,8 @@ define(["exports", "reflect-metadata"], function (exports) {
     function proxyMethod(key, method, source, type) {
         var interceptors = void 0;
         function methodProxy() {
-            for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
-                args[_key8] = arguments[_key8];
+            for (var _len8 = arguments.length, args = Array(_len8), _key41 = 0; _key41 < _len8; _key41++) {
+                args[_key41] = arguments[_key41];
             }
 
             var _this = this;

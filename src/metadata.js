@@ -1,6 +1,6 @@
 import { Abstract, getPropertyDescriptors } from "./base2";
 import { $isFunction } from "./util";
-import decorate from "./decorate";
+import { decorate } from "./decorate";
 import "reflect-metadata";
 
 /**
@@ -240,4 +240,3 @@ function _metadataKeyCollector(metadataKey, target, callback) {
     keys.forEach(key => this.collect(metadataKey, target, key, callback));
 }
 
-export default Metadata;

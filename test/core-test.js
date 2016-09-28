@@ -15,9 +15,8 @@ import {
     Interceptor, InterceptorSelector, ProxyBuilder
 } from "../src/proxy";
 
-import metadata from "../src/metadata";
-import design from "../src/design";
-import inject from "../src/inject";
+import { design } from "../src/design";
+import { inject } from "../src/inject";
 
 import {
     IndexedList, $isFunction, $isString,
@@ -1071,7 +1070,7 @@ describe("ProxyBuilder", () => {
     });
 });
 
-describe("design", () => {
+describe("@design", () => {
     const Zoo = Base.extend({
               @design(Person)
               trainer: undefined,

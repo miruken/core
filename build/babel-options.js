@@ -13,7 +13,10 @@ exports.base = function() {
         compact: false,
         code: true,
         presets: [ 'es2015' ],
-        plugins: ['transform-decorators-legacy']
+        plugins: [
+            'transform-decorators-legacy',
+            'transform-function-parameter-decorators'
+        ]
     };
 }
 
