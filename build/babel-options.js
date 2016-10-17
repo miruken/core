@@ -14,8 +14,7 @@ exports.base = function() {
         code: true,
         presets: [ 'es2015' ],
         plugins: [
-            'transform-decorators-legacy',
-            'transform-function-parameter-decorators'
+            'transform-decorators-legacy'
         ]
     };
 }

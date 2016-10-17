@@ -14,6 +14,7 @@ import {
 import {
     Interceptor, InterceptorSelector, ProxyBuilder
 } from "../src/proxy";
+import { Policy } from "../src/policy";
 
 import { design } from "../src/design";
 import { inject } from "../src/inject";
@@ -887,6 +888,79 @@ describe("Protocol", () => {
     });
 });
 
+describe("Policy", () => {
+    const MyPolicy = Policy.extend({
+        ack:   false,
+        log:   false,
+        child: undefined
+    });
+
+    describe("#copy", () => {
+        it("should copy policy", () => {
+            const policy     = new Policy({ack: true, log: true}),
+                  policyCopy = policy.copy();
+            expect(policyCopy).to.not.equal(policy);
+            expect(policyCopy.ack).to.be.true;
+            expect(policyCopy.log).to.be.true;
+            expect(policyCopy.child).to.be.undefined;
+        });
+
+        it("should copy nested policy", () => {
+            const policy     = new Policy({
+                      ack: true,
+                      log: true,
+                      child: new MyPolicy({ack: true})
+                  }),
+                  policyCopy = policy.copy();
+            expect(policyCopy).to.not.equal(policy);
+            expect(policyCopy.ack).to.be.true;
+            expect(policyCopy.log).to.be.true;
+            expect(policyCopy.child).to.not.equal(policy.child);
+            expect(policyCopy.child.ack).to.be.true;
+            expect(policyCopy.child.log).to.be.false;
+            expect(policyCopy.child.child).to.be.undefined;            
+        });        
+    });
+
+    describe("#mergeInto", () => {
+        it("should merge policy", () => {
+            const policy1 = new Policy({
+                      ack: true,
+                      log: true,
+                      child: new MyPolicy({ack: true})                
+                  }),
+                  policy2 = new Policy({log: false});
+            policy1.mergeInto(policy2);
+            expect(policy2.ack).to.be.true;
+            expect(policy2.log).to.be.false;
+            expect(policy2.child).to.not.equal(policy1.child);
+            expect(policy2.child.ack).to.be.true;
+            expect(policy2.child.log).to.be.false;            
+        });
+
+        it("should merge nested policy", () => {
+            const policy1 = new Policy({
+                      ack: true,
+                      log: true,
+                      child: new MyPolicy({ack: true})
+                  }),
+                  policy2 = new Policy({
+                      log: false,
+                      child: new MyPolicy({
+                          ack: false,
+                          log: true
+                      })
+                  });
+            policy1.mergeInto(policy2);
+            expect(policy2.ack).to.be.true;
+            expect(policy2.log).to.be.false;
+            expect(policy2.child).to.not.equal(policy1.child);
+            expect(policy2.child.ack).to.be.false;
+            expect(policy2.child.log).to.be.true;            
+        });        
+    });
+});
+
 describe("ProxyBuilder", () => {
     const ToUpperInterceptor = Interceptor.extend({
         intercept(invocation) {
@@ -1079,7 +1153,7 @@ describe("@design", () => {
               constructor(zooKeeper, animals) {},
         
               @design(Dog, Elephant, AsianElephant)
-              safari() {}
+              safari(dog, elephant, asianElephant) {}
           }),
           PettingZoo = Zoo.extend(design(Person, Person, [Animal]), {
               constructor(zooKeeper, trainer, animals) {

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.ProxyBuilder = exports.InterceptorSelector = exports.Interceptor = exports.Facet = exports.Traversal = exports.TraversingMixin = exports.Traversing = exports.TraversingAxis = exports.DisposingMixin = exports.Disposing = exports.Startup = exports.Starting = exports.Parenting = exports.Invoking = exports.Resolving = exports.Initializing = exports.Variance = exports.MethodType = exports.nothing = exports.emptyArray = exports.$isProtocol = exports.StrictProtocol = exports.Protocol = exports.inject = exports.design = exports.Metadata = exports.IndexedList = exports.ArrayManager = exports.Flags = exports.Enum = exports.ArrayDelegate = exports.ObjectDelegate = exports.Delegate = exports.partial = exports.extend = exports.Module = exports.Abstract = exports.Package = exports.Base = exports.False = exports.True = exports.Null = exports.Undefined = exports.$instant = exports.$promise = exports.$optional = exports.$child = exports.$every = exports.$eval = exports.$lazy = exports.$use = exports.$eq = undefined;
+exports.ProxyBuilder = exports.InterceptorSelector = exports.Interceptor = exports.Facet = exports.Policy = exports.Traversal = exports.TraversingMixin = exports.Traversing = exports.TraversingAxis = exports.DisposingMixin = exports.Disposing = exports.Startup = exports.Starting = exports.Parenting = exports.Invoking = exports.Resolving = exports.Initializing = exports.Variance = exports.MethodType = exports.nothing = exports.emptyArray = exports.$isProtocol = exports.StrictProtocol = exports.Protocol = exports.inject = exports.design = exports.Metadata = exports.IndexedList = exports.ArrayManager = exports.Flags = exports.Enum = exports.ArrayDelegate = exports.ObjectDelegate = exports.Delegate = exports.partial = exports.extend = exports.Module = exports.Abstract = exports.Package = exports.Base = exports.False = exports.True = exports.Null = exports.Undefined = exports.$instant = exports.$promise = exports.$optional = exports.$child = exports.$every = exports.$eval = exports.$lazy = exports.$use = exports.$eq = undefined;
 
 var _Base$extend;
 
@@ -35,7 +35,6 @@ exports.$lift = $lift;
 exports.$flatten = $flatten;
 exports.$equals = $equals;
 exports.$debounce = $debounce;
-exports.optional = optional;
 exports.$protocols = $protocols;
 exports.protocol = protocol;
 exports.conformsTo = conformsTo;
@@ -753,8 +752,8 @@ function K(k) {
 };
 
 function copy() {
-    for (var _len = arguments.length, args = Array(_len), _key5 = 0; _key5 < _len; _key5++) {
-        args[_key5] = arguments[_key5];
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
     }
 
     return decorate(_copy, args);
@@ -1309,8 +1308,8 @@ var Metadata = exports.Metadata = Abstract.extend(null, {
     },
     decorator: function decorator(metadataKey, handler) {
         function decorator() {
-            for (var _len2 = arguments.length, args = Array(_len2), _key19 = 0; _key19 < _len2; _key19++) {
-                args[_key19] = arguments[_key19];
+            for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+                args[_key2] = arguments[_key2];
             }
 
             return decorate(handler, args);
@@ -1409,13 +1408,9 @@ var design = exports.design = DesignMetadata.decorator(designMetadataKey, functi
     }
 });
 
-function optional() {}
-
-function _validateTypes(_types2) {
-    var _types3 = optional(_types2);
-
-    for (var i = 0; i < _types3.length; ++i) {
-        var type = _types3[i];
+function _validateTypes(types) {
+    for (var i = 0; i < types.length; ++i) {
+        var type = types[i];
         if (type == null) {
             return;
         };
@@ -1558,8 +1553,8 @@ function $protocols(target, own) {
 }
 
 function protocol() {
-    for (var _len3 = arguments.length, args = Array(_len3), _key31 = 0; _key31 < _len3; _key31++) {
-        args[_key31] = arguments[_key31];
+    for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+        args[_key3] = arguments[_key3];
     }
 
     if (args.length === 0) {
@@ -1580,8 +1575,8 @@ function _protocol(target) {
         if (!descriptor.enumerable) return;
         if ($isFunction(descriptor.value)) {
             descriptor.value = function () {
-                for (var _len4 = arguments.length, args = Array(_len4), _key33 = 0; _key33 < _len4; _key33++) {
-                    args[_key33] = arguments[_key33];
+                for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+                    args[_key4] = arguments[_key4];
                 }
 
                 return this[protocolInvoke](key, args);
@@ -1608,8 +1603,8 @@ function _protocol(target) {
 }
 
 function conformsTo() {
-    for (var _len5 = arguments.length, protocols = Array(_len5), _key34 = 0; _key34 < _len5; _key34++) {
-        protocols[_key34] = arguments[_key34];
+    for (var _len5 = arguments.length, protocols = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+        protocols[_key5] = arguments[_key5];
     }
 
     protocols = $flatten(protocols, true);
@@ -1651,8 +1646,8 @@ var Variance = exports.Variance = Enum({
 });
 
 Base.extend = function () {
-    for (var _len6 = arguments.length, args = Array(_len6), _key36 = 0; _key36 < _len6; _key36++) {
-        args[_key36] = arguments[_key36];
+    for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+        args[_key6] = arguments[_key6];
     }
 
     var constraints = args,
@@ -1715,8 +1710,8 @@ Base.prototype.extend = function (key, value) {
 };
 
 function mixin() {
-    for (var _len7 = arguments.length, behaviors = Array(_len7), _key38 = 0; _key38 < _len7; _key38++) {
-        behaviors[_key38] = arguments[_key38];
+    for (var _len7 = arguments.length, behaviors = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
+        behaviors[_key7] = arguments[_key7];
     }
 
     behaviors = $flatten(behaviors, true);
@@ -2158,6 +2153,51 @@ function _reverseLevelOrder(node, visitor, context) {
     }
 }
 
+var Policy = exports.Policy = Base.extend({
+    mergeInto: function mergeInto(policy) {
+        var _this12 = this;
+
+        if (!(policy instanceof this.constructor)) {
+            return false;
+        }
+        var descriptors = getPropertyDescriptors(this),
+            keys = Reflect.ownKeys(descriptors);
+        keys.forEach(function (key) {
+            var keyValue = _this12[key];
+            if ($isFunction(keyValue)) {
+                return;
+            }
+            if (keyValue !== undefined && _this12.hasOwnProperty(key)) {
+                var policyValue = policy[key];
+                if (policyValue === undefined || !policy.hasOwnProperty(key)) {
+                    policy[key] = _copyPolicyValue(keyValue);
+                } else if ($isFunction(keyValue.mergeInto)) {
+                    keyValue.mergeInto(policyValue);
+                }
+            }
+        });
+        return true;
+    },
+    copy: function copy() {
+        var policy = Reflect.construct(this.constructor, emptyArray);
+        this.mergeInto(policy);
+        return policy;
+    }
+});
+
+function _copyPolicyValue(policyValue) {
+    if ($isNothing(policyValue)) {
+        return policyValue;
+    }
+    if (Array.isArray(policyValue)) {
+        return policyValue.map(_copyPolicyValue);
+    }
+    if ($isFunction(policyValue.copy)) {
+        return policyValue.copy();
+    }
+    return policyValue;
+}
+
 var Facet = exports.Facet = Object.freeze({
     Parameters: "parameters",
 
@@ -2294,8 +2334,8 @@ function proxyClass(proxy, protocols) {
 function proxyMethod(key, method, source, type) {
     var interceptors = void 0;
     function methodProxy() {
-        for (var _len8 = arguments.length, args = Array(_len8), _key41 = 0; _key41 < _len8; _key41++) {
-            args[_key41] = arguments[_key41];
+        for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
+            args[_key8] = arguments[_key8];
         }
 
         var _this = this;
@@ -2359,7 +2399,7 @@ function proxyMethod(key, method, source, type) {
 }
 
 function extendProxyInstance(key, value) {
-    var _this12 = this;
+    var _this13 = this;
 
     var proxy = this.constructor,
         overrides = arguments.length === 1 ? key : _defineProperty({}, key, value),
@@ -2370,7 +2410,7 @@ function extendProxyInstance(key, value) {
         var value = descriptor.value;
         var get = descriptor.get;
         var set = descriptor.set;
-        var baseDescriptor = getPropertyDescriptors(_this12, key);
+        var baseDescriptor = getPropertyDescriptors(_this13, key);
         if (!baseDescriptor) return;
         if (value) {
             if ($isFunction(value)) {
@@ -2390,7 +2430,7 @@ function extendProxyInstance(key, value) {
                 baseDescriptor.set = set.baseMethod;
             }
         }
-        Object.defineProperty(_this12, key, baseDescriptor);
+        Object.defineProperty(_this13, key, baseDescriptor);
     });
     this.base(overrides);
     Reflect.ownKeys(props).forEach(function (key) {
@@ -2414,7 +2454,7 @@ function extendProxyInstance(key, value) {
                 descriptor.set = proxyMethod(key, set, proxy, MethodType.Set);
             }
         }
-        Object.defineProperty(_this12, key, descriptor);
+        Object.defineProperty(_this13, key, descriptor);
     });
     return this;
 }
