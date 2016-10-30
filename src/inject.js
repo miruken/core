@@ -1,6 +1,6 @@
 import { Metadata } from "./metadata";
 import { isDescriptor } from "./decorate";
-import { $flatten } from "./util";
+import { $isFunction, $flatten } from "./util";
 
 const injectMetadataKey = Symbol();
 
@@ -12,10 +12,17 @@ const injectMetadataKey = Symbol();
 export const inject = Metadata.decorator(injectMetadataKey,
     (target, key, descriptor, dependencies) => {
         if (!isDescriptor(descriptor)) {
-            dependencies = key;
-            target       = target.prototype        
-            key          = "constructor"
+            dependencies = $flatten(key);
+            Metadata.define(injectMetadataKey, dependencies, target.prototype, "constructor");
+            return;
         }
+        const { value } = descriptor;        
         dependencies = $flatten(dependencies);
-        Metadata.define(injectMetadataKey, dependencies, target, key);
+        if ($isFunction(value)) {
+            Metadata.define(injectMetadataKey, dependencies, target, key);
+        } else if (dependencies.length !== 1) {
+            throw new SyntaxError(`@inject for property '${key}' requires single key to be specified`);
+        } else {
+            Metadata.define(injectMetadataKey, dependencies[0], target, key);
+        }
     });

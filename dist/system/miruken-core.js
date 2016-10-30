@@ -1838,7 +1838,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
                             }
                         },
                         setIndex: function setIndex(index, item) {
-                            if (_items.length <= index || _items[index] === undefined) {
+                            if (_items[index] === undefined) {
                                 _items[index] = this.mapItem(item);
                             }
                             return this;
@@ -2156,7 +2156,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
                     _validateTypes(types);
                     Metadata.define(paramTypesKey, types, target, key);
                 } else if (types.length !== 1) {
-                    throw new SyntaxError("@design for property '" + key + "' requires a type to be specified");
+                    throw new SyntaxError("@design for property '" + key + "' requires a single type to be specified");
                 } else {
                     _validateTypes(types);
                     Metadata.define(propertyTypeKey, types[0], target, key);
@@ -2169,12 +2169,20 @@ System.register(["reflect-metadata"], function (_export, _context) {
 
             _export("inject", inject = Metadata.decorator(injectMetadataKey, function (target, key, descriptor, dependencies) {
                 if (!isDescriptor(descriptor)) {
-                    dependencies = key;
-                    target = target.prototype;
-                    key = "constructor";
+                    dependencies = $flatten(key);
+                    Metadata.define(injectMetadataKey, dependencies, target.prototype, "constructor");
+                    return;
                 }
+                var value = descriptor.value;
+
                 dependencies = $flatten(dependencies);
-                Metadata.define(injectMetadataKey, dependencies, target, key);
+                if ($isFunction(value)) {
+                    Metadata.define(injectMetadataKey, dependencies, target, key);
+                } else if (dependencies.length !== 1) {
+                    throw new SyntaxError("@inject for property '" + key + "' requires single key to be specified");
+                } else {
+                    Metadata.define(injectMetadataKey, dependencies[0], target, key);
+                }
             }));
 
             _export("inject", inject);
@@ -2585,13 +2593,13 @@ System.register(["reflect-metadata"], function (_export, _context) {
             _export("Policy", Policy);
 
             _export("Facet", Facet = Object.freeze({
-                Parameters: "parameters",
+                Parameters: "proxy:parameters",
 
-                Interceptors: "interceptors",
+                Interceptors: "proxy:interceptors",
 
-                InterceptorSelectors: "interceptorSelectors",
+                InterceptorSelectors: "proxy:interceptorSelectors",
 
-                Delegate: "delegate"
+                Delegate: "proxy:delegate"
             }));
 
             _export("Facet", Facet);

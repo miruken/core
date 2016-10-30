@@ -37,8 +37,7 @@ export const ArrayManager = Base.extend({
              * @chainable
              */
             setIndex(index, item) {
-                if ((_items.length <= index) ||
-                    (_items[index] === undefined)) {
+                if (_items[index] === undefined) {
                     _items[index] = this.mapItem(item);
                 }
                 return this;

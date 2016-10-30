@@ -12,19 +12,19 @@ export const Facet = Object.freeze({
     /**
      * @property {string} Parameters
      */
-    Parameters: "parameters",
+    Parameters: "proxy:parameters",
     /**
      * @property {string} Interceptors
      */        
-    Interceptors: "interceptors",
+    Interceptors: "proxy:interceptors",
     /**
      * @property {string} InterceptorSelectors
      */                
-    InterceptorSelectors: "interceptorSelectors",
+    InterceptorSelectors: "proxy:interceptorSelectors",
     /**
      * @property {string} Delegate
      */                        
-    Delegate: "delegate"
+    Delegate: "proxy:delegate"
 });
 
 /**

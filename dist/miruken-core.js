@@ -1128,8 +1128,7 @@ export const ArrayManager = Base.extend({
              * @chainable
              */
             setIndex(index, item) {
-                if ((_items.length <= index) ||
-                    (_items[index] === undefined)) {
+                if (_items[index] === undefined) {
                     _items[index] = this.mapItem(item);
                 }
                 return this;
@@ -1821,7 +1820,7 @@ export const design = DesignMetadata.decorator(designMetadataKey,
             _validateTypes(types);
             Metadata.define(paramTypesKey, types, target, key);        
         } else if (types.length !== 1) {
-            throw new SyntaxError(`@design for property '${key}' requires a type to be specified`);
+            throw new SyntaxError(`@design for property '${key}' requires a single type to be specified`);
         } else {
             _validateTypes(types);            
             Metadata.define(propertyTypeKey, types[0], target, key);
@@ -1854,12 +1853,19 @@ const injectMetadataKey = Symbol();
 export const inject = Metadata.decorator(injectMetadataKey,
     (target, key, descriptor, dependencies) => {
         if (!isDescriptor(descriptor)) {
-            dependencies = key;
-            target       = target.prototype        
-            key          = "constructor"
+            dependencies = $flatten(key);
+            Metadata.define(injectMetadataKey, dependencies, target.prototype, "constructor");
+            return;
         }
+        const { value } = descriptor;        
         dependencies = $flatten(dependencies);
-        Metadata.define(injectMetadataKey, dependencies, target, key);
+        if ($isFunction(value)) {
+            Metadata.define(injectMetadataKey, dependencies, target, key);
+        } else if (dependencies.length !== 1) {
+            throw new SyntaxError(`@inject for property '${key}' requires single key to be specified`);
+        } else {
+            Metadata.define(injectMetadataKey, dependencies[0], target, key);
+        }
     });
 
 /**
@@ -2866,19 +2872,19 @@ export const Facet = Object.freeze({
     /**
      * @property {string} Parameters
      */
-    Parameters: "parameters",
+    Parameters: "proxy:parameters",
     /**
      * @property {string} Interceptors
      */        
-    Interceptors: "interceptors",
+    Interceptors: "proxy:interceptors",
     /**
      * @property {string} InterceptorSelectors
      */                
-    InterceptorSelectors: "interceptorSelectors",
+    InterceptorSelectors: "proxy:interceptorSelectors",
     /**
      * @property {string} Delegate
      */                        
-    Delegate: "delegate"
+    Delegate: "proxy:delegate"
 });
 
 /**

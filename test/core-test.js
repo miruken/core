@@ -12,7 +12,8 @@ import {
     Disposing, DisposingMixin, $using
 } from "../src/dispose";
 import {
-    Interceptor, InterceptorSelector, ProxyBuilder
+    Facet, Interceptor, InterceptorSelector,
+    ProxyBuilder
 } from "../src/proxy";
 import { Policy } from "../src/policy";
 
@@ -983,8 +984,8 @@ describe("ProxyBuilder", () => {
             const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
-                                     parameters:   ["Patches", "red"],
-                                     interceptors: [new LogInterceptor()]
+                                     [Facet.Parameters]:   ["Patches", "red"],
+                                     [Facet.interceptors]: [new LogInterceptor()]
                   });
             expect(dog.name).to.equal("Patches");
             expect(dog.color).to.equal("red");            
@@ -1017,7 +1018,7 @@ describe("ProxyBuilder", () => {
                       }
                   }),
                   animal = new AnimalProxy({
-                      interceptors: [new AnimalInterceptor()]
+                      [Facet.Interceptors]: [new AnimalInterceptor()]
                   });
             animal.name = "Pluto";
             expect(animal.name).to.equal("Pluto");
@@ -1037,8 +1038,8 @@ describe("ProxyBuilder", () => {
                   }),
                   FlyingDogProxy = proxyBuilder.buildProxy([Dog, Flying, DisposingMixin]);
             $using(new FlyingDogProxy({
-                       parameters:   ["Wonder Dog"],
-                       interceptors: [new FlyingInterceptor(), new LogInterceptor()]
+                       [Facet.Parameters]:   ["Wonder Dog"],
+                       [Facet.Interceptors]: [new FlyingInterceptor(), new LogInterceptor()]
                    }), wonderDog => {
                 expect(wonderDog.name).to.equal("Wonder Dog");
                 expect(wonderDog.talk()).to.equal("Ruff Ruff");
@@ -1052,8 +1053,8 @@ describe("ProxyBuilder", () => {
             const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
-                                     parameters:   ["Patches"],
-                                     interceptors: [new ToUpperInterceptor()]
+                                     [Facet.Parameters]:   ["Patches"],
+                                     [Facet.Interceptors]: [new ToUpperInterceptor()]
                                  });
             expect(dog.name).to.equal("PATCHES");
             expect(dog.talk()).to.equal("RUFF RUFF");
@@ -1068,9 +1069,9 @@ describe("ProxyBuilder", () => {
                   }}),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
-                                     parameters:           ["Patches"],
-                                     interceptors:         [new ToUpperInterceptor()],
-                                     interceptorSelectors: [selector]
+                                     [Facet.Parameters]:           ["Patches"],
+                                     [Facet.Interceptors]:         [new ToUpperInterceptor()],
+                                     [Facet.InterceptorSelectors]: [selector]
                                  });
             expect(dog.name).to.equal("PATCHES");
             expect(dog.talk()).to.equal("Ruff Ruff");
@@ -1107,8 +1108,8 @@ describe("ProxyBuilder", () => {
             const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
-                                    parameters:  ["Patches"],
-                                    interceptors:[new ToUpperInterceptor()]
+                                    [Facet.Parameters]:  ["Patches"],
+                                    [Facet.Interceptors]:[new ToUpperInterceptor()]
                                  });
             dog.extend("getColor", () => { return "white with brown spots"; });
             dog.extend({
@@ -1122,8 +1123,8 @@ describe("ProxyBuilder", () => {
             const proxyBuilder = new ProxyBuilder(),
                   DogProxy     = proxyBuilder.buildProxy([Dog]),
                   dog          = new DogProxy({
-                                    parameters:  ["Patches"],
-                                    interceptors:[new ToUpperInterceptor()]
+                                    [Facet.Parameters]:  ["Patches"],
+                                    [Facet.Interceptors]:[new ToUpperInterceptor()]
                                  });
             expect(dog.name).to.equal("PATCHES");
             dog.extend({
@@ -1199,7 +1200,7 @@ describe("@design", () => {
                 @design
                 friend: undefined
             });
-        }).to.throw(Error, "@design for property 'friend' requires a type to be specified");
+        }).to.throw(Error, "@design for property 'friend' requires a single type to be specified");
     });
 
     it("should reject invalid array specifications", () => {
