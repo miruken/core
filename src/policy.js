@@ -37,6 +37,8 @@ export const Policy = Base.extend({
         this.mergeInto(policy);
         return policy;
     }
+}, {
+    coerce(...args) { return Reflect.construct(this, args); }
 });
 
 function _copyPolicyValue(policyValue) {

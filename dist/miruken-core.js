@@ -1984,7 +1984,7 @@ export const Protocol = Base.extend({
             if (getPropertyDescriptors(protocolProto, key) ||
                 getPropertyDescriptors(prototype, key)) return;
             Object.defineProperty(prototype, key, props[key]);            
-        });        
+        });
     },
     /**
      * Creates a protocol binding over the object.
@@ -2849,6 +2849,8 @@ export const Policy = Base.extend({
         this.mergeInto(policy);
         return policy;
     }
+}, {
+    coerce(...args) { return Reflect.construct(this, args); }
 });
 
 function _copyPolicyValue(policyValue) {

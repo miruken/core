@@ -129,7 +129,7 @@ export const Protocol = Base.extend({
             if (getPropertyDescriptors(protocolProto, key) ||
                 getPropertyDescriptors(prototype, key)) return;
             Object.defineProperty(prototype, key, props[key]);            
-        });        
+        });
     },
     /**
      * Creates a protocol binding over the object.

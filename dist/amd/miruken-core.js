@@ -2216,6 +2216,14 @@ define(["exports", "reflect-metadata"], function (exports) {
             this.mergeInto(policy);
             return policy;
         }
+    }, {
+        coerce: function coerce() {
+            for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
+                args[_key8] = arguments[_key8];
+            }
+
+            return Reflect.construct(this, args);
+        }
     });
 
     function _copyPolicyValue(policyValue) {
@@ -2367,8 +2375,8 @@ define(["exports", "reflect-metadata"], function (exports) {
     function proxyMethod(key, method, source, type) {
         var interceptors = void 0;
         function methodProxy() {
-            for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
-                args[_key8] = arguments[_key8];
+            for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
+                args[_key9] = arguments[_key9];
             }
 
             var _this = this;
