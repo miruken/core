@@ -1858,17 +1858,17 @@ var TraversingAxis = exports.TraversingAxis = Enum({
 
     DescendantReverse: 7,
 
-    ChildOrSelf: 8,
+    SelfOrChild: 8,
 
-    SiblingOrSelf: 9,
+    SelfOrSibling: 9,
 
-    AncestorOrSelf: 10,
+    SelfOrAncestor: 10,
 
-    DescendantOrSelf: 11,
+    SelfOrDescendant: 11,
 
-    DescendantOrSelfReverse: 12,
+    SelfOrDescendantReverse: 12,
 
-    AncestorSiblingOrSelf: 13
+    SelfSiblingOrAncestor: 13
 });
 
 var Traversing = exports.Traversing = Protocol.extend({
@@ -1897,22 +1897,22 @@ var TraversingMixin = exports.TraversingMixin = Module.extend({
                 break;
 
             case TraversingAxis.Sibling:
-                traverseAncestorSiblingOrSelf.call(object, visitor, false, false, context);
+                traverseSelfSiblingOrAncestor.call(object, visitor, false, false, context);
                 break;
 
-            case TraversingAxis.ChildOrSelf:
+            case TraversingAxis.SelfOrChild:
                 traverseChildren.call(object, visitor, true, context);
                 break;
 
-            case TraversingAxis.SiblingOrSelf:
-                traverseAncestorSiblingOrSelf.call(object, visitor, true, false, context);
+            case TraversingAxis.SelfOrSibling:
+                traverseSelfSiblingOrAncestor.call(object, visitor, true, false, context);
                 break;
 
             case TraversingAxis.Ancestor:
                 traverseAncestors.call(object, visitor, false, context);
                 break;
 
-            case TraversingAxis.AncestorOrSelf:
+            case TraversingAxis.SelfOrAncestor:
                 traverseAncestors.call(object, visitor, true, context);
                 break;
 
@@ -1924,16 +1924,16 @@ var TraversingMixin = exports.TraversingMixin = Module.extend({
                 traverseDescendantsReverse.call(object, visitor, false, context);
                 break;
 
-            case TraversingAxis.DescendantOrSelf:
+            case TraversingAxis.SelfOrDescendant:
                 traverseDescendants.call(object, visitor, true, context);
                 break;
 
-            case TraversingAxis.DescendantOrSelfReverse:
+            case TraversingAxis.SelfOrDescendantReverse:
                 traverseDescendantsReverse.call(object, visitor, true, context);
                 break;
 
-            case TraversingAxis.AncestorSiblingOrSelf:
-                traverseAncestorSiblingOrSelf.call(object, visitor, true, true, context);
+            case TraversingAxis.SelfSiblingOrAncestor:
+                traverseSelfSiblingOrAncestor.call(object, visitor, true, true, context);
                 break;
 
             default:
@@ -2032,7 +2032,7 @@ function traverseDescendantsReverse(visitor, withSelf, context) {
     }
 }
 
-function traverseAncestorSiblingOrSelf(visitor, withSelf, withAncestor, context) {
+function traverseSelfSiblingOrAncestor(visitor, withSelf, withAncestor, context) {
     if (withSelf && visitor.call(context, this)) {
         return;
     }

@@ -85,7 +85,7 @@ describe("Traversing", () => {
                   .addChild(new TreeNode("child 3 1")),
                   visited = [];
             root.addChild(child1, child2, child3);
-            root.traverse(TraversingAxis.ChildOrSelf, node => {
+            root.traverse(TraversingAxis.SelfOrChild, node => {
                 visited.push(node);
             });
             expect(visited).to.eql([root, child1, child2, child3]);
@@ -99,7 +99,7 @@ describe("Traversing", () => {
                   .addChild(new TreeNode("child 3 1")),
                   visited = [];
             root.addChild(child1, child2, child3);
-            child2.traverse(TraversingAxis.SiblingOrSelf, node => {
+            child2.traverse(TraversingAxis.SelfOrSibling, node => {
                 visited.push(node);
             });
             expect(visited).to.eql([child2, child1, child3]);
@@ -125,7 +125,7 @@ describe("Traversing", () => {
                   visited    = [];
             root.addChild(child);
             child.addChild(grandChild);
-            grandChild.traverse(TraversingAxis.AncestorOrSelf, node => {
+            grandChild.traverse(TraversingAxis.SelfOrAncestor, node => {
                 visited.push(node);
             });
             expect(visited).to.eql([grandChild, child, root]);
@@ -170,7 +170,7 @@ describe("Traversing", () => {
                   visited  = [];
             child3.addChild(child3_1);
             root.addChild(child1, child2, child3);
-            root.traverse(TraversingAxis.DescendantOrSelf, node => {
+            root.traverse(TraversingAxis.SelfOrDescendant, node => {
                 visited.push(node);
             });
             expect(visited).to.eql([root, child1, child2, child3, child3_1]);
@@ -185,7 +185,7 @@ describe("Traversing", () => {
                   visited  = [];
             child3.addChild(child3_1);
             root.addChild(child1, child2, child3);
-            root.traverse(TraversingAxis.DescendantOrSelfReverse, node => {
+            root.traverse(TraversingAxis.SelfOrDescendantReverse, node => {
                 visited.push(node);
             });
             expect(visited).to.eql([child3_1, child1, child2, child3, root]);
@@ -202,7 +202,7 @@ describe("Traversing", () => {
             child3.addChild(child3_1);
             parent.addChild(child1, child2, child3);
             root.addChild(parent);
-            child3.traverse(TraversingAxis.AncestorSiblingOrSelf, node => {
+            child3.traverse(TraversingAxis.SelfSiblingOrAncestor, node => {
                 visited.push(node);
             });
             expect(visited).to.eql([child3, child1, child2, parent, root]);

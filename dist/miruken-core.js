@@ -2504,34 +2504,34 @@ export const TraversingAxis = Enum({
     DescendantReverse: 7,
     /**
      * Traverse current node and children.
-     * @property {number} ChildOrSelf
+     * @property {number} SelfOrChild
      */
-    ChildOrSelf: 8,
+    SelfOrChild: 8,
     /**
      * Traverse current node and siblings.
-     * @property {number} SiblingOrSelf
+     * @property {number} SelfOrSibling
      */
-    SiblingOrSelf: 9,
+    SelfOrSibling: 9,
     /**
      * Traverse current node and ancestors.
-     * @property {number} AncestorOrSelf
+     * @property {number} SelfOrAncestor
      */
-    AncestorOrSelf: 10,
+    SelfOrAncestor: 10,
     /**
      * Traverse current node and descendents.
-     * @property {number} DescendantOrSelf
+     * @property {number} SelfOrDescendant
      */
-    DescendantOrSelf: 11,
+    SelfOrDescendant: 11,
     /**
      * Traverse current node and descendents in reverse.
-     * @property {number} DescendantOrSelfReverse
+     * @property {number} SelfOrDescendantReverse
      */
-    DescendantOrSelfReverse: 12,
+    SelfOrDescendantReverse: 12,
     /**
      * Traverse current node, ancestors and siblings.
-     * @property {number} AncestorSiblingOrSelf 
+     * @property {number} SelfSiblingOrAncestor 
      */
-    AncestorSiblingOrSelf: 13
+    SelfSiblingOrAncestor: 13
 });
 
 /**
@@ -2578,22 +2578,22 @@ export const TraversingMixin = Module.extend({
             break;
 
         case TraversingAxis.Sibling:
-            traverseAncestorSiblingOrSelf.call(object, visitor, false, false, context);
+            traverseSelfSiblingOrAncestor.call(object, visitor, false, false, context);
             break;
             
-        case TraversingAxis.ChildOrSelf:
+        case TraversingAxis.SelfOrChild:
             traverseChildren.call(object, visitor, true, context);
             break;
 
-        case TraversingAxis.SiblingOrSelf:
-            traverseAncestorSiblingOrSelf.call(object, visitor, true, false, context);
+        case TraversingAxis.SelfOrSibling:
+            traverseSelfSiblingOrAncestor.call(object, visitor, true, false, context);
             break;
             
         case TraversingAxis.Ancestor:
             traverseAncestors.call(object, visitor, false, context);
             break;
             
-        case TraversingAxis.AncestorOrSelf:
+        case TraversingAxis.SelfOrAncestor:
             traverseAncestors.call(object, visitor, true, context);
             break;
             
@@ -2605,16 +2605,16 @@ export const TraversingMixin = Module.extend({
             traverseDescendantsReverse.call(object, visitor, false, context);
             break;
             
-        case TraversingAxis.DescendantOrSelf:
+        case TraversingAxis.SelfOrDescendant:
             traverseDescendants.call(object, visitor, true, context);
             break;
 
-        case TraversingAxis.DescendantOrSelfReverse:
+        case TraversingAxis.SelfOrDescendantReverse:
             traverseDescendantsReverse.call(object, visitor, true, context);
             break;
             
-        case TraversingAxis.AncestorSiblingOrSelf:
-            traverseAncestorSiblingOrSelf.call(object, visitor, true, true, context);
+        case TraversingAxis.SelfSiblingOrAncestor:
+            traverseSelfSiblingOrAncestor.call(object, visitor, true, true, context);
             break;
 
         default:
@@ -2685,7 +2685,7 @@ function traverseDescendantsReverse(visitor, withSelf, context) {
     }
 }
 
-function traverseAncestorSiblingOrSelf(visitor, withSelf, withAncestor, context) {
+function traverseSelfSiblingOrAncestor(visitor, withSelf, withAncestor, context) {
     if (withSelf && visitor.call(context, this)) {
         return;
     }
