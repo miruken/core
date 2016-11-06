@@ -333,7 +333,7 @@ export function $isObject(obj) {
  * @returns  {boolean} true if a plain object.
  */
 export function $isPlainObject(obj) {
-    return !!(obj && (obj.constructor === Object))
+    return $isObject(obj) && obj.constructor === Object;
 }
 
 /**

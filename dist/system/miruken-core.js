@@ -491,7 +491,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
     _export("$isObject", $isObject);
 
     function $isPlainObject(obj) {
-        return !!(obj && obj.constructor === Object);
+        return $isObject(obj) && obj.constructor === Object;
     }
 
     _export("$isPlainObject", $isPlainObject);
@@ -2144,7 +2144,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
                         throw new SyntaxError("@design for constructor expects at least " + target.length + " parameters but only " + key.length + " specified");
                     }
                     _validateTypes(key);
-                    Metadata.define(paramTypesKey, key, target.prototype, "constructor");
+                    DesignMetadata.define(paramTypesKey, key, target.prototype, "constructor");
                     return;
                 }
                 var value = descriptor.value;
@@ -2154,12 +2154,12 @@ System.register(["reflect-metadata"], function (_export, _context) {
                         throw new SyntaxError("@design for method '" + key + "' expects at least " + value.length + " parameters but only " + types.length + " specified");
                     }
                     _validateTypes(types);
-                    Metadata.define(paramTypesKey, types, target, key);
+                    DesignMetadata.define(paramTypesKey, types, target, key);
                 } else if (types.length !== 1) {
                     throw new SyntaxError("@design for property '" + key + "' requires a single type to be specified");
                 } else {
                     _validateTypes(types);
-                    Metadata.define(propertyTypeKey, types[0], target, key);
+                    DesignMetadata.define(propertyTypeKey, types[0], target, key);
                 }
             }));
 
