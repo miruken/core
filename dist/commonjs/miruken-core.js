@@ -1762,7 +1762,7 @@ function $isClass(target) {
 }
 
 function $classOf(instance) {
-    return instance && instance.constructor;
+    return instance == null ? undefined : instance.constructor;
 }
 
 function $decorator(decorations) {

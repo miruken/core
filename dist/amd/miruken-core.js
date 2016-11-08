@@ -1787,7 +1787,7 @@ define(["exports", "reflect-metadata"], function (exports) {
     }
 
     function $classOf(instance) {
-        return instance && instance.constructor;
+        return instance == null ? undefined : instance.constructor;
     }
 
     function $decorator(decorations) {

@@ -751,7 +751,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
     _export("$isClass", $isClass);
 
     function $classOf(instance) {
-        return instance && instance.constructor;
+        return instance == null ? undefined : instance.constructor;
     }
 
     _export("$classOf", $classOf);

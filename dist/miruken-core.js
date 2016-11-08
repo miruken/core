@@ -2332,7 +2332,7 @@ export function $isClass(target) {
  * @returns  {Function} instance class. 
  */
 export function $classOf(instance) {
-    return instance && instance.constructor;
+    return instance == null ? undefined : instance.constructor;
 }
 
 /**
