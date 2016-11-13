@@ -11,14 +11,15 @@ module.exports = function(config) {
 
         jspm: {
             loadFiles: [paths.tests],
-            serveFiles: [paths.source]
+            serveFiles: [paths.source, "dist/*.js"]
         },
         
         files: [],
         
         preprocessors: {
             [paths.tests]: ['babel'],
-            [paths.source]: ['babel']
+            [paths.source]: ['babel'],
+            "dist/*.js":  ["babel"]
         },
 
         babelPreprocessor: {
