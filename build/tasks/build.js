@@ -4,14 +4,16 @@ var to5 = require('gulp-babel');
 var paths = require('../paths');
 var compilerOptions = require('../babel-options');
 var assign = Object.assign || require('object.assign');
-var rollup = require("rollup");
+var rollup = require("rollup").rollup;
+var rollupMultiEntry = require("rollup-plugin-multi-entry");
 
 var jsName = paths.packageName + '.js';
 
 gulp.task("rollup", function(done) {
-    rollup.rollup({
-        entry: "src/core.js",
-        dest:  paths.output + jsName
+    rollup({
+        entry:   paths.source,
+        dest:    paths.output + jsName,
+        plugins: [rollupMultiEntry()]
     })
     .then(function(bundle) {
         bundle.write({
@@ -20,8 +22,8 @@ gulp.task("rollup", function(done) {
         console.log('Build complete');
     })
     .catch(function(err) {
-      console.log('rollup error');
-      console.log(err);
+        console.log('rollup error');
+        console.log(err);
     })
     .then(done, done);
 });

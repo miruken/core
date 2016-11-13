@@ -3,7 +3,7 @@
 System.register(["reflect-metadata"], function (_export, _context) {
     "use strict";
 
-    var _Base$extend, _typeof, Undefined, __prototyping, _counter, _IGNORE, _BASE, _HIDDEN, _slice, _subclass, Base, Package, Abstract, _moduleCount, Module, _toString, ArrayManager, IndexedList, Delegate, ObjectDelegate, ArrayDelegate, Metadata, protocolGet, protocolSet, protocolInvoke, protocolDelegate, protocolStrict, protocolMetadataKey, Protocol, StrictProtocol, $isProtocol, Defining, Enum, Flags, baseExtend, baseImplement, baseProtoExtend, emptyArray, nothing, MethodType, Variance, Initializing, Resolving, Invoking, Parenting, Starting, Startup;
+    var _Base$extend, _typeof, Undefined, Null, True, False, __prototyping, _counter, _IGNORE, _BASE, _HIDDEN, _slice, _subclass, Base, Package, Abstract, _moduleCount, Module, _toString, ArrayManager, IndexedList, Delegate, ObjectDelegate, ArrayDelegate, Metadata, protocolGet, protocolSet, protocolInvoke, protocolDelegate, protocolStrict, protocolMetadataKey, Protocol, StrictProtocol, $isProtocol, Defining, Enum, Flags, baseExtend, baseImplement, baseProtoExtend, emptyArray, nothing, MethodType, Variance, Initializing, Resolving, Invoking, Parenting, Starting, Startup, designMetadataKey, paramTypesKey, propertyTypeKey, DesignMetadata, design, Disposing, DisposingMixin, TraversingAxis, Traversing, TraversingMixin, Traversal, injectMetadataKey, inject, $eq, $use, $lazy, $eval, $every, $child, $optional, $promise, $instant, Policy, Facet, Interceptor, InterceptorSelector, ProxyBuilder, noProxyMethods;
 
     function _defineProperty(obj, key, value) {
         if (key in obj) {
@@ -65,6 +65,13 @@ System.register(["reflect-metadata"], function (_export, _context) {
             return module[name].apply(module, args);
         };
     }
+
+    function pcopy(object) {
+        _dummy.prototype = object;
+        return new _dummy();
+    }
+
+    function _dummy() {}
 
     function _extend(object, source) {
         if (object && source) {
@@ -224,6 +231,43 @@ System.register(["reflect-metadata"], function (_export, _context) {
         return props;
     }
 
+    function instanceOf(object, klass) {
+
+        if (typeof klass != "function") {
+            throw new TypeError("Invalid 'instanceOf' operand.");
+        }
+
+        if (object == null) return false;
+
+        if (object.constructor == klass) return true;
+        if (klass.ancestorOf) return klass.ancestorOf(object.constructor);
+
+        if (object instanceof klass) return true;
+
+        if (Base.ancestorOf == klass.ancestorOf) return false;
+
+        if (Base.ancestorOf == object.constructor.ancestorOf) return klass == Object;
+
+        switch (klass) {
+            case Array:
+                return _toString.call(object) == "[object Array]";
+            case Date:
+                return _toString.call(object) == "[object Date]";
+            case RegExp:
+                return _toString.call(object) == "[object RegExp]";
+            case Function:
+                return typeOf(object) == "function";
+            case String:
+            case Number:
+            case Boolean:
+                return typeOf(object) == _typeof(klass.prototype.valueOf());
+            case Object:
+                return true;
+        }
+
+        return false;
+    }
+
     function typeOf(object) {
         var type = typeof object === "undefined" ? "undefined" : _typeof(object);
         switch (type) {
@@ -234,6 +278,12 @@ System.register(["reflect-metadata"], function (_export, _context) {
             default:
                 return type;
         }
+    }
+
+    function assignID(object, name) {
+        if (!name) name = object.nodeType == 1 ? "uniqueID" : "base2ID";
+        if (!object.hasOwnProperty(name)) object[name] = "b2_" + _counter++;
+        return object[name];
     }
 
     function format(string) {
@@ -297,49 +347,6 @@ System.register(["reflect-metadata"], function (_export, _context) {
         };
     }
 
-    function defaultOrder(a, b) {
-        return a < b;
-    }
-
-    function $isFunction(fn) {
-        return fn instanceof Function;
-    }
-
-    function $isObject(obj) {
-        return typeOf(obj) === "object";
-    }
-
-    function $isNothing(value) {
-        return value == null;
-    }
-
-    function $isSomething$1(value) {
-        return value != null;
-    }
-
-    function $flatten(arr, prune) {
-        var _ref;
-
-        if (!Array.isArray(arr)) return arr;
-        var items = arr.map(function (item) {
-            return $flatten(item, prune);
-        });
-        if (prune) items = items.filter($isSomething$1);
-        return (_ref = []).concat.apply(_ref, _toConsumableArray(items));
-    }
-
-    function $equals(obj1, obj2) {
-        if (obj1 === obj2) {
-            return true;
-        }
-        if (obj1 && $isFunction(obj1.equals)) {
-            return obj1.equals(obj2);
-        } else if (obj2 && $isFunction(obj2.equals)) {
-            return obj2.equals(obj1);
-        }
-        return false;
-    }
-
     function decorate(decorator, args) {
         if (isDescriptor(args[args.length - 1])) {
             return decorator.apply(undefined, _toConsumableArray(args).concat([[]]));
@@ -365,18 +372,150 @@ System.register(["reflect-metadata"], function (_export, _context) {
         return false;
     }
 
+    function copy() {
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+        }
+
+        return decorate(_copy, args);
+    }
+
+    function _copy(target, key, descriptor) {
+        if (!isDescriptor(descriptor)) {
+            throw new SyntaxError("@copy can only be applied to methods or properties");
+        }
+        var get = descriptor.get,
+            set = descriptor.set,
+            value = descriptor.value,
+            initializer = descriptor.initializer;
+
+        if ($isFunction(value)) {
+            descriptor.value = function () {
+                return _copyOf(value.apply(this, arguments));
+            };
+        }
+        if ($isFunction(initializer)) {
+            descriptor.initializer = function () {
+                return _copyOf(initializer.apply(this));
+            };
+        }
+        if ($isFunction(get)) {
+            descriptor.get = function () {
+                return _copyOf(get.apply(this));
+            };
+        }
+        if ($isFunction(set)) {
+            descriptor.set = function (value) {
+                return set.call(this, _copyOf(value));
+            };
+        }
+    }
+
+    function _copyOf(value) {
+        if (value != null && $isFunction(value.copy)) {
+            value = value.copy();
+        }
+        return value;
+    }
+
+    function defaultOrder(a, b) {
+        return a < b;
+    }
+
+    function $isString(str) {
+        return typeOf(str) === "string";
+    }
+
+    function $isSymbol(str) {
+        return Object(str) instanceof Symbol;
+    }
+
+    function $isFunction$1(fn) {
+        return fn instanceof Function;
+    }
+
+    function $isObject(obj) {
+        return typeOf(obj) === "object";
+    }
+
+    function $isPlainObject(obj) {
+        return $isObject(obj) && obj.constructor === Object;
+    }
+
+    function $isPromise(promise) {
+        return promise && $isFunction$1(promise.then);
+    }
+
+    function $isNothing(value) {
+        return value == null;
+    }
+
+    function $isSomething$1(value) {
+        return value != null;
+    }
+
+    function $lift(value) {
+        return function () {
+            return value;
+        };
+    }
+
+    function $flatten(arr, prune) {
+        var _ref;
+
+        if (!Array.isArray(arr)) return arr;
+        var items = arr.map(function (item) {
+            return $flatten(item, prune);
+        });
+        if (prune) items = items.filter($isSomething$1);
+        return (_ref = []).concat.apply(_ref, _toConsumableArray(items));
+    }
+
+    function $equals(obj1, obj2) {
+        if (obj1 === obj2) {
+            return true;
+        }
+        if (obj1 && $isFunction$1(obj1.equals)) {
+            return obj1.equals(obj2);
+        } else if (obj2 && $isFunction$1(obj2.equals)) {
+            return obj2.equals(obj1);
+        }
+        return false;
+    }
+
+    function $debounce(fn, wait, immediate, defaultReturnValue) {
+        var timeout = void 0;
+        return function () {
+            var context = this,
+                args = arguments;
+            var later = function later() {
+                timeout = null;
+                if (!immediate) {
+                    return fn.apply(context, args);
+                }
+            };
+            var callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow) {
+                return fn.apply(context, args);
+            }
+            return defaultReturnValue;
+        };
+    }
+
     function _metadataGetter(metadataKey, own, target, targetKey) {
         return own ? this.getOwn(metadataKey, target, targetKey) : this.get(metadataKey, target, targetKey);
     }
 
     function _metadataKeyGetter(metadataKey, own, target, callback) {
-        var _this5 = this;
+        var _this6 = this;
 
         var found = false;
-        if (!$isFunction(callback)) return false;
+        if (!$isFunction$1(callback)) return false;
         var keys = Reflect.ownKeys(own ? target : getPropertyDescriptors(target)).concat("constructor");
         keys.forEach(function (key) {
-            var metadata = own ? _this5.getOwn(metadataKey, target, key) : _this5.get(metadataKey, target, key);
+            var metadata = own ? _this6.getOwn(metadataKey, target, key) : _this6.get(metadataKey, target, key);
             if (metadata) {
                 callback(metadata, key);
                 found = true;
@@ -386,28 +525,28 @@ System.register(["reflect-metadata"], function (_export, _context) {
     }
 
     function _metadataCollector(metadataKey, target, targetKey, callback) {
-        if (!callback && $isFunction(targetKey)) {
+        if (!callback && $isFunction$1(targetKey)) {
             var _ref2 = [null, targetKey];
             targetKey = _ref2[0];
             callback = _ref2[1];
         }
-        if (!$isFunction(callback)) return;
+        if (!$isFunction$1(callback)) return;
         this.collect(metadataKey, target, targetKey, callback);
     }
 
     function _metadataKeyCollector(metadataKey, target, callback) {
-        var _this6 = this;
+        var _this7 = this;
 
-        if (!$isFunction(callback)) return;
+        if (!$isFunction$1(callback)) return;
         var keys = Reflect.ownKeys(getPropertyDescriptors(target)).concat("constructor");
         keys.forEach(function (key) {
-            return _this6.collect(metadataKey, target, key, callback);
+            return _this7.collect(metadataKey, target, key, callback);
         });
     }
 
     function $protocols(target, own) {
         if (!target) return [];
-        if ($isFunction(target)) {
+        if ($isFunction$1(target)) {
             target = target.prototype;
         }
         var protocols = !own ? new Set() : Metadata.getOwn(protocolMetadataKey, target);
@@ -425,8 +564,8 @@ System.register(["reflect-metadata"], function (_export, _context) {
     }
 
     function protocol() {
-        for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-            args[_key2] = arguments[_key2];
+        for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+            args[_key3] = arguments[_key3];
         }
 
         if (args.length === 0) {
@@ -438,17 +577,17 @@ System.register(["reflect-metadata"], function (_export, _context) {
     }
 
     function _protocol(target) {
-        if ($isFunction(target)) {
+        if ($isFunction$1(target)) {
             target = target.prototype;
         }
         Reflect.ownKeys(target).forEach(function (key) {
             if (key === "constructor") return;
             var descriptor = Object.getOwnPropertyDescriptor(target, key);
             if (!descriptor.enumerable) return;
-            if ($isFunction(descriptor.value)) {
+            if ($isFunction$1(descriptor.value)) {
                 descriptor.value = function () {
-                    for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-                        args[_key3] = arguments[_key3];
+                    for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+                        args[_key4] = arguments[_key4];
                     }
 
                     return this[protocolInvoke](key, args);
@@ -475,8 +614,8 @@ System.register(["reflect-metadata"], function (_export, _context) {
     }
 
     function conformsTo() {
-        for (var _len4 = arguments.length, protocols = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-            protocols[_key4] = arguments[_key4];
+        for (var _len5 = arguments.length, protocols = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+            protocols[_key5] = arguments[_key5];
         }
 
         protocols = $flatten(protocols, true);
@@ -495,13 +634,13 @@ System.register(["reflect-metadata"], function (_export, _context) {
     }
 
     function mixin() {
-        for (var _len6 = arguments.length, behaviors = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-            behaviors[_key6] = arguments[_key6];
+        for (var _len7 = arguments.length, behaviors = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
+            behaviors[_key7] = arguments[_key7];
         }
 
         behaviors = $flatten(behaviors, true);
         return function (target) {
-            if (behaviors.length > 0 && $isFunction(target.implement)) {
+            if (behaviors.length > 0 && $isFunction$1(target.implement)) {
                 behaviors.forEach(function (b) {
                     return target.implement(b);
                 });
@@ -513,7 +652,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
         if (!target || $isProtocol(target)) return false;
         if (target.prototype instanceof Base) return true;
         var name = target.name;
-        return name && $isFunction(target) && isUpperCase(name.charAt(0));
+        return name && $isFunction$1(target) && isUpperCase(name.charAt(0));
     }
 
     function $classOf(instance) {
@@ -530,7 +669,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
                 configurable: false,
                 value: decoratee
             });
-            if (decorations && $isFunction(decorator.extend)) {
+            if (decorations && $isFunction$1(decorator.extend)) {
                 decorator.extend(decorations);
             }
             return decorator;
@@ -554,6 +693,529 @@ System.register(["reflect-metadata"], function (_export, _context) {
         return char.toUpperCase() === char;
     }
 
+    function _validateTypes(types) {
+        for (var i = 0; i < types.length; ++i) {
+            var type = types[i];
+            if (type == null) {
+                return;
+            }
+            if (Array.isArray(type)) {
+                if (type.length !== 1) {
+                    throw new SyntaxError("@design array specification at index " + i + " expects a single type");
+                }
+                type = type[0];
+            }
+            if (!$isFunction$1(type)) {
+                throw new SyntaxError("@design expects basic types, classes or protocols");
+            }
+        }
+    }
+
+    function $using(disposing, action, context) {
+        if (disposing && $isFunction$1(disposing.dispose)) {
+            if (!$isPromise(action)) {
+                var result = void 0;
+                try {
+                    result = $isFunction$1(action) ? action.call(context, disposing) : action;
+                    if (!$isPromise(result)) {
+                        return result;
+                    }
+                } finally {
+                    if ($isPromise(result)) {
+                        action = result;
+                    } else {
+                        var dresult = disposing.dispose();
+                        if (dresult !== undefined) {
+                            return dresult;
+                        }
+                    }
+                }
+            }
+            return action.then(function (res) {
+                var dres = disposing.dispose();
+                return dres !== undefined ? dres : res;
+            }, function (err) {
+                var dres = disposing.dispose();
+                return dres !== undefined ? dres : Promise.reject(err);
+            });
+        }
+    }
+
+    function checkCircularity(visited, node) {
+        if (visited.indexOf(node) !== -1) {
+            throw new Error("Circularity detected for node " + node);
+        }
+        visited.push(node);
+        return node;
+    }
+
+    function traverseSelf(visitor, context) {
+        visitor.call(context, this);
+    }
+
+    function traverseRoot(visitor, context) {
+        var parent = void 0,
+            root = this,
+            visited = [this];
+        while (parent = root.parent) {
+            checkCircularity(visited, parent);
+            root = parent;
+        }
+        visitor.call(context, root);
+    }
+
+    function traverseChildren(visitor, withSelf, context) {
+        if (withSelf && visitor.call(context, this)) {
+            return;
+        }
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
+
+        try {
+            for (var _iterator = this.children[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                var child = _step.value;
+
+                if (visitor.call(context, child)) {
+                    return;
+                }
+            }
+        } catch (err) {
+            _didIteratorError = true;
+            _iteratorError = err;
+        } finally {
+            try {
+                if (!_iteratorNormalCompletion && _iterator.return) {
+                    _iterator.return();
+                }
+            } finally {
+                if (_didIteratorError) {
+                    throw _iteratorError;
+                }
+            }
+        }
+    }
+
+    function traverseAncestors(visitor, withSelf, context) {
+        var parent = this,
+            visited = [this];
+        if (withSelf && visitor.call(context, this)) {
+            return;
+        }
+        while ((parent = parent.parent) && !visitor.call(context, parent)) {
+            checkCircularity(visited, parent);
+        }
+    }
+
+    function traverseDescendants(visitor, withSelf, context) {
+        var _this10 = this;
+
+        if (withSelf) {
+            Traversal.levelOrder(this, visitor, context);
+        } else {
+            Traversal.levelOrder(this, function (node) {
+                return !$equals(_this10, node) && visitor.call(context, node);
+            }, context);
+        }
+    }
+
+    function traverseDescendantsReverse(visitor, withSelf, context) {
+        var _this11 = this;
+
+        if (withSelf) {
+            Traversal.reverseLevelOrder(this, visitor, context);
+        } else {
+            Traversal.reverseLevelOrder(this, function (node) {
+                return !$equals(_this11, node) && visitor.call(context, node);
+            }, context);
+        }
+    }
+
+    function traverseSelfSiblingOrAncestor(visitor, withSelf, withAncestor, context) {
+        if (withSelf && visitor.call(context, this)) {
+            return;
+        }
+        var parent = this.parent;
+        if (parent) {
+            var _iteratorNormalCompletion2 = true;
+            var _didIteratorError2 = false;
+            var _iteratorError2 = undefined;
+
+            try {
+                for (var _iterator2 = parent.children[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                    var sibling = _step2.value;
+
+                    if (!$equals(this, sibling) && visitor.call(context, sibling)) {
+                        return;
+                    }
+                }
+            } catch (err) {
+                _didIteratorError2 = true;
+                _iteratorError2 = err;
+            } finally {
+                try {
+                    if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                        _iterator2.return();
+                    }
+                } finally {
+                    if (_didIteratorError2) {
+                        throw _iteratorError2;
+                    }
+                }
+            }
+
+            if (withAncestor) {
+                traverseAncestors.call(parent, visitor, true, context);
+            }
+        }
+    }
+
+    function _preOrder(node, visitor, context) {
+        var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+
+        checkCircularity(visited, node);
+        if (!node || !$isFunction$1(visitor) || visitor.call(context, node)) {
+            return true;
+        }
+        if ($isFunction$1(node.traverse)) node.traverse(function (child) {
+            return _preOrder(child, visitor, context, visited);
+        });
+        return false;
+    }
+
+    function _postOrder(node, visitor, context) {
+        var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+
+        checkCircularity(visited, node);
+        if (!node || !$isFunction$1(visitor)) {
+            return true;
+        }
+        if ($isFunction$1(node.traverse)) node.traverse(function (child) {
+            return _postOrder(child, visitor, context, visited);
+        });
+        return visitor.call(context, node);
+    }
+
+    function _levelOrder(node, visitor, context) {
+        var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+
+        if (!node || !$isFunction$1(visitor)) {
+            return;
+        }
+        var queue = [node];
+        while (queue.length > 0) {
+            var next = queue.shift();
+            checkCircularity(visited, next);
+            if (visitor.call(context, next)) {
+                return;
+            }
+            if ($isFunction$1(next.traverse)) next.traverse(function (child) {
+                if (child) queue.push(child);
+            });
+        }
+    }
+
+    function _reverseLevelOrder(node, visitor, context) {
+        var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+
+        if (!node || !$isFunction$1(visitor)) {
+            return;
+        }
+        var queue = [node],
+            stack = [];
+
+        var _loop = function _loop() {
+            var next = queue.shift();
+            checkCircularity(visited, next);
+            stack.push(next);
+            var level = [];
+            if ($isFunction$1(next.traverse)) next.traverse(function (child) {
+                if (child) level.unshift(child);
+            });
+            queue.push.apply(queue, level);
+        };
+
+        while (queue.length > 0) {
+            _loop();
+        }
+        while (stack.length > 0) {
+            if (visitor.call(context, stack.pop())) {
+                return;
+            }
+        }
+    }
+
+    function Modifier() {}
+
+    function $createModifier() {
+        var allowNew = void 0;
+        function modifier(source) {
+            if (!new.target) {
+                if (modifier.test(source)) {
+                    return source;
+                }
+                allowNew = true;
+                var wrapped = new modifier(source);
+                allowNew = false;
+                return wrapped;
+            } else {
+                if (!allowNew) {
+                    throw new Error("Modifiers should not be called with the new operator.");
+                }
+                this.getSource = function () {
+                    return source;
+                };
+            }
+        }
+        modifier.prototype = new Modifier();
+        modifier.test = function (source) {
+            if (source instanceof modifier) {
+                return true;
+            } else if (source instanceof Modifier) {
+                return modifier.test(source.getSource());
+            }
+            return false;
+        };
+        return modifier;
+    }
+
+    function _copyPolicyValue(policyValue) {
+        if ($isNothing(policyValue)) {
+            return policyValue;
+        }
+        if (Array.isArray(policyValue)) {
+            return policyValue.map(_copyPolicyValue);
+        }
+        if ($isFunction$1(policyValue.copy)) {
+            return policyValue.copy();
+        }
+        return policyValue;
+    }
+
+    function _buildProxy(classes, protocols, options) {
+        var base = options.baseType || classes.shift() || Base,
+            proxy = base.extend.apply(base, _toConsumableArray(classes.concat(protocols)).concat([{
+            constructor: function constructor(facets) {
+                var spec = {};
+                spec.value = facets[Facet.InterceptorSelectors];
+                if (spec.value && spec.value.length > 0) {
+                    Object.defineProperty(this, "selectors", spec);
+                }
+                spec.value = facets[Facet.Interceptors];
+                if (spec.value && spec.value.length > 0) {
+                    Object.defineProperty(this, "interceptors", spec);
+                }
+                spec.value = facets[Facet.Delegate];
+                if (spec.value) {
+                    spec.writable = true;
+                    Object.defineProperty(this, "delegate", spec);
+                }
+                var ctor = proxyMethod("constructor", this.base, base);
+                ctor.apply(this, facets[Facet.Parameters]);
+                delete spec.writable;
+                delete spec.value;
+            },
+            getInterceptors: function getInterceptors(source, method) {
+                var selectors = this.selectors;
+                return selectors ? selectors.reduce(function (interceptors, selector) {
+                    return selector.selectInterceptors(source, method, interceptors);
+                }, this.interceptors) : this.interceptors;
+            },
+
+            extend: extendProxyInstance
+        }, {
+            shouldProxy: options.shouldProxy
+        }]));
+        proxyClass(proxy, protocols);
+        proxy.extend = proxy.implement = throwProxiesSealedExeception;
+        return proxy;
+    }
+
+    function throwProxiesSealedExeception() {
+        throw new TypeError("Proxy classes are sealed and cannot be extended from.");
+    }
+
+    function proxyClass(proxy, protocols) {
+        var sources = [proxy].concat($protocols(proxy), protocols),
+            proxied = {};
+
+        var _loop2 = function _loop2(i) {
+            var source = sources[i],
+                isProtocol = $isProtocol(source),
+                props = getPropertyDescriptors(source.prototype);
+            Reflect.ownKeys(props).forEach(function (key) {
+                if (proxied.hasOwnProperty(key) || key in noProxyMethods) return;
+                if (proxy.shouldProxy && !proxy.shouldProxy(key, source)) return;
+                var descriptor = props[key];
+                if (!descriptor.enumerable) return;
+                var value = descriptor.value,
+                    get = descriptor.get,
+                    set = descriptor.set;
+
+                if ($isFunction$1(value)) {
+                    if (isProtocol) value = null;
+                    descriptor.value = proxyMethod(key, value, proxy);
+                } else {
+                    if (descriptor.hasOwnProperty("value")) {
+                        (function () {
+                            var field = Symbol();
+                            get = function get() {
+                                return this[field];
+                            }, set = function set(value) {
+                                this[field] = value;
+                            };
+                            delete descriptor.value;
+                            delete descriptor.writable;
+                        })();
+                    }
+                    if (get) {
+                        if (isProtocol) get = null;
+                        descriptor.get = proxyMethod(key, get, proxy, MethodType.Get);
+                    }
+                    if (set) {
+                        if (isProtocol) set = null;
+                        descriptor.set = proxyMethod(key, set, proxy, MethodType.Set);
+                    }
+                }
+                Object.defineProperty(proxy.prototype, key, descriptor);
+                proxied[key] = true;
+            });
+        };
+
+        for (var i = 0; i < sources.length; ++i) {
+            _loop2(i);
+        }
+    }
+
+    function proxyMethod(key, method, source, type) {
+        var interceptors = void 0;
+        function methodProxy() {
+            for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
+                args[_key9] = arguments[_key9];
+            }
+
+            var _this = this;
+            var delegate$$1 = this.delegate,
+                idx = -1;
+            if (!interceptors) {
+                interceptors = this.getInterceptors(source, key);
+            }
+            type = type || MethodType.Invoke;
+            var invocation = {
+                method: key,
+                methodType: type,
+                source: source,
+                args: args,
+                useDelegate: function useDelegate(value) {
+                    delegate$$1 = value;
+                },
+                replaceDelegate: function replaceDelegate(value) {
+                    _this.delegate = delegate$$1 = value;
+                },
+
+                get canProceed() {
+                    if (interceptors && idx + 1 < interceptors.length) {
+                        return true;
+                    }
+                    if (delegate$$1) {
+                        return $isFunction$1(delegate$$1[key]);
+                    }
+                    return !!method;
+                },
+                proceed: function proceed() {
+                    ++idx;
+                    if (interceptors && idx < interceptors.length) {
+                        var interceptor = interceptors[idx];
+                        return interceptor.intercept(invocation);
+                    }
+                    if (delegate$$1) {
+                        switch (type) {
+                            case MethodType.Get:
+                                return delegate$$1[key];
+                            case MethodType.Set:
+                                delegate$$1[key] = args[0];
+                                break;
+                            case MethodType.Invoke:
+                                var invoke = delegate$$1[key];
+                                if ($isFunction$1(invoke)) {
+                                    return invoke.apply(delegate$$1, this.args);
+                                }
+                                break;
+                        }
+                    } else if (method) {
+                        return method.apply(_this, this.args);
+                    }
+                    throw new Error("Interceptor cannot proceed without a class or delegate method '" + key + "'.");
+                }
+            };
+            return invocation.proceed();
+        }
+        methodProxy.baseMethod = method;
+        return methodProxy;
+    }
+
+    function extendProxyInstance(key, value) {
+        var _this13 = this;
+
+        var proxy = this.constructor,
+            overrides = arguments.length === 1 ? key : _defineProperty({}, key, value),
+            props = getPropertyDescriptors(overrides);
+        Reflect.ownKeys(props).forEach(function (key) {
+            var descriptor = props[key];
+            if (!descriptor.enumerable) return;
+            var value = descriptor.value,
+                get = descriptor.get,
+                set = descriptor.set,
+                baseDescriptor = getPropertyDescriptors(_this13, key);
+
+            if (!baseDescriptor) return;
+            if (value) {
+                if ($isFunction$1(value)) {
+                    var baseValue = baseDescriptor.value;
+                    if ($isFunction$1(value) && value.baseMethod) {
+                        baseDescriptor.value = value.baseMethod;
+                    }
+                }
+            } else if (get) {
+                var baseGet = baseDescriptor.get;
+                if (baseGet && get.baseMethod) {
+                    baseDescriptor.get = get.baseMethod;
+                }
+            } else if (set) {
+                var baseSet = baseDescriptor.set;
+                if (baseSet && set.baseMethod) {
+                    baseDescriptor.set = set.baseMethod;
+                }
+            }
+            Object.defineProperty(_this13, key, baseDescriptor);
+        });
+        this.base(overrides);
+        Reflect.ownKeys(props).forEach(function (key) {
+            if (key in noProxyMethods) return;
+            if (proxy.shouldProxy && !proxy.shouldProxy(key, proxy)) return;
+            var descriptor = props[key];
+            if (!descriptor.enumerable) return;
+            var value = descriptor.value,
+                get = descriptor.get,
+                set = descriptor.set;
+
+            if ($isFunction$1(value)) {
+                descriptor.value = proxyMethod(key, value, proxy);
+            } else if (!(get || set)) {
+                return;
+            } else {
+                if (get) {
+                    descriptor.get = proxyMethod(key, get, proxy, MethodType.Get);
+                }
+                if (set) {
+                    descriptor.set = proxyMethod(key, set, proxy, MethodType.Set);
+                }
+            }
+            Object.defineProperty(_this13, key, descriptor);
+        });
+        return this;
+    }
+
     return {
         setters: [function (_reflectMetadata) {}],
         execute: function () {
@@ -562,7 +1224,15 @@ System.register(["reflect-metadata"], function (_export, _context) {
             } : function (obj) {
                 return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
             };
-            Undefined = K();
+
+            _export("Undefined", Undefined = K());
+
+            _export("Null", Null = K(null));
+
+            _export("True", True = K(true));
+
+            _export("False", False = K(false));
+
             _counter = 1;
             _IGNORE = K();
             _BASE = /\bbase\b/;
@@ -609,7 +1279,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
                 return _class;
             };
 
-            Base = _subclass.call(Object, {
+            _export("Base", Base = _subclass.call(Object, {
                 constructor: function constructor() {
                     if (arguments.length > 0 && typeOf(arguments[0]) === 'object') {
                         this.extend(arguments[0]);
@@ -625,7 +1295,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
                         return "[object " + this.constructor.toString().slice(1, -1) + "]";
                     }
                 }
-            }, Base = {
+            }, _export("Base", Base = {
                 ancestorOf: function ancestorOf(klass) {
                     return _ancestorOf(this, klass);
                 },
@@ -640,12 +1310,11 @@ System.register(["reflect-metadata"], function (_export, _context) {
                     _extend(this.prototype, source);
                     return this;
                 }
-            });
-
+            })));
 
             Base.base = Base.prototype.base = function () {};
 
-            Package = Base.extend({
+            _export("Package", Package = Base.extend({
                 constructor: function constructor(_private, _public) {
                     var pkg = this,
                         openPkg;
@@ -763,14 +1432,17 @@ System.register(["reflect-metadata"], function (_export, _context) {
                 toString: function toString() {
                     return format("[%1]", this.parent ? this.parent.toString().slice(1, -1) + "." + this.name : this.name);
                 }
-            });
-            Abstract = Base.extend({
+            }));
+
+            _export("Abstract", Abstract = Base.extend({
                 constructor: function constructor() {
                     throw new TypeError("Abstract class cannot be instantiated.");
                 }
-            });
+            }));
+
             _moduleCount = 0;
-            Module = Abstract.extend(null, {
+
+            _export("Module", Module = Abstract.extend(null, {
                 namespace: "",
 
                 extend: function extend(_interface, _static) {
@@ -829,11 +1501,11 @@ System.register(["reflect-metadata"], function (_export, _context) {
                     });
                     return module;
                 }
-            });
-
+            }));
 
             Module.prototype.base = Module.prototype.extend = _IGNORE;_toString = Object.prototype.toString;
-            ArrayManager = Base.extend({
+
+            _export("ArrayManager", ArrayManager = Base.extend({
                 constructor: function constructor(items) {
                     var _items = [];
                     this.extend({
@@ -896,8 +1568,9 @@ System.register(["reflect-metadata"], function (_export, _context) {
                 mapItem: function mapItem(item) {
                     return item;
                 }
-            });
-            IndexedList = Base.extend({
+            }));
+
+            _export("IndexedList", IndexedList = Base.extend({
                 constructor: function constructor() {
                     var order = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultOrder;
 
@@ -1007,13 +1680,15 @@ System.register(["reflect-metadata"], function (_export, _context) {
                         }
                     });
                 }
-            });
-            Delegate = Base.extend({
+            }));
+
+            _export("Delegate", Delegate = Base.extend({
                 get: function get(protocol, key, strict) {},
                 set: function set(protocol, key, value, strict) {},
                 invoke: function invoke(protocol, methodName, args, strict) {}
-            });
-            ObjectDelegate = Delegate.extend({
+            }));
+
+            _export("ObjectDelegate", ObjectDelegate = Delegate.extend({
                 constructor: function constructor(object) {
                     Object.defineProperty(this, "object", { value: object });
                 },
@@ -1036,8 +1711,9 @@ System.register(["reflect-metadata"], function (_export, _context) {
                         return method && method.apply(object, args);
                     }
                 }
-            });
-            ArrayDelegate = Delegate.extend({
+            }));
+
+            _export("ArrayDelegate", ArrayDelegate = Delegate.extend({
                 constructor: function constructor(array) {
                     Object.defineProperty(this, "array", { value: array });
                 },
@@ -1060,8 +1736,9 @@ System.register(["reflect-metadata"], function (_export, _context) {
                         return method && (!strict || protocol.isAdoptedBy(object)) ? method.apply(object, args) : result;
                     }, undefined);
                 }
-            });
-            Metadata = Abstract.extend(null, {
+            }));
+
+            _export("Metadata", Metadata = Abstract.extend(null, {
                 get: function get(metadataKey, target, targetKey) {
                     if (target) {
                         return targetKey ? Reflect.getMetadata(metadataKey, target, targetKey) : Reflect.getMetadata(metadataKey, target);
@@ -1077,7 +1754,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
                         creator = targetKey;
                         targetKey = undefined;
                     }
-                    if (!$isFunction(creator)) {
+                    if (!$isFunction$1(creator)) {
                         throw new TypeError("creator must be a function");
                     }
                     var metadata = this.getOwn(metadataKey, target, targetKey);
@@ -1098,41 +1775,41 @@ System.register(["reflect-metadata"], function (_export, _context) {
                     }
                 },
                 copyOwn: function copyOwn(target, source) {
-                    var _this = this;
+                    var _this2 = this;
 
                     this.copyOwnKey(target, source);
                     Reflect.ownKeys(source).forEach(function (sourceKey) {
-                        return _this.copyOwnKey(target, source, sourceKey);
+                        return _this2.copyOwnKey(target, source, sourceKey);
                     });
                 },
                 copyOwnKey: function copyOwnKey(target, source, sourceKey) {
-                    var _this2 = this;
+                    var _this3 = this;
 
                     var metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
                     metadataKeys.forEach(function (metadataKey) {
-                        var metadata = _this2.getOwn(metadataKey, source, sourceKey);
-                        _this2.define(metadataKey, metadata, target, sourceKey);
+                        var metadata = _this3.getOwn(metadataKey, source, sourceKey);
+                        _this3.define(metadataKey, metadata, target, sourceKey);
                     });
                 },
                 mergeOwn: function mergeOwn(target, source) {
-                    var _this3 = this;
+                    var _this4 = this;
 
                     this.mergeOwnKey(target, source);
                     Reflect.ownKeys(source).forEach(function (sourceKey) {
-                        return _this3.mergeOwnKey(target, source, sourceKey);
+                        return _this4.mergeOwnKey(target, source, sourceKey);
                     });
                 },
                 mergeOwnKey: function mergeOwnKey(target, source, sourceKey) {
-                    var _this4 = this;
+                    var _this5 = this;
 
                     var metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
                     metadataKeys.forEach(function (metadataKey) {
-                        var targetMetadata = _this4.getOwn(metadataKey, target, sourceKey),
-                            sourceMetadata = _this4.getOwn(metadataKey, source, sourceKey);
+                        var targetMetadata = _this5.getOwn(metadataKey, target, sourceKey),
+                            sourceMetadata = _this5.getOwn(metadataKey, source, sourceKey);
                         if (targetMetadata && targetMetadata.merge) {
                             targetMetadata.merge(sourceMetadata);x;
                         } else {
-                            _this4.define(metadataKey, sourceMetadata, target, sourceKey);
+                            _this5.define(metadataKey, sourceMetadata, target, sourceKey);
                         }
                     });
                 },
@@ -1141,7 +1818,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
                         collector = targetKey;
                         targetKey = undefined;
                     }
-                    if (!$isFunction(collector)) {
+                    if (!$isFunction$1(collector)) {
                         throw new TypeError("collector must be a function");
                     }
                     while (target) {
@@ -1155,8 +1832,8 @@ System.register(["reflect-metadata"], function (_export, _context) {
                 },
                 decorator: function decorator(metadataKey, handler) {
                     function decorator() {
-                        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-                            args[_key] = arguments[_key];
+                        for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+                            args[_key2] = arguments[_key2];
                         }
 
                         return decorate(handler, args);
@@ -1169,21 +1846,23 @@ System.register(["reflect-metadata"], function (_export, _context) {
                     decorator.collectKeys = _metadataKeyCollector.bind(this, metadataKey);
                     return decorator;
                 }
-            });
+            }));
+
             protocolGet = Symbol();
             protocolSet = Symbol();
             protocolInvoke = Symbol();
             protocolDelegate = Symbol();
             protocolStrict = Symbol();
             protocolMetadataKey = Symbol();
-            Protocol = Base.extend((_Base$extend = {
+
+            _export("Protocol", Protocol = Base.extend((_Base$extend = {
                 constructor: function constructor(delegate$$1, strict) {
                     var _Object$definePropert;
 
                     if ($isNothing(delegate$$1)) {
                         delegate$$1 = new Delegate();
                     } else if (!(delegate$$1 instanceof Delegate)) {
-                        if ($isFunction(delegate$$1.toDelegate)) {
+                        if ($isFunction$1(delegate$$1.toDelegate)) {
                             delegate$$1 = delegate$$1.toDelegate();
                             if (!(delegate$$1 instanceof Delegate)) {
                                 throw new TypeError("'toDelegate' method did not return a Delegate.");
@@ -1210,26 +1889,26 @@ System.register(["reflect-metadata"], function (_export, _context) {
                     return target && target.prototype instanceof Protocol;
                 },
                 isAdoptedBy: function isAdoptedBy(target) {
-                    var _this7 = this;
+                    var _this8 = this;
 
                     if (!target) return false;
                     if (this === target || target && target.prototype instanceof this) {
                         return true;
                     }
-                    var metaTarget = $isFunction(target) ? target.prototype : target;
+                    var metaTarget = $isFunction$1(target) ? target.prototype : target;
                     return Metadata.collect(protocolMetadataKey, metaTarget, function (protocols) {
-                        return protocols.has(_this7) || [].concat(_toConsumableArray(protocols)).some(function (p) {
-                            return _this7.isAdoptedBy(p);
+                        return protocols.has(_this8) || [].concat(_toConsumableArray(protocols)).some(function (p) {
+                            return _this8.isAdoptedBy(p);
                         });
                     });
                 },
                 adoptBy: function adoptBy(target) {
-                    var _this8 = this;
+                    var _this9 = this;
 
                     if (!target) return;
-                    var metaTarget = $isFunction(target) ? target.prototype : target;
+                    var metaTarget = $isFunction$1(target) ? target.prototype : target;
                     if (Metadata.collect(protocolMetadataKey, metaTarget, function (p) {
-                        return p.has(_this8);
+                        return p.has(_this9);
                     })) {
                         return false;
                     }
@@ -1237,7 +1916,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
                         return new Set();
                     });
                     protocols.add(this);
-                    if ($isFunction(target.protocolAdopted)) {
+                    if ($isFunction$1(target.protocolAdopted)) {
                         target.protocolAdopted(this);
                     }
                     return true;
@@ -1254,15 +1933,19 @@ System.register(["reflect-metadata"], function (_export, _context) {
                 coerce: function coerce(object, strict) {
                     return new this(object, strict);
                 }
-            });
-            StrictProtocol = Protocol.extend({
+            }));
+
+            _export("StrictProtocol", StrictProtocol = Protocol.extend({
                 constructor: function constructor(proxy, strict) {
                     this.base(proxy, strict === undefined || strict);
                 }
-            });
-            $isProtocol = Protocol.isProtocol;
+            }));
+
+            _export("$isProtocol", $isProtocol = Protocol.isProtocol);
+
             Defining = Symbol();
-            Enum = Base.extend({
+
+            _export("Enum", Enum = Base.extend({
                 constructor: function constructor(value, name, ordinal) {
                     this.constructing(value, name);
                     Object.defineProperties(this, {
@@ -1322,14 +2005,14 @@ System.register(["reflect-metadata"], function (_export, _context) {
                     }
                     return match;
                 }
-            });
+            }));
 
             Enum.prototype.valueOf = function () {
                 var value = +this.value;
                 return isNaN(value) ? this.ordinal : value;
             };
 
-            Flags = Enum.extend({
+            _export("Flags", Flags = Enum.extend({
                 hasFlag: function hasFlag(flag) {
                     flag = +flag;
                     return (this & flag) === flag;
@@ -1357,7 +2040,8 @@ System.register(["reflect-metadata"], function (_export, _context) {
                     }
                     return new this(value, name);
                 }
-            });
+            }));
+
             baseExtend = Base.extend;
             baseImplement = Base.implement;
             baseProtoExtend = Base.prototype.extend;
@@ -1383,8 +2067,8 @@ System.register(["reflect-metadata"], function (_export, _context) {
             }));
 
             Base.extend = function () {
-                for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-                    args[_key5] = arguments[_key5];
+                for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+                    args[_key6] = arguments[_key6];
                 }
 
                 var constraints = args,
@@ -1405,7 +2089,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
                         decorators.push(conformsTo(constraint));
                     } else if (constraint.prototype instanceof Base || constraint.prototype instanceof Module) {
                         decorators.push(mixin(constraint));
-                    } else if ($isFunction(constraint)) {
+                    } else if ($isFunction$1(constraint)) {
                         decorators.push(constraint);
                     } else {
                         break;
@@ -1468,6 +2152,358 @@ System.register(["reflect-metadata"], function (_export, _context) {
                 start: function start() {}
             }));
 
+            designMetadataKey = Symbol();
+            paramTypesKey = "design:paramtypes";
+            propertyTypeKey = "design:type";
+            DesignMetadata = Metadata.extend(null, {
+                get: function get(metadataKey, target, targetKey) {
+                    if (metadataKey === designMetadataKey) {
+                        return this.base(paramTypesKey, target, targetKey) || this.base(propertyTypeKey, target, targetKey);
+                    }
+                    return this.base(metadataKey, target, targetKey);
+                },
+                getOwn: function getOwn(metadataKey, target, targetKey) {
+                    if (metadataKey === designMetadataKey) {
+                        return this.base(paramTypesKey, target, targetKey) || this.base(propertyTypeKey, target, targetKey);
+                    }
+                    return this.base(metadataKey, target, targetKey);
+                }
+            });
+
+            _export("design", design = DesignMetadata.decorator(designMetadataKey, function (target, key, descriptor, types) {
+                if (!isDescriptor(descriptor)) {
+                    if (target.length > key.length) {
+                        throw new SyntaxError("@design for constructor expects at least " + target.length + " parameters but only " + key.length + " specified");
+                    }
+                    _validateTypes(key);
+                    DesignMetadata.define(paramTypesKey, key, target.prototype, "constructor");
+                    return;
+                }
+                var value = descriptor.value;
+
+                if ($isFunction$1(value)) {
+                    if (value.length > types.length) {
+                        throw new SyntaxError("@design for method '" + key + "' expects at least " + value.length + " parameters but only " + types.length + " specified");
+                    }
+                    _validateTypes(types);
+                    DesignMetadata.define(paramTypesKey, types, target, key);
+                } else if (types.length !== 1) {
+                    throw new SyntaxError("@design for property '" + key + "' requires a single type to be specified");
+                } else {
+                    _validateTypes(types);
+                    DesignMetadata.define(propertyTypeKey, types[0], target, key);
+                }
+            }));
+
+            _export("Disposing", Disposing = Protocol.extend({
+                dispose: function dispose() {}
+            }));
+
+            _export("DisposingMixin", DisposingMixin = Module.extend({
+                dispose: function dispose(object) {
+                    if ($isFunction$1(object._dispose)) {
+                        var result = object._dispose();
+                        object.dispose = Undefined;
+                        return result;
+                    }
+                }
+            }));
+
+            _export("TraversingAxis", TraversingAxis = Enum({
+                Self: 1,
+
+                Root: 2,
+
+                Child: 3,
+
+                Sibling: 4,
+
+                Ancestor: 5,
+
+                Descendant: 6,
+
+                DescendantReverse: 7,
+
+                SelfOrChild: 8,
+
+                SelfOrSibling: 9,
+
+                SelfOrAncestor: 10,
+
+                SelfOrDescendant: 11,
+
+                SelfOrDescendantReverse: 12,
+
+                SelfSiblingOrAncestor: 13
+            }));
+
+            _export("Traversing", Traversing = Protocol.extend({
+                traverse: function traverse(axis, visitor, context) {}
+            }));
+
+            _export("TraversingMixin", TraversingMixin = Module.extend({
+                traverse: function traverse(object, axis, visitor, context) {
+                    if ($isFunction$1(axis)) {
+                        context = visitor;
+                        visitor = axis;
+                        axis = TraversingAxis.Child;
+                    }
+                    if (!$isFunction$1(visitor)) return;
+                    switch (axis) {
+                        case TraversingAxis.Self:
+                            traverseSelf.call(object, visitor, context);
+                            break;
+
+                        case TraversingAxis.Root:
+                            traverseRoot.call(object, visitor, context);
+                            break;
+
+                        case TraversingAxis.Child:
+                            traverseChildren.call(object, visitor, false, context);
+                            break;
+
+                        case TraversingAxis.Sibling:
+                            traverseSelfSiblingOrAncestor.call(object, visitor, false, false, context);
+                            break;
+
+                        case TraversingAxis.SelfOrChild:
+                            traverseChildren.call(object, visitor, true, context);
+                            break;
+
+                        case TraversingAxis.SelfOrSibling:
+                            traverseSelfSiblingOrAncestor.call(object, visitor, true, false, context);
+                            break;
+
+                        case TraversingAxis.Ancestor:
+                            traverseAncestors.call(object, visitor, false, context);
+                            break;
+
+                        case TraversingAxis.SelfOrAncestor:
+                            traverseAncestors.call(object, visitor, true, context);
+                            break;
+
+                        case TraversingAxis.Descendant:
+                            traverseDescendants.call(object, visitor, false, context);
+                            break;
+
+                        case TraversingAxis.DescendantReverse:
+                            traverseDescendantsReverse.call(object, visitor, false, context);
+                            break;
+
+                        case TraversingAxis.SelfOrDescendant:
+                            traverseDescendants.call(object, visitor, true, context);
+                            break;
+
+                        case TraversingAxis.SelfOrDescendantReverse:
+                            traverseDescendantsReverse.call(object, visitor, true, context);
+                            break;
+
+                        case TraversingAxis.SelfSiblingOrAncestor:
+                            traverseSelfSiblingOrAncestor.call(object, visitor, true, true, context);
+                            break;
+
+                        default:
+                            throw new Error("Unrecognized TraversingAxis " + axis + ".");
+                    }
+                }
+            }));
+
+            _export("Traversal", Traversal = Abstract.extend({}, {
+                preOrder: function preOrder(node, visitor, context) {
+                    return _preOrder(node, visitor, context);
+                },
+                postOrder: function postOrder(node, visitor, context) {
+                    return _postOrder(node, visitor, context);
+                },
+                levelOrder: function levelOrder(node, visitor, context) {
+                    return _levelOrder(node, visitor, context);
+                },
+                reverseLevelOrder: function reverseLevelOrder(node, visitor, context) {
+                    return _reverseLevelOrder(node, visitor, context);
+                }
+            }));
+
+            injectMetadataKey = Symbol();
+
+            _export("inject", inject = Metadata.decorator(injectMetadataKey, function (target, key, descriptor, dependencies) {
+                if (!isDescriptor(descriptor)) {
+                    dependencies = $flatten(key);
+                    Metadata.define(injectMetadataKey, dependencies, target.prototype, "constructor");
+                    return;
+                }
+                var value = descriptor.value;
+
+                dependencies = $flatten(dependencies);
+                if ($isFunction$1(value)) {
+                    Metadata.define(injectMetadataKey, dependencies, target, key);
+                } else if (dependencies.length !== 1) {
+                    throw new SyntaxError("@inject for property '" + key + "' requires single key to be specified");
+                } else {
+                    Metadata.define(injectMetadataKey, dependencies[0], target, key);
+                }
+            }));
+
+            _export("$eq", $eq = $createModifier());
+
+            _export("$use", $use = $createModifier());
+
+            _export("$lazy", $lazy = $createModifier());
+
+            _export("$eval", $eval = $createModifier());
+
+            _export("$every", $every = $createModifier());
+
+            _export("$child", $child = $createModifier());
+
+            _export("$optional", $optional = $createModifier());
+
+            _export("$promise", $promise = $createModifier());
+
+            _export("$instant", $instant = $createModifier());
+
+            Modifier.isModified = function (source) {
+                return source instanceof Modifier;
+            };
+            Modifier.unwrap = function (source) {
+                return source instanceof Modifier ? Modifier.unwrap(source.getSource()) : source;
+            };
+            _export("Policy", Policy = Base.extend({
+                mergeInto: function mergeInto(policy) {
+                    var _this12 = this;
+
+                    if (!(policy instanceof this.constructor)) {
+                        return false;
+                    }
+                    var descriptors = getPropertyDescriptors(this),
+                        keys = Reflect.ownKeys(descriptors);
+                    keys.forEach(function (key) {
+                        var keyValue = _this12[key];
+                        if ($isFunction$1(keyValue)) {
+                            return;
+                        }
+                        if (keyValue !== undefined && _this12.hasOwnProperty(key)) {
+                            var policyValue = policy[key];
+                            if (policyValue === undefined || !policy.hasOwnProperty(key)) {
+                                policy[key] = _copyPolicyValue(keyValue);
+                            } else if ($isFunction$1(keyValue.mergeInto)) {
+                                keyValue.mergeInto(policyValue);
+                            }
+                        }
+                    });
+                    return true;
+                },
+                copy: function copy() {
+                    var policy = Reflect.construct(this.constructor, emptyArray);
+                    this.mergeInto(policy);
+                    return policy;
+                }
+            }, {
+                coerce: function coerce() {
+                    for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
+                        args[_key8] = arguments[_key8];
+                    }
+
+                    return Reflect.construct(this, args);
+                }
+            }));
+
+            if (Promise.prototype.finally === undefined) Promise.prototype.finally = function (callback) {
+                var p = this.constructor;
+                return this.then(function (value) {
+                    return p.resolve(callback()).then(function () {
+                        return value;
+                    });
+                }, function (reason) {
+                    return p.resolve(callback()).then(function () {
+                        throw reason;
+                    });
+                });
+            };
+
+            if (Promise.delay === undefined) Promise.delay = function (ms) {
+                return new Promise(function (resolve) {
+                    return setTimeout(resolve, ms);
+                });
+            };
+
+            _export("Facet", Facet = Object.freeze({
+                Parameters: "proxy:parameters",
+
+                Interceptors: "proxy:interceptors",
+
+                InterceptorSelectors: "proxy:interceptorSelectors",
+
+                Delegate: "proxy:delegate"
+            }));
+
+            _export("Interceptor", Interceptor = Base.extend({
+                intercept: function intercept(invocation) {
+                    return invocation.proceed();
+                }
+            }));
+
+            _export("InterceptorSelector", InterceptorSelector = Base.extend({
+                selectInterceptors: function selectInterceptors(type, method, interceptors) {
+                    return interceptors;
+                }
+            }));
+
+            _export("ProxyBuilder", ProxyBuilder = Base.extend({
+                buildProxy: function buildProxy(types, options) {
+                    if (!Array.isArray(types)) {
+                        throw new TypeError("ProxyBuilder requires an array of types to proxy.");
+                    }
+                    var classes = types.filter($isClass),
+                        protocols = types.filter($isProtocol);
+                    return _buildProxy(classes, protocols, options || {});
+                }
+            }));
+
+            noProxyMethods = {
+                base: true, extend: true, constructor: true, conformsTo: true,
+                getInterceptors: true, getDelegate: true, setDelegate: true
+            };
+
+            _export("Undefined", Undefined);
+
+            _export("Null", Null);
+
+            _export("True", True);
+
+            _export("False", False);
+
+            _export("Base", Base);
+
+            _export("Package", Package);
+
+            _export("Abstract", Abstract);
+
+            _export("Module", Module);
+
+            _export("pcopy", pcopy);
+
+            _export("extend", _extend);
+
+            _export("getPropertyDescriptors", getPropertyDescriptors);
+
+            _export("instanceOf", instanceOf);
+
+            _export("typeOf", typeOf);
+
+            _export("assignID", assignID);
+
+            _export("format", format);
+
+            _export("csv", csv);
+
+            _export("bind", bind);
+
+            _export("partial", _partial);
+
+            _export("delegate", delegate);
+
+            _export("copy", copy);
+
             _export("emptyArray", emptyArray);
 
             _export("nothing", nothing);
@@ -1499,6 +2535,112 @@ System.register(["reflect-metadata"], function (_export, _context) {
             _export("$decorate", $decorate);
 
             _export("$decorated", $decorated);
+
+            _export("decorate", decorate);
+
+            _export("isDescriptor", isDescriptor);
+
+            _export("Delegate", Delegate);
+
+            _export("ObjectDelegate", ObjectDelegate);
+
+            _export("ArrayDelegate", ArrayDelegate);
+
+            _export("design", design);
+
+            _export("Disposing", Disposing);
+
+            _export("DisposingMixin", DisposingMixin);
+
+            _export("$using", $using);
+
+            _export("Enum", Enum);
+
+            _export("Flags", Flags);
+
+            _export("TraversingAxis", TraversingAxis);
+
+            _export("Traversing", Traversing);
+
+            _export("TraversingMixin", TraversingMixin);
+
+            _export("Traversal", Traversal);
+
+            _export("inject", inject);
+
+            _export("Metadata", Metadata);
+
+            _export("$eq", $eq);
+
+            _export("$use", $use);
+
+            _export("$lazy", $lazy);
+
+            _export("$eval", $eval);
+
+            _export("$every", $every);
+
+            _export("$child", $child);
+
+            _export("$optional", $optional);
+
+            _export("$promise", $promise);
+
+            _export("$instant", $instant);
+
+            _export("Modifier", Modifier);
+
+            _export("$createModifier", $createModifier);
+
+            _export("Policy", Policy);
+
+            _export("Protocol", Protocol);
+
+            _export("StrictProtocol", StrictProtocol);
+
+            _export("$isProtocol", $isProtocol);
+
+            _export("$protocols", $protocols);
+
+            _export("protocol", protocol);
+
+            _export("conformsTo", conformsTo);
+
+            _export("Facet", Facet);
+
+            _export("Interceptor", Interceptor);
+
+            _export("InterceptorSelector", InterceptorSelector);
+
+            _export("ProxyBuilder", ProxyBuilder);
+
+            _export("ArrayManager", ArrayManager);
+
+            _export("IndexedList", IndexedList);
+
+            _export("$isString", $isString);
+
+            _export("$isSymbol", $isSymbol);
+
+            _export("$isFunction", $isFunction$1);
+
+            _export("$isObject", $isObject);
+
+            _export("$isPlainObject", $isPlainObject);
+
+            _export("$isPromise", $isPromise);
+
+            _export("$isNothing", $isNothing);
+
+            _export("$isSomething", $isSomething$1);
+
+            _export("$lift", $lift);
+
+            _export("$flatten", $flatten);
+
+            _export("$equals", $equals);
+
+            _export("$debounce", $debounce);
         }
     };
 });

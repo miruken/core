@@ -10,6 +10,9 @@ import 'reflect-metadata';
 */
 
 const Undefined = K();
+const Null      = K(null);
+const True      = K(true);
+const False     = K(false);
 
 var __prototyping;
 var _counter = 1;
@@ -352,9 +355,13 @@ function _createModuleMethod(module, name) {
   };
 }
 
+function pcopy(object) { // Prototype-base copy.
+  // Doug Crockford / Richard Cornford
+  _dummy.prototype = object;
+  return new _dummy;
+}
 
-
-
+function _dummy(){}
 
 // =========================================================================
 // lang/extend.js
@@ -522,7 +529,49 @@ function getPropertyDescriptors(obj, key) {
 // lang/instanceOf.js
 // =========================================================================
 
+function instanceOf(object, klass) {
+  // Handle exceptions where the target object originates from another frame.
+  // This is handy for JSON parsing (amongst other things).
+  
+  if (typeof klass != "function") {
+    throw new TypeError("Invalid 'instanceOf' operand.");
+  }
 
+  if (object == null) return false;
+   
+  if (object.constructor == klass) return true;
+  if (klass.ancestorOf) return klass.ancestorOf(object.constructor);
+  /*@if (@_jscript_version < 5.1)
+    // do nothing
+  @else @*/
+    if (object instanceof klass) return true;
+  /*@end @*/
+
+  // If the class is a base2 class then it would have passed the test above.
+  if (Base.ancestorOf == klass.ancestorOf) return false;
+  
+  // base2 objects can only be instances of Object.
+  if (Base.ancestorOf == object.constructor.ancestorOf) return klass == Object;
+  
+  switch (klass) {
+    case Array:
+      return _toString.call(object) == "[object Array]";
+    case Date:
+      return _toString.call(object) == "[object Date]";
+    case RegExp:
+      return _toString.call(object) == "[object RegExp]";
+    case Function:
+      return typeOf(object) == "function";
+    case String:
+    case Number:
+    case Boolean:
+      return typeOf(object) == typeof klass.prototype.valueOf();
+    case Object:
+      return true;
+  }
+  
+  return false;
+}
 
 var _toString = Object.prototype.toString;
 
@@ -549,7 +598,12 @@ function typeOf(object) {
   }
 }
 
-
+function assignID(object, name) {
+  // Assign a unique ID to an object.
+  if (!name) name = object.nodeType == 1 ? "uniqueID" : "base2ID";
+  if (!object.hasOwnProperty(name)) object[name] = "b2_" + _counter++;
+  return object[name];
+}
 
 function format(string) {
     // Replace %n with arguments[n].
@@ -612,6 +666,73 @@ function K(k) {
     return function() {
         return k;
     };
+}
+
+function decorate(decorator, args) {
+    if (isDescriptor(args[args.length - 1])) {
+        return decorator(...args, []);
+    }
+    return function () {
+        return decorator(...arguments, args);
+    };
+}
+
+function isDescriptor(desc) {
+    if (!desc || !desc.hasOwnProperty) {
+        return false;
+    }
+
+    const keys = ["value", "initializer", "get", "set"];
+
+    for (let i = 0, l = keys.length; i < l; i++) {
+        if (desc.hasOwnProperty(keys[i])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Applies copy semantics on properties and return values.
+ * @method copy
+ */
+function copy(...args) {
+    return decorate(_copy, args);
+}
+
+function _copy(target, key, descriptor) {
+    if (!isDescriptor(descriptor)) {
+        throw new SyntaxError("@copy can only be applied to methods or properties");
+    }
+    const { get, set, value, initializer } = descriptor;
+    if ($isFunction(value)) {
+        descriptor.value = function () {
+            return _copyOf(value.apply(this, arguments));
+        };
+    }
+    if ($isFunction(initializer)) {
+        descriptor.initializer = function () {
+            return _copyOf(initializer.apply(this));
+        };
+    }
+    if ($isFunction(get)) {
+        descriptor.get = function () {
+            return _copyOf(get.apply(this));
+        };
+    }
+    if ($isFunction(set)) {
+        descriptor.set = function (value) {
+            return set.call(this, _copyOf(value));
+        };
+    }
+}
+
+function _copyOf(value) {
+    if (value != null && $isFunction(value.copy)) {
+        value = value.copy();
+    }
+    return value;
 }
 
 /**
@@ -906,7 +1027,9 @@ function defaultOrder(a, b) {
  * @param    {Any}     str  -  string to test
  * @returns  {boolean} true if a string.
  */
-
+function $isString(str) {
+    return typeOf(str) === "string";
+}
 
 /**
  * Determines if `sym` is a symbol.
@@ -914,7 +1037,9 @@ function defaultOrder(a, b) {
  * @param    {Symbole} sym  -  symbol to test
  * @returns  {boolean} true if a symbol.
  */
-
+function $isSymbol(str) {
+    return Object(str) instanceof Symbol;
+}
 
 /**
  * Determines if `fn` is a function.
@@ -922,7 +1047,7 @@ function defaultOrder(a, b) {
  * @param    {Any}     fn  -  function to test
  * @returns  {boolean} true if a function.
  */
-function $isFunction(fn) {
+function $isFunction$1(fn) {
     return fn instanceof Function;
 }
 
@@ -942,7 +1067,9 @@ function $isObject(obj) {
  * @param    {Any}     obj  -  object to test
  * @returns  {boolean} true if a plain object.
  */
-
+function $isPlainObject(obj) {
+    return $isObject(obj) && obj.constructor === Object;
+}
 
 /**
  * Determines if `promise` is a promise.
@@ -950,7 +1077,9 @@ function $isObject(obj) {
  * @param    {Any}     promise  -  promise to test
  * @returns  {boolean} true if a promise. 
  */
-
+function $isPromise(promise) {
+    return promise && $isFunction$1(promise.then);
+}
 
 /**
  * Determines if `value` is null or undefined.
@@ -978,7 +1107,9 @@ function $isSomething$1(value) {
  * @param    {Any}      value  -  any value
  * @returns  {Function} function that returns value.
  */
-
+function $lift(value) {
+    return function() { return value; };
+}
 
 /**
  * Recursively flattens and optionally prune an array.
@@ -1009,9 +1140,9 @@ function $equals(obj1, obj2) {
     if (obj1 === obj2) {
         return true;
     }
-    if (obj1 && $isFunction(obj1.equals)) {
+    if (obj1 && $isFunction$1(obj1.equals)) {
         return obj1.equals(obj2);
-    } else if (obj2 && $isFunction(obj2.equals)) {
+    } else if (obj2 && $isFunction$1(obj2.equals)) {
         return obj2.equals(obj1);
     }
     return false;
@@ -1026,6 +1157,25 @@ function $equals(obj1, obj2) {
  * @param    {Any}      defaultReturnValue  -  value to return when throttled
  * @returns  {Function} throttled function
  */
+function $debounce(fn, wait, immediate, defaultReturnValue) {
+    let timeout;
+    return function () {
+        const context = this, args = arguments;
+        const later = function () {
+            timeout = null;
+            if (!immediate) {
+                return fn.apply(context, args);
+            }
+        };
+        const callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) {
+            return fn.apply(context, args);
+        }
+        return defaultReturnValue;
+    };
+}
 
 /**
  * Delegates properties and methods to another object.<br/>
@@ -1130,31 +1280,6 @@ const ArrayDelegate = Delegate.extend({
     }
 });
 
-function decorate(decorator, args) {
-    if (isDescriptor(args[args.length - 1])) {
-        return decorator(...args, []);
-    }
-    return function () {
-        return decorator(...arguments, args);
-    };
-}
-
-function isDescriptor(desc) {
-    if (!desc || !desc.hasOwnProperty) {
-        return false;
-    }
-
-    const keys = ["value", "initializer", "get", "set"];
-
-    for (let i = 0, l = keys.length; i < l; i++) {
-        if (desc.hasOwnProperty(keys[i])) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 /**
  * Provides an abstraction for meta-data management.
  * @class Metadata
@@ -1207,7 +1332,7 @@ const Metadata = Abstract.extend(null, {
             creator   = targetKey;
             targetKey = undefined;
         }        
-        if (!$isFunction(creator)) {
+        if (!$isFunction$1(creator)) {
             throw new TypeError("creator must be a function");
         }
         let metadata = this.getOwn(metadataKey, target, targetKey);
@@ -1321,7 +1446,7 @@ const Metadata = Abstract.extend(null, {
             collector = targetKey;
             targetKey = undefined;
         }
-        if (!$isFunction(collector)) {
+        if (!$isFunction$1(collector)) {
             throw new TypeError("collector must be a function");
         }
         while (target) {
@@ -1362,7 +1487,7 @@ function _metadataGetter(metadataKey, own, target, targetKey) {
 
 function _metadataKeyGetter(metadataKey, own,  target, callback) {
     let found = false;
-    if (!$isFunction(callback)) return false;
+    if (!$isFunction$1(callback)) return false;
     const keys = Reflect.ownKeys(own ? target : getPropertyDescriptors(target))
           .concat("constructor");
     keys.forEach(key => {
@@ -1378,15 +1503,15 @@ function _metadataKeyGetter(metadataKey, own,  target, callback) {
 }
 
 function _metadataCollector(metadataKey, target, targetKey, callback) {
-    if (!callback && $isFunction(targetKey)) {
+    if (!callback && $isFunction$1(targetKey)) {
         [targetKey, callback] = [null, targetKey];
     }
-    if (!$isFunction(callback)) return;
+    if (!$isFunction$1(callback)) return;
     this.collect(metadataKey, target, targetKey, callback);
 }
 
 function _metadataKeyCollector(metadataKey, target, callback) {
-    if (!$isFunction(callback)) return;
+    if (!$isFunction$1(callback)) return;
     const keys = Reflect.ownKeys(getPropertyDescriptors(target))
           .concat("constructor");
     keys.forEach(key => this.collect(metadataKey, target, key, callback));
@@ -1418,7 +1543,7 @@ const Protocol = Base.extend({
         if ($isNothing(delegate$$1)) {
             delegate$$1 = new Delegate();
         } else if (!(delegate$$1 instanceof Delegate)) {
-            if ($isFunction(delegate$$1.toDelegate)) {
+            if ($isFunction$1(delegate$$1.toDelegate)) {
                 delegate$$1 = delegate$$1.toDelegate();
                 if (!(delegate$$1 instanceof Delegate)) {
                     throw new TypeError("'toDelegate' method did not return a Delegate.");
@@ -1469,7 +1594,7 @@ const Protocol = Base.extend({
         if (this === target || (target && target.prototype instanceof this)) {
             return true;
         }
-        const metaTarget = $isFunction(target) ? target.prototype : target;        
+        const metaTarget = $isFunction$1(target) ? target.prototype : target;        
         return Metadata.collect(protocolMetadataKey, metaTarget,
                                 protocols => protocols.has(this) ||
                                 [...protocols].some(p => this.isAdoptedBy(p)));
@@ -1483,13 +1608,13 @@ const Protocol = Base.extend({
      */    
     adoptBy(target) {
         if (!target) return;
-        const metaTarget = $isFunction(target) ? target.prototype : target;
+        const metaTarget = $isFunction$1(target) ? target.prototype : target;
         if (Metadata.collect(protocolMetadataKey, metaTarget, p => p.has(this))) {
             return false;
         }
         const protocols = Metadata.getOrCreateOwn(protocolMetadataKey, metaTarget, () => new Set());
         protocols.add(this);
-        if ($isFunction(target.protocolAdopted)) {
+        if ($isFunction$1(target.protocolAdopted)) {
             target.protocolAdopted(this);
         }
         return true;
@@ -1551,7 +1676,7 @@ const $isProtocol = Protocol.isProtocol;
  */
 function $protocols(target, own) {
     if (!target) return [];
-    if ($isFunction(target)) {
+    if ($isFunction$1(target)) {
         target = target.prototype;
     }
     const protocols = !own ? new Set()
@@ -1579,14 +1704,14 @@ function protocol(...args) {
 }
 
 function _protocol(target) {
-    if ($isFunction(target)) {
+    if ($isFunction$1(target)) {
         target = target.prototype;
     }
     Reflect.ownKeys(target).forEach(key => {
         if (key === "constructor") return;
         const descriptor = Object.getOwnPropertyDescriptor(target, key);
         if (!descriptor.enumerable) return;
-        if ($isFunction(descriptor.value)) {
+        if ($isFunction$1(descriptor.value)) {
             descriptor.value = function (...args) {
                 return this[protocolInvoke](key, args);
             };
@@ -1834,7 +1959,7 @@ Base.extend = function (...args) {
         } else if (constraint.prototype instanceof Base ||
                    constraint.prototype instanceof Module) {
             decorators.push(mixin(constraint));
-        } else if ($isFunction(constraint)) {
+        } else if ($isFunction$1(constraint)) {
             decorators.push(constraint);
         }
         else {
@@ -1885,7 +2010,7 @@ Base.prototype.extend = function (key, value) {
 function mixin(...behaviors) {
     behaviors = $flatten(behaviors, true);
     return function (target) {
-        if (behaviors.length > 0 && $isFunction(target.implement)) {
+        if (behaviors.length > 0 && $isFunction$1(target.implement)) {
             behaviors.forEach(b => target.implement(b));
         }
     };
@@ -1974,7 +2099,7 @@ function $isClass(target) {
     if (!target || $isProtocol(target)) return false;    
     if (target.prototype instanceof Base) return true;
     const name = target.name;  // use Capital name convention
-    return name && $isFunction(target) && isUpperCase(name.charAt(0));
+    return name && $isFunction$1(target) && isUpperCase(name.charAt(0));
 }
 
 /**
@@ -2004,7 +2129,7 @@ function $decorator(decorations) {
             configurable: false,
             value:        decoratee
         });
-        if (decorations && $isFunction(decorator.extend)) {
+        if (decorations && $isFunction$1(decorator.extend)) {
             decorator.extend(decorations);
         }
         return decorator;
@@ -2044,4 +2169,981 @@ function isUpperCase(char) {
     return char.toUpperCase() === char;
 }
 
-export { emptyArray, nothing, MethodType, Variance, mixin, Initializing, Resolving, Invoking, Parenting, Starting, Startup, $isClass, $classOf, $decorator, $decorate, $decorated };
+const designMetadataKey = Symbol();
+const paramTypesKey     = "design:paramtypes";
+const propertyTypeKey   = "design:type";
+
+/**
+ * Custom Metadata to bridge Typescript annotations.
+ * @class DesignMetadata
+ */
+const DesignMetadata = Metadata.extend(null, {
+    get(metadataKey, target, targetKey) {
+        if (metadataKey === designMetadataKey) {
+            return this.base(paramTypesKey, target, targetKey)
+                || this.base(propertyTypeKey, target, targetKey);
+        }
+        return this.base(metadataKey, target, targetKey);
+    },
+    getOwn(metadataKey, target, targetKey) {
+        if (metadataKey === designMetadataKey) {
+            return this.base(paramTypesKey, target, targetKey)
+                || this.base(propertyTypeKey, target, targetKey);
+        }
+        return this.base(metadataKey, target, targetKey);        
+    }
+});
+
+/**
+ * Attaches design metadata compatible with Typescript.
+ * @method design
+ */
+const design = DesignMetadata.decorator(designMetadataKey,
+    (target, key, descriptor, types) => {
+        if (!isDescriptor(descriptor)) {
+            if (target.length > key.length) {
+                throw new SyntaxError(
+                    `@design for constructor expects at least ${target.length} parameters but only ${key.length} specified`);
+            }            
+            _validateTypes(key);
+            DesignMetadata.define(paramTypesKey, key, target.prototype, "constructor");
+            return;
+        }
+        const { value } = descriptor;
+        if ($isFunction$1(value)) {
+            if (value.length > types.length) {
+                throw new SyntaxError(
+                    `@design for method '${key}' expects at least ${value.length} parameters but only ${types.length} specified`);
+            }
+            _validateTypes(types);
+            DesignMetadata.define(paramTypesKey, types, target, key);        
+        } else if (types.length !== 1) {
+            throw new SyntaxError(`@design for property '${key}' requires a single type to be specified`);
+        } else {
+            _validateTypes(types);            
+            DesignMetadata.define(propertyTypeKey, types[0], target, key);
+        }
+    });
+    
+function _validateTypes(types) {
+    for (let i = 0; i < types.length; ++i) {
+        let type = types[i];
+        if (type == null) { return }
+        if (Array.isArray(type)) {
+            if (type.length !== 1) {
+                throw new SyntaxError(`@design array specification at index ${i} expects a single type`);
+            }
+            type = type[0];
+        }
+        if (!$isFunction$1(type)) {
+            throw new SyntaxError("@design expects basic types, classes or protocols");
+        }
+    }
+}
+
+/**
+ * Protocol for targets that manage disposal lifecycle.
+ * @class Disposing
+ * @extends Protocol
+ */
+const Disposing = Protocol.extend({
+    /**
+     * Releases any resources managed by the receiver.
+     * @method dispose
+     */
+    dispose() {}
+});
+
+/**
+ * Mixin for {{#crossLink "Disposing"}}{{/crossLink}} implementation.
+ * @class DisposingMixin
+ * @uses Disposing
+ * @extends Module
+ */
+const DisposingMixin = Module.extend({
+    dispose(object) {
+        if ($isFunction$1(object._dispose)) {
+            const result = object._dispose();
+            object.dispose = Undefined;  // dispose once
+            return result;
+        }
+    }
+});
+
+/**
+ * Convenience function for disposing resources.
+ * @method $using
+ * @param    {Disposing}           disposing  - object to dispose
+ * @param    {Function | Promise}  action     - block or Promise
+ * @param    {Object}              [context]  - block context
+ * @returns  {Any} result of executing the action in context.
+ */
+function $using(disposing, action, context) {
+    if (disposing && $isFunction$1(disposing.dispose)) {
+        if (!$isPromise(action)) {
+            let result;
+            try {
+                result = $isFunction$1(action)
+                    ? action.call(context, disposing)
+                    : action;
+                if (!$isPromise(result)) {
+                    return result;
+                }
+            } finally {
+                if ($isPromise(result)) {
+                    action = result;
+                } else {
+                    const dresult = disposing.dispose();
+                    if (dresult !== undefined) {
+                        return dresult;
+                    }
+                }
+            }
+        }
+        return action.then(function (res) {
+            const dres = disposing.dispose();
+            return dres !== undefined ? dres : res;
+        }, function (err) {
+            const dres = disposing.dispose();
+            return dres !== undefined ? dres : Promise.reject(err);
+        });
+    }
+}
+
+/**
+ * TraversingAxis enum
+ * @class TraversingAxis
+ * @extends Enum
+ */
+const TraversingAxis = Enum({
+    /**
+     * Traverse only current node.
+     * @property {number} Self
+     */
+    Self: 1,
+    /**
+     * Traverse only current node root.
+     * @property {number} Root
+     */
+    Root: 2,
+    /**
+     * Traverse current node children.
+     * @property {number} Child
+     */
+    Child: 3,
+    /**
+     * Traverse current node siblings.
+     * @property {number} Sibling
+     */
+    Sibling: 4,
+    /**
+     * Traverse current node ancestors.
+     * @property {number} Ancestor
+     */
+    Ancestor: 5,
+    /**
+     * Traverse current node descendants.
+     * @property {number} Descendant
+     */
+    Descendant: 6,
+    /**
+     * Traverse current node descendants in reverse.
+     * @property {number} DescendantReverse
+     */
+    DescendantReverse: 7,
+    /**
+     * Traverse current node and children.
+     * @property {number} SelfOrChild
+     */
+    SelfOrChild: 8,
+    /**
+     * Traverse current node and siblings.
+     * @property {number} SelfOrSibling
+     */
+    SelfOrSibling: 9,
+    /**
+     * Traverse current node and ancestors.
+     * @property {number} SelfOrAncestor
+     */
+    SelfOrAncestor: 10,
+    /**
+     * Traverse current node and descendents.
+     * @property {number} SelfOrDescendant
+     */
+    SelfOrDescendant: 11,
+    /**
+     * Traverse current node and descendents in reverse.
+     * @property {number} SelfOrDescendantReverse
+     */
+    SelfOrDescendantReverse: 12,
+    /**
+     * Traverse current node, ancestors and siblings.
+     * @property {number} SelfSiblingOrAncestor 
+     */
+    SelfSiblingOrAncestor: 13
+});
+
+/**
+ * Protocol for traversing an abitrary graph of objects.
+ * @class Traversing
+ * @extends Protocol
+ */
+const Traversing = Protocol.extend({
+    /**
+     * Traverse a graph of objects.
+     * @method traverse
+     * @param {TraversingAxis}  axis       -  axis of traversal
+     * @param {Function}        visitor    -  receives visited nodes
+     * @param {Object}          [context]  -  visitor callback context
+     */
+    traverse(axis, visitor, context) {}
+});
+
+/**
+ * Mixin for Traversing functionality.
+ * @class TraversingMixin
+ * @uses Traversing
+ * @extends Module
+ */
+const TraversingMixin = Module.extend({
+    traverse(object, axis, visitor, context) {
+        if ($isFunction$1(axis)) {
+            context = visitor;
+            visitor = axis;
+            axis    = TraversingAxis.Child;
+        }
+        if (!$isFunction$1(visitor)) return;
+        switch (axis) {
+        case TraversingAxis.Self:
+            traverseSelf.call(object, visitor, context);
+            break;
+            
+        case TraversingAxis.Root:
+            traverseRoot.call(object, visitor, context);
+            break;
+            
+        case TraversingAxis.Child:
+            traverseChildren.call(object, visitor, false, context);
+            break;
+
+        case TraversingAxis.Sibling:
+            traverseSelfSiblingOrAncestor.call(object, visitor, false, false, context);
+            break;
+            
+        case TraversingAxis.SelfOrChild:
+            traverseChildren.call(object, visitor, true, context);
+            break;
+
+        case TraversingAxis.SelfOrSibling:
+            traverseSelfSiblingOrAncestor.call(object, visitor, true, false, context);
+            break;
+            
+        case TraversingAxis.Ancestor:
+            traverseAncestors.call(object, visitor, false, context);
+            break;
+            
+        case TraversingAxis.SelfOrAncestor:
+            traverseAncestors.call(object, visitor, true, context);
+            break;
+            
+        case TraversingAxis.Descendant:
+            traverseDescendants.call(object, visitor, false, context);
+            break;
+            
+        case TraversingAxis.DescendantReverse:
+            traverseDescendantsReverse.call(object, visitor, false, context);
+            break;
+            
+        case TraversingAxis.SelfOrDescendant:
+            traverseDescendants.call(object, visitor, true, context);
+            break;
+
+        case TraversingAxis.SelfOrDescendantReverse:
+            traverseDescendantsReverse.call(object, visitor, true, context);
+            break;
+            
+        case TraversingAxis.SelfSiblingOrAncestor:
+            traverseSelfSiblingOrAncestor.call(object, visitor, true, true, context);
+            break;
+
+        default:
+            throw new Error(`Unrecognized TraversingAxis ${axis}.`);
+        }
+    }
+});
+
+function checkCircularity(visited, node) {
+    if (visited.indexOf(node) !== -1) {
+        throw new Error(`Circularity detected for node ${node}`);
+    }
+    visited.push(node);
+    return node;
+}
+
+function traverseSelf(visitor, context) {
+    visitor.call(context, this);
+}
+
+function traverseRoot(visitor, context) {
+    let parent, root = this, visited = [this];
+    while (parent = root.parent) {
+        checkCircularity(visited, parent);
+        root = parent;   
+    }
+    visitor.call(context, root);
+}
+
+function traverseChildren(visitor, withSelf, context) {
+    if ((withSelf && visitor.call(context, this))) {
+        return;
+    }
+    for (const child of this.children) {
+        if (visitor.call(context, child)) {
+            return;
+        }
+    }
+}
+
+function traverseAncestors(visitor, withSelf, context) {
+    let parent = this, visited = [this];
+    if (withSelf && visitor.call(context, this)) {
+        return;
+    }
+    while ((parent = parent.parent) && !visitor.call(context, parent)) {
+        checkCircularity(visited, parent);
+    }
+}
+
+function traverseDescendants(visitor, withSelf, context) {
+    if (withSelf) {
+        Traversal.levelOrder(this, visitor, context);
+    } else {
+        Traversal.levelOrder(this, node =>
+            !$equals(this, node) && visitor.call(context, node),
+            context);
+    }
+}
+
+function traverseDescendantsReverse(visitor, withSelf, context) {
+    if (withSelf) {
+        Traversal.reverseLevelOrder(this, visitor, context);
+    } else {
+        Traversal.reverseLevelOrder(this, node =>
+            !$equals(this, node) && visitor.call(context, node),
+            context);
+    }
+}
+
+function traverseSelfSiblingOrAncestor(visitor, withSelf, withAncestor, context) {
+    if (withSelf && visitor.call(context, this)) {
+        return;
+    }
+    const parent = this.parent;
+    if (parent) {
+        for (const sibling of parent.children) {
+            if (!$equals(this, sibling) && visitor.call(context, sibling)) {
+                return;
+            }
+        }
+        if (withAncestor) {
+            traverseAncestors.call(parent, visitor, true, context);
+        }
+    }
+}
+
+/**
+ * Helper class for traversing a graph.
+ * @static
+ * @class Traversal
+ * @extends Abstract
+ */
+const Traversal = Abstract.extend({}, {
+    /**
+     * Performs a pre-order graph traversal.
+     * @static
+     * @method preOrder
+     * @param  {Traversing}  node       -  node to traverse
+     * @param  {Function}    visitor    -  receives visited nodes
+     * @param  {Object}      [context]  -  visitor calling context
+     */
+    preOrder(node, visitor, context) {
+        return preOrder(node, visitor, context);
+    },
+    /**
+     * Performs a post-order graph traversal.
+     * @static
+     * @method postOrder
+     * @param  {Traversing}  node       -  node to traverse
+     * @param  {Function}    visitor    -  receives visited nodes
+     * @param  {Object}      [context]  -  visitor calling context
+     */
+    postOrder(node, visitor, context) {
+        return postOrder(node, visitor, context);
+    },
+    /**
+     * Performs a level-order graph traversal.
+     * @static
+     * @method levelOrder
+     * @param  {Traversing}  node       -  node to traverse
+     * @param  {Function}    visitor    -  receives visited nodes
+     * @param  {Object}      [context]  -  visitor calling context
+     */
+    levelOrder(node, visitor, context) {
+        return levelOrder(node, visitor, context);
+    },
+    /**
+     * Performs a reverse level-order graph traversal.
+     * @static
+     * @method levelOrder
+     * @param  {Traversing}  node       -  node to traverse
+     * @param  {Function}    visitor    -  receives visited nodes
+     * @param  {Object}      [context]  -  visitor calling context
+     */
+    reverseLevelOrder(node, visitor, context) {
+        return reverseLevelOrder(node, visitor, context);
+    }
+});
+
+function preOrder(node, visitor, context, visited = []) {
+    checkCircularity(visited, node);
+    if (!node || !$isFunction$1(visitor) || visitor.call(context, node)) {
+        return true;
+    }
+    if ($isFunction$1(node.traverse))
+        node.traverse(child => preOrder(child, visitor, context, visited));
+    return false;
+}
+
+function postOrder(node, visitor, context, visited = []) {
+    checkCircularity(visited, node);
+    if (!node || !$isFunction$1(visitor)) {
+        return true;
+    }
+    if ($isFunction$1(node.traverse))
+        node.traverse(child => postOrder(child, visitor, context, visited));
+    return visitor.call(context, node);
+}
+
+function levelOrder(node, visitor, context, visited = []) {
+    if (!node || !$isFunction$1(visitor)) {
+        return;
+    }
+    const queue = [node];
+    while (queue.length > 0) {
+        const next = queue.shift();
+        checkCircularity(visited, next);
+        if (visitor.call(context, next)) {
+            return;
+        }
+        if ($isFunction$1(next.traverse))
+            next.traverse(child => {
+                if (child) queue.push(child);
+            });
+    }
+}
+
+function reverseLevelOrder(node, visitor, context, visited = []) {
+    if (!node || !$isFunction$1(visitor)) {
+        return;
+    }
+    const queue = [node],
+          stack = [];
+    while (queue.length > 0) {
+        const next = queue.shift();
+        checkCircularity(visited, next);
+        stack.push(next);
+        const level = [];
+        if ($isFunction$1(next.traverse))
+            next.traverse(child => {
+                if (child) level.unshift(child);
+            });
+        queue.push.apply(queue, level);
+    }
+    while (stack.length > 0) {
+        if (visitor.call(context, stack.pop())) {
+            return;
+        }
+    }
+}
+
+const injectMetadataKey = Symbol();
+
+/**
+ * Specifies dependencies on properties and methods.
+ * @method inject
+ * @param  {Array}  ...dependencies  -  property/method dependencies
+ */
+const inject = Metadata.decorator(injectMetadataKey,
+    (target, key, descriptor, dependencies) => {
+        if (!isDescriptor(descriptor)) {
+            dependencies = $flatten(key);
+            Metadata.define(injectMetadataKey, dependencies, target.prototype, "constructor");
+            return;
+        }
+        const { value } = descriptor;        
+        dependencies = $flatten(dependencies);
+        if ($isFunction$1(value)) {
+            Metadata.define(injectMetadataKey, dependencies, target, key);
+        } else if (dependencies.length !== 1) {
+            throw new SyntaxError(`@inject for property '${key}' requires single key to be specified`);
+        } else {
+            Metadata.define(injectMetadataKey, dependencies[0], target, key);
+        }
+    });
+
+/**
+ * Annotates invariance.
+ * @attribute $eq
+ * @for Modifier
+ */
+const $eq = $createModifier();
+
+/**
+ * Annotates use value as is.
+ * @attribute $use
+ * @for Modifier
+ */    
+const $use = $createModifier();
+
+/**
+ * Annotates lazy semantics.
+ * @attribute $lazy
+ * @for Modifier
+ */            
+const $lazy = $createModifier();
+
+/**
+ * Annotates function to be evaluated.
+ * @attribute $eval
+ * @for Modifier
+ */                
+const $eval = $createModifier();
+
+/**
+ * Annotates zero or more semantics.
+ * @attribute $every
+ * @for Modifier
+ */                    
+const $every = $createModifier();
+
+/**
+ * Annotates 
+ * @attribute use {{#crossLink "Parenting"}}{{/crossLink}} protocol.
+ * @attribute $child
+ * @for Modifier
+ */                        
+const $child = $createModifier();
+
+/**
+ * Annotates optional semantics.
+ * @attribute $optional
+ * @for Modifier
+ */                        
+const $optional = $createModifier();
+
+/**
+ * Annotates Promise expectation.
+ * @attribute $promise
+ * @for Modifier
+ */                            
+const $promise = $createModifier();
+
+/**
+ * Annotates synchronous.
+ * @attribute $instant
+ * @for Modifier
+ */                                
+const $instant = $createModifier();
+
+/**
+ * Class for annotating targets.
+ * @class Modifier
+ * @param  {Object}  source  -  source to annotate
+ */
+function Modifier() {}
+Modifier.isModified = function (source) {
+    return source instanceof Modifier;
+};
+Modifier.unwrap = function (source) {
+    return (source instanceof Modifier) 
+        ? Modifier.unwrap(source.getSource())
+        : source;
+};
+function $createModifier() {
+    let allowNew;
+    function modifier(source) {
+        if (!new.target) {
+            if (modifier.test(source)) {
+                return source;
+            }
+            allowNew = true;
+            const wrapped = new modifier(source);
+            allowNew = false;
+            return wrapped;
+        } else {
+            if (!allowNew) {
+                throw new Error("Modifiers should not be called with the new operator.");
+            }
+            this.getSource = function () {
+                return source;
+            };
+        }
+    }
+    modifier.prototype = new Modifier();
+    modifier.test      = function (source) {
+        if (source instanceof modifier) {
+            return true;
+        } else if (source instanceof Modifier) {
+            return modifier.test(source.getSource());
+        }
+        return false;
+    };
+    return modifier;
+}
+
+const Policy = Base.extend({
+    /**
+     * Merges this policy data into `policy`.
+     * @method mergeInto
+     * @param   {Policy}  policy  -  policy to receive data
+     * @returns {boolean} true if policy could be merged into.
+     */
+    mergeInto(policy) {
+        if (!(policy instanceof this.constructor)) {
+            return false;
+        }
+        const descriptors = getPropertyDescriptors(this),
+              keys        = Reflect.ownKeys(descriptors);
+        keys.forEach(key => {
+            const keyValue = this[key];
+            if ($isFunction$1(keyValue)) { return; }
+            if (keyValue !== undefined && this.hasOwnProperty(key)) {
+                const policyValue = policy[key];
+                if (policyValue === undefined || !policy.hasOwnProperty(key)) {
+                    policy[key] = _copyPolicyValue(keyValue);
+                } else if ($isFunction$1(keyValue.mergeInto)) {
+                    keyValue.mergeInto(policyValue);
+                }
+            }
+        });
+        return true;
+    },
+    copy() {
+        var policy = Reflect.construct(this.constructor, emptyArray);
+        this.mergeInto(policy);
+        return policy;
+    }
+}, {
+    coerce(...args) { return Reflect.construct(this, args); }
+});
+
+function _copyPolicyValue(policyValue) {
+    if ($isNothing(policyValue)) {
+        return policyValue;
+    }
+    if (Array.isArray(policyValue)) {
+        return policyValue.map(_copyPolicyValue);
+    }
+    if ($isFunction$1(policyValue.copy)) {
+        return policyValue.copy();
+    }
+    return policyValue;
+}
+
+if (Promise.prototype.finally === undefined)
+    Promise.prototype.finally = function (callback) {
+        let p = this.constructor;
+        return this.then(
+            value  => p.resolve(callback()).then(() => value),
+            reason => p.resolve(callback()).then(() => { throw reason })
+        );
+    };
+
+if (Promise.delay === undefined)
+    Promise.delay = function (ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    };
+
+/**
+ * Facet choices for proxies.
+ * @class Facet
+ */
+const Facet = Object.freeze({
+    /**
+     * @property {string} Parameters
+     */
+    Parameters: "proxy:parameters",
+    /**
+     * @property {string} Interceptors
+     */        
+    Interceptors: "proxy:interceptors",
+    /**
+     * @property {string} InterceptorSelectors
+     */                
+    InterceptorSelectors: "proxy:interceptorSelectors",
+    /**
+     * @property {string} Delegate
+     */                        
+    Delegate: "proxy:delegate"
+});
+
+/**
+ * Base class for method interception.
+ * @class Interceptor
+ * @extends Base
+ */
+const Interceptor = Base.extend({
+    /**
+     * @method intercept
+     * @param    {Object} invocation  - invocation
+     * @returns  {Any} invocation result
+     */
+    intercept(invocation) { return invocation.proceed(); }
+});
+
+/**
+ * Responsible for selecting which interceptors to apply to a method.
+ * @class InterceptorSelector
+ * @extends Base
+ */
+const InterceptorSelector = Base.extend({
+    /**
+     * Selects `interceptors` to apply to `method`.
+     * @method selectInterceptors
+     * @param    {Type}    type         - intercepted type
+     * @param    {string}  method       - intercepted method name
+     * @param    {Array}   interceptors - available interceptors
+     * @returns  {Array} interceptors to apply to method.
+     */
+    selectInterceptors(type, method, interceptors) {
+        return interceptors;
+    }
+});
+
+/**
+ * Builds proxy classes for interception.
+ * @class ProxyBuilder
+ * @extends Base
+ */
+const ProxyBuilder = Base.extend({
+    /**
+     * Builds a proxy class for the supplied types.
+     * @method buildProxy
+     * @param    {Array}     ...types  -  classes and protocols
+     * @param    {Object}    options   -  literal options
+     * @returns  {Function}  proxy class.
+     */
+    buildProxy(types, options) {
+        if (!Array.isArray(types)) {
+            throw new TypeError("ProxyBuilder requires an array of types to proxy.");
+        }
+        const classes   = types.filter($isClass),
+              protocols = types.filter($isProtocol);
+        return buildProxy(classes, protocols, options || {});
+    }
+});
+
+function buildProxy(classes, protocols, options) {
+    const base  = options.baseType || classes.shift() || Base,
+          proxy = base.extend(...classes.concat(protocols), {
+            constructor(facets) {
+                const spec = {};
+                spec.value = facets[Facet.InterceptorSelectors];
+                if (spec.value && spec.value.length > 0) {
+                    Object.defineProperty(this, "selectors", spec);
+                }
+                spec.value = facets[Facet.Interceptors];
+                if (spec.value && spec.value.length > 0) {
+                    Object.defineProperty(this, "interceptors", spec);
+                }
+                spec.value = facets[Facet.Delegate];
+                if (spec.value) {
+                    spec.writable = true;
+                    Object.defineProperty(this, "delegate", spec);
+                }
+                const ctor = proxyMethod("constructor", this.base, base);
+                ctor.apply(this, facets[Facet.Parameters]);
+                delete spec.writable;
+                delete spec.value;
+            },
+            getInterceptors(source, method) {
+                const selectors = this.selectors;
+                return selectors ? selectors.reduce((interceptors, selector) =>
+                           selector.selectInterceptors(source, method, interceptors),
+                           this.interceptors)
+                     : this.interceptors;
+            },
+            extend: extendProxyInstance
+        }, {
+            shouldProxy: options.shouldProxy
+        });
+    proxyClass(proxy, protocols);
+    proxy.extend = proxy.implement = throwProxiesSealedExeception;
+    return proxy;
+}
+
+function throwProxiesSealedExeception()
+{
+    throw new TypeError("Proxy classes are sealed and cannot be extended from.");
+}
+
+const noProxyMethods = {
+    base: true, extend: true, constructor: true, conformsTo: true,
+    getInterceptors: true, getDelegate: true, setDelegate: true
+};
+
+function proxyClass(proxy, protocols) {
+    const sources = [proxy].concat($protocols(proxy), protocols),
+          proxied = {};
+    for (let i = 0; i < sources.length; ++i) {
+        const source     = sources[i],
+              isProtocol = $isProtocol(source),
+              props      = getPropertyDescriptors(source.prototype);
+        Reflect.ownKeys(props).forEach(key => {
+            if (proxied.hasOwnProperty(key) || (key in noProxyMethods)) return;
+            if (proxy.shouldProxy && !proxy.shouldProxy(key, source)) return;
+            const descriptor = props[key];
+            if (!descriptor.enumerable) return;
+            let { value, get, set } = descriptor;
+            if ($isFunction$1(value)) {
+                if (isProtocol) value = null;
+                descriptor.value = proxyMethod(key, value, proxy);
+            } else {
+                if (descriptor.hasOwnProperty("value")) {
+                    const field = Symbol();
+                    get = function () { return this[field]; },
+                    set = function (value) { this[field] = value; };
+                    delete descriptor.value;
+                    delete descriptor.writable;
+                }
+                if (get) {
+                    if (isProtocol) get = null;
+                    descriptor.get = proxyMethod(key, get, proxy, MethodType.Get);
+                }
+                if (set) {
+                    if (isProtocol) set = null;                    
+                    descriptor.set = proxyMethod(key, set, proxy, MethodType.Set);
+                }
+            }
+            Object.defineProperty(proxy.prototype, key, descriptor);
+            proxied[key] = true;
+        });
+    }
+}
+
+function proxyMethod(key, method, source, type) {
+    let interceptors;    
+    function methodProxy(...args) {
+        const _this    = this;
+        let   delegate$$1 = this.delegate,
+              idx      = -1;
+        if (!interceptors) {
+            interceptors = this.getInterceptors(source, key);
+        }
+        type = type || MethodType.Invoke;
+        const invocation = {
+            method:     key,
+            methodType: type,            
+            source:     source,
+            args:       args,
+            useDelegate(value) { delegate$$1 = value; },
+            replaceDelegate(value) {
+                _this.delegate = delegate$$1 = value;
+            },
+            get canProceed() {
+                if (interceptors && (idx + 1 < interceptors.length)) {
+                    return true;
+                }
+                if (delegate$$1) {
+                    return $isFunction$1(delegate$$1[key]);
+                }
+                return !!method;
+            },
+            proceed() {
+                ++idx;
+                if (interceptors && idx < interceptors.length) {
+                    const interceptor = interceptors[idx];
+                    return interceptor.intercept(invocation);
+                }
+                if (delegate$$1) {
+                    switch(type) {
+                    case MethodType.Get:
+                        return delegate$$1[key];
+                    case MethodType.Set:
+                        delegate$$1[key] = args[0];
+                        break;
+                    case MethodType.Invoke:
+                        const invoke = delegate$$1[key];
+                        if ($isFunction$1(invoke)) {
+                            return invoke.apply(delegate$$1, this.args);
+                        }
+                        break;
+                    }
+                } else if (method) {
+                    return method.apply(_this, this.args);
+                }
+                throw new Error(`Interceptor cannot proceed without a class or delegate method '${key}'.`);
+            }
+        };
+        return invocation.proceed();
+    }
+    methodProxy.baseMethod = method;
+    return methodProxy;
+}
+
+function extendProxyInstance(key, value) {
+    const proxy     = this.constructor,
+          overrides = arguments.length === 1
+                    ? key : { [key]: value },
+          props     = getPropertyDescriptors(overrides);
+    Reflect.ownKeys(props).forEach(key => {
+        const descriptor = props[key];        
+        if (!descriptor.enumerable) return;
+        let { value, get, set } = descriptor,
+            baseDescriptor = getPropertyDescriptors(this, key);
+        if (!baseDescriptor) return;
+        if (value) {
+            if ($isFunction$1(value)) {
+                const baseValue = baseDescriptor.value;
+                if ($isFunction$1(value) && value.baseMethod) {
+                    baseDescriptor.value = value.baseMethod;
+                }
+            }
+        } else if (get) {
+            const baseGet = baseDescriptor.get;
+            if (baseGet && get.baseMethod) {
+                baseDescriptor.get = get.baseMethod;
+            }
+        } else if (set) {
+            const baseSet = baseDescriptor.set;
+            if (baseSet && set.baseMethod) {
+                baseDescriptor.set = set.baseMethod;
+            }            
+        }
+        Object.defineProperty(this, key, baseDescriptor);
+    });
+    this.base(overrides);
+    Reflect.ownKeys(props).forEach(key => {
+        if (key in noProxyMethods) return;
+        if (proxy.shouldProxy && !proxy.shouldProxy(key, proxy)) return;
+        const descriptor = props[key];
+        if (!descriptor.enumerable) return;
+        let { value, get, set } = descriptor;        
+        if ($isFunction$1(value)) {
+            descriptor.value = proxyMethod(key, value, proxy);
+        } else if (!(get || set)) {
+            return;
+        } else {
+            if (get) {
+                descriptor.get = proxyMethod(key, get, proxy, MethodType.Get);
+            }
+            if (set) {
+                descriptor.set = proxyMethod(key, set, proxy, MethodType.Set);
+            }
+        }
+        Object.defineProperty(this, key, descriptor);
+    });
+    return this;
+}
+
+export { Undefined, Null, True, False, Base, Package, Abstract, Module, pcopy, extend, getPropertyDescriptors, instanceOf, typeOf, assignID, format, csv, bind, partial, delegate, copy, emptyArray, nothing, MethodType, Variance, mixin, Initializing, Resolving, Invoking, Parenting, Starting, Startup, $isClass, $classOf, $decorator, $decorate, $decorated, decorate, isDescriptor, Delegate, ObjectDelegate, ArrayDelegate, design, Disposing, DisposingMixin, $using, Enum, Flags, TraversingAxis, Traversing, TraversingMixin, Traversal, inject, Metadata, $eq, $use, $lazy, $eval, $every, $child, $optional, $promise, $instant, Modifier, $createModifier, Policy, Protocol, StrictProtocol, $isProtocol, $protocols, protocol, conformsTo, Facet, Interceptor, InterceptorSelector, ProxyBuilder, ArrayManager, IndexedList, $isString, $isSymbol, $isFunction$1 as $isFunction, $isObject, $isPlainObject, $isPromise, $isNothing, $isSomething$1 as $isSomething, $lift, $flatten, $equals, $debounce };
