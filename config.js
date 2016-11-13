@@ -1,6 +1,6 @@
 System.config({
   defaultJSExtensions: true,
-  transpiler: "babel",
+  transpiler: false,
   babelOptions: {
     "optional": [
       "runtime",
@@ -14,9 +14,9 @@ System.config({
   },
 
   map: {
-    "babel": "npm:babel@6.5.2",
+    "babel": "npm:babel-core@5.8.38",
     "babel-core": "npm:babel-core@6.16.0",
-    "babel-runtime": "npm:babel-runtime@6.11.6",
+    "babel-runtime": "npm:babel-runtime@5.8.38",
     "chai": "npm:chai@3.5.0",
     "core-js": "npm:core-js@1.2.7",
     "reflect-metadata": "npm:reflect-metadata@0.1.8",
@@ -169,9 +169,6 @@ System.config({
       "lodash": "npm:lodash@4.16.2",
       "to-fast-properties": "npm:to-fast-properties@1.0.2"
     },
-    "npm:babel@6.5.2": {
-      "process": "github:jspm/nodelibs-process@0.1.2"
-    },
     "npm:babylon@6.11.2": {
       "fs": "github:jspm/nodelibs-fs@0.1.2",
       "process": "github:jspm/nodelibs-process@0.1.2"
@@ -184,7 +181,7 @@ System.config({
       "base64-js": "npm:base64-js@0.0.8",
       "child_process": "github:jspm/nodelibs-child_process@0.1.0",
       "fs": "github:jspm/nodelibs-fs@0.1.2",
-      "ieee754": "npm:ieee754@1.1.6",
+      "ieee754": "npm:ieee754@1.1.8",
       "isarray": "npm:isarray@1.0.0",
       "process": "github:jspm/nodelibs-process@0.1.2"
     },

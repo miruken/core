@@ -1,154 +1,4 @@
-import "reflect-metadata";
-
-
-if (Promise.prototype.finally === undefined)
-    Promise.prototype.finally = function (callback) {
-        let p = this.constructor;
-        return this.then(
-            value  => p.resolve(callback()).then(() => value),
-            reason => p.resolve(callback()).then(() => { throw reason })
-        );
-    };
-
-if (Promise.delay === undefined)
-    Promise.delay = function (ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    };
-
-/**
- * Annotates invariance.
- * @attribute $eq
- * @for Modifier
- */
-export const $eq = $createModifier();
-
-/**
- * Annotates use value as is.
- * @attribute $use
- * @for Modifier
- */    
-export const $use = $createModifier();
-
-/**
- * Annotates lazy semantics.
- * @attribute $lazy
- * @for Modifier
- */            
-export const $lazy = $createModifier();
-
-/**
- * Annotates function to be evaluated.
- * @attribute $eval
- * @for Modifier
- */                
-export const $eval = $createModifier();
-
-/**
- * Annotates zero or more semantics.
- * @attribute $every
- * @for Modifier
- */                    
-export const $every = $createModifier();
-
-/**
- * Annotates 
- * @attribute use {{#crossLink "Parenting"}}{{/crossLink}} protocol.
- * @attribute $child
- * @for Modifier
- */                        
-export const $child = $createModifier();
-
-/**
- * Annotates optional semantics.
- * @attribute $optional
- * @for Modifier
- */                        
-export const $optional = $createModifier();
-
-/**
- * Annotates Promise expectation.
- * @attribute $promise
- * @for Modifier
- */                            
-export const $promise = $createModifier();
-
-/**
- * Annotates synchronous.
- * @attribute $instant
- * @for Modifier
- */                                
-export const $instant = $createModifier();
-
-/**
- * Class for annotating targets.
- * @class Modifier
- * @param  {Object}  source  -  source to annotate
- */
-export function Modifier() {}
-Modifier.isModified = function (source) {
-    return source instanceof Modifier;
-};
-Modifier.unwrap = function (source) {
-    return (source instanceof Modifier) 
-        ? Modifier.unwrap(source.getSource())
-        : source;
-};
-export function $createModifier() {
-    let allowNew;
-    function modifier(source) {
-        if (!new.target) {
-            if (modifier.test(source)) {
-                return source;
-            }
-            allowNew = true;
-            const wrapped = new modifier(source);
-            allowNew = false;
-            return wrapped;
-        } else {
-            if (!allowNew) {
-                throw new Error("Modifiers should not be called with the new operator.");
-            }
-            this.getSource = function () {
-                return source;
-            }
-        }
-    }
-    modifier.prototype = new Modifier();
-    modifier.test      = function (source) {
-        if (source instanceof modifier) {
-            return true;
-        } else if (source instanceof Modifier) {
-            return modifier.test(source.getSource());
-        }
-        return false;
-    }
-    return modifier;
-}
-
-export function decorate(decorator, args) {
-    if (isDescriptor(args[args.length - 1])) {
-        return decorator(...args, []);
-    }
-    return function () {
-        return decorator(...arguments, args);
-    };
-}
-
-export function isDescriptor(desc) {
-    if (!desc || !desc.hasOwnProperty) {
-        return false;
-    }
-
-    const keys = ["value", "initializer", "get", "set"];
-
-    for (let i = 0, l = keys.length; i < l; i++) {
-        if (desc.hasOwnProperty(keys[i])) {
-            return true;
-        }
-    }
-
-    return false;
-}
+import 'reflect-metadata';
 
 /*
   base2 - copyright 2007-2009, Dean Edwards
@@ -159,17 +9,15 @@ export function isDescriptor(desc) {
     Doeke Zanstra
 */
 
-export const Undefined = K(),
-             Null      = K(null),
-             True      = K(true),
-             False     = K(false);
+const Undefined = K();
 
-var __prototyping, _counter = 1;
+var __prototyping;
+var _counter = 1;
 
-const _IGNORE = K(),
-      _BASE   = /\bbase\b/,
-      _HIDDEN = ["constructor", "toString"],     // only override these when prototyping
-      _slice  = Array.prototype.slice;
+const _IGNORE = K();
+const _BASE   = /\bbase\b/;
+const _HIDDEN = ["constructor", "toString"];
+const _slice  = Array.prototype.slice;
 
 // =========================================================================
 // base2/Base.js
@@ -210,7 +58,7 @@ const _subclass = function(_instance, _static) {
       }
     }
     return this;
-  };
+  }
   _prototype.constructor = _class;
   
   // Build the static interface.
@@ -223,7 +71,7 @@ const _subclass = function(_instance, _static) {
   return _class;
 };
 
-export let Base = _subclass.call(Object, {
+let Base = _subclass.call(Object, {
   constructor: function() {
     if (arguments.length > 0 && typeOf(arguments[0]) === 'object') {
       this.extend(arguments[0]);
@@ -264,7 +112,7 @@ Base.base = Base.prototype.base = function() {
 // base2/Package.js
 // =========================================================================
 
-export const Package = Base.extend({
+const Package = Base.extend({
   constructor: function(_private, _public) {
     var pkg = this, openPkg;
     
@@ -342,7 +190,7 @@ export const Package = Base.extend({
         value = value[names[i++]];
       }
       return value;
-    };
+    }
   },
 
   exports: "",
@@ -391,7 +239,7 @@ export const Package = Base.extend({
 // base2/Abstract.js
 // =========================================================================
 
-export const Abstract = Base.extend({
+const Abstract = Base.extend({
   constructor: function() {
     throw new TypeError("Abstract class cannot be instantiated.");
   }
@@ -403,7 +251,7 @@ export const Abstract = Base.extend({
 
 var _moduleCount = 0;
 
-export const Module = Abstract.extend(null, {
+const Module = Abstract.extend(null, {
   namespace: "",
 
   extend: function(_interface, _static) {
@@ -488,13 +336,13 @@ function _extendModule(module, _interface) {
       }
     }
   }
-};
+}
 
 function _createStaticModuleMethod(module, name) {
   return function() {
     return module[name].apply(module, arguments);
   };
-};
+}
 
 function _createModuleMethod(module, name) {
   return function() {
@@ -502,21 +350,17 @@ function _createModuleMethod(module, name) {
     args.unshift(this);
     return module[name].apply(module, args);
   };
-};
+}
 
-export function pcopy(object) { // Prototype-base copy.
-  // Doug Crockford / Richard Cornford
-  _dummy.prototype = object;
-  return new _dummy;
-};
 
-function _dummy(){};
+
+
 
 // =========================================================================
 // lang/extend.js
 // =========================================================================
 
-export function extend(object, source) { // or extend(object, key, value)
+function extend(object, source) { // or extend(object, key, value)
   if (object && source) {
     var useProto = __prototyping;
     if (arguments.length > 2) { // Extending with a key/value pair.
@@ -550,7 +394,7 @@ export function extend(object, source) { // or extend(object, key, value)
     });
   }
   return object;
-};
+}
 
 function _ancestorOf(ancestor, fn) {
   // Check if a function is in another function's inheritance chain.
@@ -560,7 +404,7 @@ function _ancestorOf(ancestor, fn) {
     if (fn == ancestor) return true;
   }
   return false;
-};
+}
 
 function _override(object, key, desc) {
   var value = desc.value;
@@ -611,7 +455,7 @@ function _override(object, key, desc) {
           var ret = get.apply(this, arguments);
           this.base = b;
           return ret;
-        }
+        };
         var ret = get.apply(this, arguments);
         this.base = b;
         return ret;
@@ -637,7 +481,7 @@ function _override(object, key, desc) {
           var ret = set.apply(this, arguments);
           this.base = b;
           return ret;
-        }
+        };
         var ret = set.apply(this, arguments);
         this.base = b;
         return ret;
@@ -652,9 +496,9 @@ function _override(object, key, desc) {
     desc.set = aset;
   }
   return desc;
-};
+}
     
-export function getPropertyDescriptors(obj, key) {
+function getPropertyDescriptors(obj, key) {
     var props = key ? null : {},
         own   = false,
         prop;
@@ -678,49 +522,7 @@ export function getPropertyDescriptors(obj, key) {
 // lang/instanceOf.js
 // =========================================================================
 
-export function instanceOf(object, klass) {
-  // Handle exceptions where the target object originates from another frame.
-  // This is handy for JSON parsing (amongst other things).
-  
-  if (typeof klass != "function") {
-    throw new TypeError("Invalid 'instanceOf' operand.");
-  }
 
-  if (object == null) return false;
-   
-  if (object.constructor == klass) return true;
-  if (klass.ancestorOf) return klass.ancestorOf(object.constructor);
-  /*@if (@_jscript_version < 5.1)
-    // do nothing
-  @else @*/
-    if (object instanceof klass) return true;
-  /*@end @*/
-
-  // If the class is a base2 class then it would have passed the test above.
-  if (Base.ancestorOf == klass.ancestorOf) return false;
-  
-  // base2 objects can only be instances of Object.
-  if (Base.ancestorOf == object.constructor.ancestorOf) return klass == Object;
-  
-  switch (klass) {
-    case Array:
-      return _toString.call(object) == "[object Array]";
-    case Date:
-      return _toString.call(object) == "[object Date]";
-    case RegExp:
-      return _toString.call(object) == "[object RegExp]";
-    case Function:
-      return typeOf(object) == "function";
-    case String:
-    case Number:
-    case Boolean:
-      return typeOf(object) == typeof klass.prototype.valueOf();
-    case Object:
-      return true;
-  }
-  
-  return false;
-};
 
 var _toString = Object.prototype.toString;
 
@@ -730,7 +532,7 @@ var _toString = Object.prototype.toString;
 
 // http://wiki.ecmascript.org/doku.php?id=proposals:typeof
 
-export function typeOf(object) {
+function typeOf(object) {
   var type = typeof object;
   switch (type) {
     case "object":
@@ -745,16 +547,11 @@ export function typeOf(object) {
     default:
       return type;
   }
-};
+}
 
-export function assignID(object, name) {
-  // Assign a unique ID to an object.
-  if (!name) name = object.nodeType == 1 ? "uniqueID" : "base2ID";
-  if (!object.hasOwnProperty(name)) object[name] = "b2_" + _counter++;
-  return object[name];
-};
 
-export function format(string) {
+
+function format(string) {
     // Replace %n with arguments[n].
     // e.g. format("%1 %2%3 %2a %1%3", "she", "se", "lls");
     // ==> "she sells sea shells"
@@ -764,13 +561,13 @@ export function format(string) {
     return (string + "").replace(pattern, function(match, index) {
         return args[index];
     });
-};
+}
 
-export function csv(string) {
+function csv(string) {
     return string ? (string + "").split(/\s*,\s*/) : [];
-};
+}
 
-export function bind(fn, context) {
+function bind(fn, context) {
     var lateBound = typeof fn != "function";
     if (arguments.length > 2) {
         var args = _slice.call(arguments, 2);
@@ -782,9 +579,9 @@ export function bind(fn, context) {
             return (lateBound ? context[fn] : fn).apply(context, arguments);
         };
     }
-};
+}
 
-export function partial(fn) { // Based on Oliver Steele's version.
+function partial(fn) { // Based on Oliver Steele's version.
     var args = _slice.call(arguments, 1);
     return function() {
         var specialised = args.concat(), i = 0, j = 0;
@@ -801,295 +598,21 @@ export function partial(fn) { // Based on Oliver Steele's version.
         }
         return fn.apply(this, specialised);
     };
-};
+}
 
-export function delegate(fn, context) {
+function delegate(fn, context) {
     return function() {
         var args = _slice.call(arguments);
         args.unshift(this);
         return fn.apply(context, args);
     };
-};
+}
 
 function K(k) {
     return function() {
         return k;
     };
-};
-
-/**
- * Applies copy semantics on properties and return values.
- * @method copy
- */
-export function copy(...args) {
-    return decorate(_copy, args);
 }
-
-function _copy(target, key, descriptor) {
-    if (!isDescriptor(descriptor)) {
-        throw new SyntaxError("@copy can only be applied to methods or properties");
-    }
-    const { get, set, value, initializer } = descriptor;
-    if ($isFunction(value)) {
-        descriptor.value = function () {
-            return _copyOf(value.apply(this, arguments));
-        }
-    }
-    if ($isFunction(initializer)) {
-        descriptor.initializer = function () {
-            return _copyOf(initializer.apply(this));
-        }
-    }
-    if ($isFunction(get)) {
-        descriptor.get = function () {
-            return _copyOf(get.apply(this));
-        }
-    }
-    if ($isFunction(set)) {
-        descriptor.set = function (value) {
-            return set.call(this, _copyOf(value));
-        }
-    }
-}
-
-function _copyOf(value) {
-    if (value != null && $isFunction(value.copy)) {
-        value = value.copy();
-    }
-    return value;
-}
-
-/**
- * Delegates properties and methods to another object.<br/>
- * See {{#crossLink "Protocol"}}{{/crossLink}}
- * @class Delegate
- * @extends Base
- */
-export const Delegate = Base.extend({
-    /**
-     * Delegates the property get on `protocol`.
-     * @method get
-     * @param   {Protocol} protocol  - receiving protocol
-     * @param   {string}   key       - key of the property
-     * @param   {boolean}  strict    - true if target must adopt protocol
-     * @returns {Any} result of the proxied get.
-     */
-    get(protocol, key, strict) {},
-    /**
-     * Delegates the property set on `protocol`.
-     * @method set
-     * @param   {Protocol} protocol  - receiving protocol
-     * @param   {string}   key       - key of the property
-     * @param   {Object}   value     - value of the property
-     * @param   {boolean}  strict    - true if target must adopt protocol
-     */
-    set(protocol, key, value, strict) {},
-    /**
-     * Delegates the method invocation on `protocol`.
-     * @method invoke
-     * @param   {Protocol} protocol    - receiving protocol
-     * @param   {string}   methodName  - name of the method
-     * @param   {Array}    args        - method arguments
-     * @param   {boolean}  strict      - true if target must adopt protocol
-     * @returns {Any} result of the proxied invocation.
-     */
-    invoke(protocol, methodName, args, strict) {}
-});
-
-/**
- * Delegates properties and methods to an object.
- * @class ObjectDelegate
- * @constructor
- * @param   {Object}  object  - receiving object
- * @extends Delegate
- */
-export const ObjectDelegate = Delegate.extend({
-    constructor(object) {
-        Object.defineProperty(this, "object", { value: object });
-    },
-    get(protocol, key, strict) {
-        const object = this.object;
-        if (object && (!strict || protocol.isAdoptedBy(object))) {
-            return object[key];
-        }
-    },
-    set(protocol, key, value, strict) {
-        const object = this.object;
-        if (object && (!strict || protocol.isAdoptedBy(object))) {
-            return object[key] = value;
-        }
-    },
-    invoke(protocol, methodName, args, strict) {
-        const object = this.object;
-        if (object && (!strict || protocol.isAdoptedBy(object))) {
-            const method = object[methodName];                
-            return method && method.apply(object, args);
-        }
-    }
-});
-
-/**
- * Delegates properties and methods to an array.
- * @class ArrayDelegate
- * @constructor
- * @param   {Array}  array  - receiving array
- * @extends Delegate
- */
-export const ArrayDelegate = Delegate.extend({
-    constructor(array) {
-        Object.defineProperty(this, "array", { value: array });
-    },
-    get(protocol, key, strict) {
-        const array = this.array;
-        return array && array.reduce((result, object) =>
-            !strict || protocol.isAdoptedBy(object) ? object[key] : result,
-            undefined);  
-    },
-    set(protocol, key, value, strict) {
-        const array = this.array;
-        return array && array.reduce((result, object) =>
-            !strict || protocol.isAdoptedBy(object) ? object[key] = value : result,
-            undefined);  
-    },
-    invoke(protocol, methodName, args, strict) {
-        const array = this.array;
-        return array && array.reduce((result, object) => {
-            const method = object[methodName];
-            return method && (!strict || protocol.isAdoptedBy(object))
-                ? method.apply(object, args)
-                : result;
-        }, undefined);
-    }
-});
-
-/**
- * Defines an enumeration.
- * <pre>
- *    const Color = Enum({
- *        red:   1,
- *        green: 2,
- *        blue:  3
- *    })
- * </pre>
- * @class Enum
- * @constructor
- * @param  {Any}     value    -  enum value
- * @param  {string}  name     -  enum name
- * @param  {number}  ordinal  -  enum position
- */
-const Defining = Symbol();
-
-export const Enum = Base.extend({
-    constructor(value, name, ordinal) {
-        this.constructing(value, name);
-        Object.defineProperties(this, {
-            "value": {
-                value:        value,
-                writable:     false,
-                configurable: false
-            },
-            "name": {
-                value:        name,
-                writable:     false,
-                configurable: false
-            },
-            "ordinal": {
-                value:        ordinal,
-                writable:     false,
-                configurable: false
-            },
-            
-        });
-    },
-    toString() { return this.name; },
-    constructing(value, name) {
-        if (!this.constructor[Defining]) {
-            throw new TypeError("Enums cannot be instantiated.");
-        }            
-    }
-}, {
-    coerce(choices, behavior) {
-        if (this !== Enum && this !== Flags) {
-            return;
-        }
-        let en = this.extend(behavior, {
-            coerce(value) {
-                return this.fromValue(value);
-            }
-        });
-        en[Defining] = true;
-        const names  = Object.freeze(Object.keys(choices));
-        let   items  = Object.keys(choices).map(
-            (name, ordinal) => en[name] = new en(choices[name], name, ordinal));
-        en.names     = Object.freeze(names);        
-        en.items     = Object.freeze(items);
-        en.fromValue = this.fromValue;
-        delete en[Defining]
-        return en;
-    },
-    fromValue(value) {
-        const match = this.items.find(item => item.value == value);
-        if (!match) {
-            throw new TypeError(`${value} is not a valid value for this Enum.`);
-        }
-        return match;
-    }
-});
-Enum.prototype.valueOf = function () {
-    const value = +this.value;
-    return isNaN(value) ? this.ordinal : value;
-}
-
-/**
- * Defines a flags enumeration.
- * <pre>
- *    const DayOfWeek = Flags({
- *        Monday:     1 << 0,
- *        Tuesday:    1 << 1,
- *        Wednesday:  1 << 2,
- *        Thursday:   1 << 3,
- *        Friday:     1 << 4,
- *        Saturday:   1 << 5,
- *        Sunday:     1 << 6
- *    })
- * </pre>
- * @class Enum
- * @constructor
- * @param  {Any} value     -  flag value
- * @param  {string} value  -  flag name
- */    
-export const Flags = Enum.extend({
-    hasFlag(flag) {
-        flag = +flag;
-        return (this & flag) === flag;
-    },
-    addFlag(flag) {
-        return $isSomething(flag)
-             ? this.constructor.fromValue(this | flag)
-             : this;
-    },
-    removeFlag(flag) {
-        return $isSomething(flag)
-             ? this.constructor.fromValue(this & (~flag))
-             : this;
-    },
-    constructing(value, name) {}        
-}, {
-    fromValue(value) {
-        value = +value;
-        let name, names = this.names;
-        for (let i = 0; i < names.length; ++i) {
-            const flag = this[names[i]];
-            if (flag.value === value) {
-                return flag;
-            }
-            if ((value & flag.value) === flag.value) {
-                name = name ? (name + "," + flag.name) : flag.name;
-            }
-        }
-        return new this(value, name);
-    }
-});
 
 /**
  * Helper class to simplify array manipulation.
@@ -1098,7 +621,7 @@ export const Flags = Enum.extend({
  * @param  {Array}  [...items]  -  initial items
  * @extends Base
  */
-export const ArrayManager = Base.extend({
+const ArrayManager = Base.extend({
     constructor(items) {
         let _items = [];
         this.extend({
@@ -1228,7 +751,7 @@ export const ArrayManager = Base.extend({
  * @param  {Function}  order  -  partially orders items
  * @extends Base
  */
-export const IndexedList = Base.extend({
+const IndexedList = Base.extend({
     constructor(order = defaultOrder) {
         let _index = {};
         this.extend({
@@ -1383,9 +906,7 @@ function defaultOrder(a, b) {
  * @param    {Any}     str  -  string to test
  * @returns  {boolean} true if a string.
  */
-export function $isString(str) {
-    return typeOf(str) === "string";
-}
+
 
 /**
  * Determines if `sym` is a symbol.
@@ -1393,9 +914,7 @@ export function $isString(str) {
  * @param    {Symbole} sym  -  symbol to test
  * @returns  {boolean} true if a symbol.
  */
-export function $isSymbol(str) {
-    return Object(str) instanceof Symbol;
-}
+
 
 /**
  * Determines if `fn` is a function.
@@ -1403,7 +922,7 @@ export function $isSymbol(str) {
  * @param    {Any}     fn  -  function to test
  * @returns  {boolean} true if a function.
  */
-export function $isFunction(fn) {
+function $isFunction(fn) {
     return fn instanceof Function;
 }
 
@@ -1413,7 +932,7 @@ export function $isFunction(fn) {
  * @param    {Any}     obj  - object to test
  * @returns  {boolean} true if an object.
  */
-export function $isObject(obj) {
+function $isObject(obj) {
     return typeOf(obj) === "object";
 }
 
@@ -1423,9 +942,7 @@ export function $isObject(obj) {
  * @param    {Any}     obj  -  object to test
  * @returns  {boolean} true if a plain object.
  */
-export function $isPlainObject(obj) {
-    return $isObject(obj) && obj.constructor === Object;
-}
+
 
 /**
  * Determines if `promise` is a promise.
@@ -1433,9 +950,7 @@ export function $isPlainObject(obj) {
  * @param    {Any}     promise  -  promise to test
  * @returns  {boolean} true if a promise. 
  */
-export function $isPromise(promise) {
-    return promise && $isFunction(promise.then);
-}
+
 
 /**
  * Determines if `value` is null or undefined.
@@ -1443,7 +958,7 @@ export function $isPromise(promise) {
  * @param    {Any}     value  -  value to test
  * @returns  {boolean} true if value null or undefined.
  */
-export function $isNothing(value) {
+function $isNothing(value) {
     return value == null;
 }
 
@@ -1453,7 +968,7 @@ export function $isNothing(value) {
  * @param    {Any}     value  -  value to test
  * @returns  {boolean} true if value not null or undefined.
  */
-export function $isSomething(value) {
+function $isSomething$1(value) {
     return value != null;
 }
 
@@ -1463,9 +978,7 @@ export function $isSomething(value) {
  * @param    {Any}      value  -  any value
  * @returns  {Function} function that returns value.
  */
-export function $lift(value) {
-    return function() { return value; };
-}
+
 
 /**
  * Recursively flattens and optionally prune an array.
@@ -1474,10 +987,10 @@ export function $lift(value) {
  * @param    {boolean} prune  -  true if prune null items
  * @returns  {Array}   flattend/pruned array or `arr`
  */
-export function $flatten(arr, prune) {
+function $flatten(arr, prune) {
     if (!Array.isArray(arr)) return arr;
     let items = arr.map(item => $flatten(item, prune));
-    if (prune) items = items.filter($isSomething);
+    if (prune) items = items.filter($isSomething$1);
     return [].concat(...items);
 }
 
@@ -1492,7 +1005,7 @@ export function $flatten(arr, prune) {
  * @param    {Any}     obj2  -  second object
  * @returns  {boolean} true if the obejcts are considered equal, false otherwise.
  */
-export function $equals(obj1, obj2) {
+function $equals(obj1, obj2) {
     if (obj1 === obj2) {
         return true;
     }
@@ -1513,31 +1026,140 @@ export function $equals(obj1, obj2) {
  * @param    {Any}      defaultReturnValue  -  value to return when throttled
  * @returns  {Function} throttled function
  */
-export function $debounce(fn, wait, immediate, defaultReturnValue) {
-    let timeout;
-    return function () {
-        const context = this, args = arguments;
-        const later = function () {
-            timeout = null;
-            if (!immediate) {
-                return fn.apply(context, args);
-            }
-        };
-        const callNow = immediate && !timeout;
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-        if (callNow) {
-            return fn.apply(context, args);
+
+/**
+ * Delegates properties and methods to another object.<br/>
+ * See {{#crossLink "Protocol"}}{{/crossLink}}
+ * @class Delegate
+ * @extends Base
+ */
+const Delegate = Base.extend({
+    /**
+     * Delegates the property get on `protocol`.
+     * @method get
+     * @param   {Protocol} protocol  - receiving protocol
+     * @param   {string}   key       - key of the property
+     * @param   {boolean}  strict    - true if target must adopt protocol
+     * @returns {Any} result of the proxied get.
+     */
+    get(protocol, key, strict) {},
+    /**
+     * Delegates the property set on `protocol`.
+     * @method set
+     * @param   {Protocol} protocol  - receiving protocol
+     * @param   {string}   key       - key of the property
+     * @param   {Object}   value     - value of the property
+     * @param   {boolean}  strict    - true if target must adopt protocol
+     */
+    set(protocol, key, value, strict) {},
+    /**
+     * Delegates the method invocation on `protocol`.
+     * @method invoke
+     * @param   {Protocol} protocol    - receiving protocol
+     * @param   {string}   methodName  - name of the method
+     * @param   {Array}    args        - method arguments
+     * @param   {boolean}  strict      - true if target must adopt protocol
+     * @returns {Any} result of the proxied invocation.
+     */
+    invoke(protocol, methodName, args, strict) {}
+});
+
+/**
+ * Delegates properties and methods to an object.
+ * @class ObjectDelegate
+ * @constructor
+ * @param   {Object}  object  - receiving object
+ * @extends Delegate
+ */
+const ObjectDelegate = Delegate.extend({
+    constructor(object) {
+        Object.defineProperty(this, "object", { value: object });
+    },
+    get(protocol, key, strict) {
+        const object = this.object;
+        if (object && (!strict || protocol.isAdoptedBy(object))) {
+            return object[key];
         }
-        return defaultReturnValue;
+    },
+    set(protocol, key, value, strict) {
+        const object = this.object;
+        if (object && (!strict || protocol.isAdoptedBy(object))) {
+            return object[key] = value;
+        }
+    },
+    invoke(protocol, methodName, args, strict) {
+        const object = this.object;
+        if (object && (!strict || protocol.isAdoptedBy(object))) {
+            const method = object[methodName];                
+            return method && method.apply(object, args);
+        }
+    }
+});
+
+/**
+ * Delegates properties and methods to an array.
+ * @class ArrayDelegate
+ * @constructor
+ * @param   {Array}  array  - receiving array
+ * @extends Delegate
+ */
+const ArrayDelegate = Delegate.extend({
+    constructor(array) {
+        Object.defineProperty(this, "array", { value: array });
+    },
+    get(protocol, key, strict) {
+        const array = this.array;
+        return array && array.reduce((result, object) =>
+            !strict || protocol.isAdoptedBy(object) ? object[key] : result,
+            undefined);  
+    },
+    set(protocol, key, value, strict) {
+        const array = this.array;
+        return array && array.reduce((result, object) =>
+            !strict || protocol.isAdoptedBy(object) ? object[key] = value : result,
+            undefined);  
+    },
+    invoke(protocol, methodName, args, strict) {
+        const array = this.array;
+        return array && array.reduce((result, object) => {
+            const method = object[methodName];
+            return method && (!strict || protocol.isAdoptedBy(object))
+                ? method.apply(object, args)
+                : result;
+        }, undefined);
+    }
+});
+
+function decorate(decorator, args) {
+    if (isDescriptor(args[args.length - 1])) {
+        return decorator(...args, []);
+    }
+    return function () {
+        return decorator(...arguments, args);
     };
-};
+}
+
+function isDescriptor(desc) {
+    if (!desc || !desc.hasOwnProperty) {
+        return false;
+    }
+
+    const keys = ["value", "initializer", "get", "set"];
+
+    for (let i = 0, l = keys.length; i < l; i++) {
+        if (desc.hasOwnProperty(keys[i])) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 /**
  * Provides an abstraction for meta-data management.
  * @class Metadata
  */
-export const Metadata = Abstract.extend(null, {
+const Metadata = Abstract.extend(null, {
     /**
      * Gets metadata on the prototype chain of an object or property.
      * @static
@@ -1677,7 +1299,7 @@ export const Metadata = Abstract.extend(null, {
             const targetMetadata = this.getOwn(metadataKey, target, sourceKey),
                   sourceMetadata = this.getOwn(metadataKey, source, sourceKey);
             if (targetMetadata && targetMetadata.merge) {
-                targetMetadata.merge(sourceMetadata);x
+                targetMetadata.merge(sourceMetadata);x;
             } else {
                 this.define(metadataKey, sourceMetadata, target, sourceKey);                
             }
@@ -1770,104 +1392,6 @@ function _metadataKeyCollector(metadataKey, target, callback) {
     keys.forEach(key => this.collect(metadataKey, target, key, callback));
 }
 
-
-const designMetadataKey = Symbol(),
-      paramTypesKey     = "design:paramtypes",
-      propertyTypeKey   = "design:type";
-
-/**
- * Custom Metadata to bridge Typescript annotations.
- * @class DesignMetadata
- */
-const DesignMetadata = Metadata.extend(null, {
-    get(metadataKey, target, targetKey) {
-        if (metadataKey === designMetadataKey) {
-            return this.base(paramTypesKey, target, targetKey)
-                || this.base(propertyTypeKey, target, targetKey);
-        }
-        return this.base(metadataKey, target, targetKey);
-    },
-    getOwn(metadataKey, target, targetKey) {
-        if (metadataKey === designMetadataKey) {
-            return this.base(paramTypesKey, target, targetKey)
-                || this.base(propertyTypeKey, target, targetKey);
-        }
-        return this.base(metadataKey, target, targetKey);        
-    }
-});
-
-/**
- * Attaches design metadata compatible with Typescript.
- * @method design
- */
-export const design = DesignMetadata.decorator(designMetadataKey,
-    (target, key, descriptor, types) => {
-        if (!isDescriptor(descriptor)) {
-            if (target.length > key.length) {
-                throw new SyntaxError(
-                    `@design for constructor expects at least ${target.length} parameters but only ${key.length} specified`);
-            }            
-            _validateTypes(key);
-            DesignMetadata.define(paramTypesKey, key, target.prototype, "constructor");
-            return;
-        }
-        const { value } = descriptor;
-        if ($isFunction(value)) {
-            if (value.length > types.length) {
-                throw new SyntaxError(
-                    `@design for method '${key}' expects at least ${value.length} parameters but only ${types.length} specified`);
-            }
-            _validateTypes(types);
-            DesignMetadata.define(paramTypesKey, types, target, key);        
-        } else if (types.length !== 1) {
-            throw new SyntaxError(`@design for property '${key}' requires a single type to be specified`);
-        } else {
-            _validateTypes(types);            
-            DesignMetadata.define(propertyTypeKey, types[0], target, key);
-        }
-    });
-    
-function _validateTypes(types) {
-    for (let i = 0; i < types.length; ++i) {
-        let type = types[i];
-        if (type == null) { return };
-        if (Array.isArray(type)) {
-            if (type.length !== 1) {
-                throw new SyntaxError(`@design array specification at index ${i} expects a single type`);
-            }
-            type = type[0];
-        }
-        if (!$isFunction(type)) {
-            throw new SyntaxError("@design expects basic types, classes or protocols");
-        }
-    }
-}
-
-const injectMetadataKey = Symbol();
-
-/**
- * Specifies dependencies on properties and methods.
- * @method inject
- * @param  {Array}  ...dependencies  -  property/method dependencies
- */
-export const inject = Metadata.decorator(injectMetadataKey,
-    (target, key, descriptor, dependencies) => {
-        if (!isDescriptor(descriptor)) {
-            dependencies = $flatten(key);
-            Metadata.define(injectMetadataKey, dependencies, target.prototype, "constructor");
-            return;
-        }
-        const { value } = descriptor;        
-        dependencies = $flatten(dependencies);
-        if ($isFunction(value)) {
-            Metadata.define(injectMetadataKey, dependencies, target, key);
-        } else if (dependencies.length !== 1) {
-            throw new SyntaxError(`@inject for property '${key}' requires single key to be specified`);
-        } else {
-            Metadata.define(injectMetadataKey, dependencies[0], target, key);
-        }
-    });
-
 /**
  * Declares methods and properties independent of a class.
  * <pre>
@@ -1882,45 +1406,45 @@ export const inject = Metadata.decorator(injectMetadataKey,
  * @param   {boolean}   [strict=false]  -  true if strict, false otherwise
  * @extends Base
  */
-const protocolGet         = Symbol(),
-      protocolSet         = Symbol(),
-      protocolInvoke      = Symbol(),
-      protocolDelegate    = Symbol(),
-      protocolStrict      = Symbol(),
-      protocolMetadataKey = Symbol();
+const protocolGet         = Symbol();
+const protocolSet         = Symbol();
+const protocolInvoke      = Symbol();
+const protocolDelegate    = Symbol();
+const protocolStrict      = Symbol();
+const protocolMetadataKey = Symbol();
 
-export const Protocol = Base.extend({
-    constructor(delegate, strict) {
-        if ($isNothing(delegate)) {
-            delegate = new Delegate();
-        } else if (!(delegate instanceof Delegate)) {
-            if ($isFunction(delegate.toDelegate)) {
-                delegate = delegate.toDelegate();
-                if (!(delegate instanceof Delegate)) {
+const Protocol = Base.extend({
+    constructor(delegate$$1, strict) {
+        if ($isNothing(delegate$$1)) {
+            delegate$$1 = new Delegate();
+        } else if (!(delegate$$1 instanceof Delegate)) {
+            if ($isFunction(delegate$$1.toDelegate)) {
+                delegate$$1 = delegate$$1.toDelegate();
+                if (!(delegate$$1 instanceof Delegate)) {
                     throw new TypeError("'toDelegate' method did not return a Delegate.");
                 }
-            } else if (Array.isArray(delegate)) {
-                delegate = new ArrayDelegate(delegate);
+            } else if (Array.isArray(delegate$$1)) {
+                delegate$$1 = new ArrayDelegate(delegate$$1);
             } else {
-                delegate = new ObjectDelegate(delegate);
+                delegate$$1 = new ObjectDelegate(delegate$$1);
             }
         }
         Object.defineProperties(this, {
-            [protocolDelegate]: { value: delegate, writable: false },            
+            [protocolDelegate]: { value: delegate$$1, writable: false },            
             [protocolStrict]:   { value: !!strict, writable: false }
         });
     },
     [protocolGet](key) {
-        const delegate = this[protocolDelegate];
-        return delegate && delegate.get(this.constructor, key, this[protocolStrict]);
+        const delegate$$1 = this[protocolDelegate];
+        return delegate$$1 && delegate$$1.get(this.constructor, key, this[protocolStrict]);
     },
     [protocolSet](key, value) {
-        const delegate = this[protocolDelegate];            
-        return delegate && delegate.set(this.constructor, key, value, this[protocolStrict]);
+        const delegate$$1 = this[protocolDelegate];            
+        return delegate$$1 && delegate$$1.set(this.constructor, key, value, this[protocolStrict]);
     },
     [protocolInvoke](methodName, args) {
-        const delegate = this[protocolDelegate];                        
-        return delegate && delegate.invoke(this.constructor, methodName, args, this[protocolStrict]);
+        const delegate$$1 = this[protocolDelegate];                        
+        return delegate$$1 && delegate$$1.invoke(this.constructor, methodName, args, this[protocolStrict]);
     }
 }, {
     /**
@@ -2004,7 +1528,7 @@ export const Protocol = Base.extend({
  * @param   {boolean}   [strict=true]  -  true ifstrict, false otherwise
  * @extends miruekn.Protocol     
  */
-export const StrictProtocol = Protocol.extend({
+const StrictProtocol = Protocol.extend({
     constructor(proxy, strict) {
         this.base(proxy, (strict === undefined) || strict);
     }
@@ -2016,7 +1540,7 @@ export const StrictProtocol = Protocol.extend({
  * @param    {Any}     protocol  - target to test
  * @returns  {boolean} true if a protocol.
  */
-export const $isProtocol = Protocol.isProtocol;
+const $isProtocol = Protocol.isProtocol;
 
 /**
  * Gets all the `target` protocols.
@@ -2025,7 +1549,7 @@ export const $isProtocol = Protocol.isProtocol;
  * @param    {boolean} own     -  true if own protocols
  * @returns  {Array} conforming protocols.
  */
-export function $protocols(target, own) {
+function $protocols(target, own) {
     if (!target) return [];
     if ($isFunction(target)) {
         target = target.prototype;
@@ -2045,7 +1569,7 @@ export function $protocols(target, own) {
  * @method protocol
  * @param  {Array}  args  -  protocol args
  */
-export function protocol(...args) {
+function protocol(...args) {
     if (args.length === 0) {
         return function () {
             return _protocol.apply(null, arguments);
@@ -2081,7 +1605,7 @@ function _protocol(target) {
             if (descriptor.set || isSimple) {
                 descriptor.set = function (value) {
                     return this[protocolSet](key, value);
-                }
+                };
             }
         }
         Object.defineProperty(target, key, descriptor);                
@@ -2095,7 +1619,7 @@ function _protocol(target) {
  * @param    {Array}    protocols  -  conforming protocols
  * @returns  {Function} the conformsTo decorator.
  */
-export function conformsTo(...protocols) {
+function conformsTo(...protocols) {
     protocols = $flatten(protocols, true);
     if (!protocols.every($isProtocol)) {
         throw new TypeError("Only Protocols can be conformed to");
@@ -2109,20 +1633,148 @@ export function conformsTo(...protocols) {
     }
 }
 
+/**
+ * Defines an enumeration.
+ * <pre>
+ *    const Color = Enum({
+ *        red:   1,
+ *        green: 2,
+ *        blue:  3
+ *    })
+ * </pre>
+ * @class Enum
+ * @constructor
+ * @param  {Any}     value    -  enum value
+ * @param  {string}  name     -  enum name
+ * @param  {number}  ordinal  -  enum position
+ */
+const Defining = Symbol();
 
-const baseExtend      = Base.extend,
-      baseImplement   = Base.implement,
-      baseProtoExtend = Base.prototype.extend;
+const Enum = Base.extend({
+    constructor(value, name, ordinal) {
+        this.constructing(value, name);
+        Object.defineProperties(this, {
+            "value": {
+                value:        value,
+                writable:     false,
+                configurable: false
+            },
+            "name": {
+                value:        name,
+                writable:     false,
+                configurable: false
+            },
+            "ordinal": {
+                value:        ordinal,
+                writable:     false,
+                configurable: false
+            },
+            
+        });
+    },
+    toString() { return this.name; },
+    constructing(value, name) {
+        if (!this.constructor[Defining]) {
+            throw new TypeError("Enums cannot be instantiated.");
+        }            
+    }
+}, {
+    coerce(choices, behavior) {
+        if (this !== Enum && this !== Flags) {
+            return;
+        }
+        let en = this.extend(behavior, {
+            coerce(value) {
+                return this.fromValue(value);
+            }
+        });
+        en[Defining] = true;
+        const names  = Object.freeze(Object.keys(choices));
+        let   items  = Object.keys(choices).map(
+            (name, ordinal) => en[name] = new en(choices[name], name, ordinal));
+        en.names     = Object.freeze(names);        
+        en.items     = Object.freeze(items);
+        en.fromValue = this.fromValue;
+        delete en[Defining];
+        return en;
+    },
+    fromValue(value) {
+        const match = this.items.find(item => item.value == value);
+        if (!match) {
+            throw new TypeError(`${value} is not a valid value for this Enum.`);
+        }
+        return match;
+    }
+});
+Enum.prototype.valueOf = function () {
+    const value = +this.value;
+    return isNaN(value) ? this.ordinal : value;
+};
 
-export const emptyArray = Object.freeze([]),
-             nothing    = undefined;
+/**
+ * Defines a flags enumeration.
+ * <pre>
+ *    const DayOfWeek = Flags({
+ *        Monday:     1 << 0,
+ *        Tuesday:    1 << 1,
+ *        Wednesday:  1 << 2,
+ *        Thursday:   1 << 3,
+ *        Friday:     1 << 4,
+ *        Saturday:   1 << 5,
+ *        Sunday:     1 << 6
+ *    })
+ * </pre>
+ * @class Enum
+ * @constructor
+ * @param  {Any} value     -  flag value
+ * @param  {string} value  -  flag name
+ */    
+const Flags = Enum.extend({
+    hasFlag(flag) {
+        flag = +flag;
+        return (this & flag) === flag;
+    },
+    addFlag(flag) {
+        return $isSomething(flag)
+             ? this.constructor.fromValue(this | flag)
+             : this;
+    },
+    removeFlag(flag) {
+        return $isSomething(flag)
+             ? this.constructor.fromValue(this & (~flag))
+             : this;
+    },
+    constructing(value, name) {}        
+}, {
+    fromValue(value) {
+        value = +value;
+        let name, names = this.names;
+        for (let i = 0; i < names.length; ++i) {
+            const flag = this[names[i]];
+            if (flag.value === value) {
+                return flag;
+            }
+            if ((value & flag.value) === flag.value) {
+                name = name ? (name + "," + flag.name) : flag.name;
+            }
+        }
+        return new this(value, name);
+    }
+});
+
+const baseExtend      = Base.extend;
+const baseImplement   = Base.implement;
+const baseProtoExtend = Base.prototype.extend;
+
+const emptyArray = Object.freeze([]);
+const nothing    = undefined;
 
 /**
  * Type of property method.
  * @class PropertyType
  * @extends Enum
  */
-export const MethodType = Enum({
+const MethodType = Enum({
     /**
      * Getter property method
      * @property {number} Get
@@ -2145,7 +1797,7 @@ export const MethodType = Enum({
  * @class Variance
  * @extends Enum
  */
-export const Variance = Enum({
+const Variance = Enum({
     /**
      * Matches a more specific type than originally specified.
      * @property {number} Covariant
@@ -2208,7 +1860,7 @@ Base.implement = function (source) {
     var type = baseImplement.call(this, source);
     Metadata.mergeOwn(type.prototype, source);
     return type;
-}
+};
 
 Base.prototype.extend = function (key, value) {
     if (!key) return this;
@@ -2222,7 +1874,7 @@ Base.prototype.extend = function (key, value) {
         return instance;
     }
     return baseProtoExtend.call(this, key, value);
-}
+};
 
 /**
  * Decorates a class with behaviors to mix in.
@@ -2230,7 +1882,7 @@ Base.prototype.extend = function (key, value) {
  * @param    {Array}    ...behaviors  -  behaviors
  * @returns  {Function} the mixin decorator.
  */
-export function mixin(...behaviors) {
+function mixin(...behaviors) {
     behaviors = $flatten(behaviors, true);
     return function (target) {
         if (behaviors.length > 0 && $isFunction(target.implement)) {
@@ -2244,7 +1896,7 @@ export function mixin(...behaviors) {
  * @class Initializing
  * @extends Protocol
  */
-export const Initializing = Protocol.extend({
+const Initializing = Protocol.extend({
     /**
      * Perform any initialization after construction..
      */
@@ -2256,14 +1908,14 @@ export const Initializing = Protocol.extend({
  * @class Resolving
  * @extends Protocol
  */
-export const Resolving = Protocol.extend();
+const Resolving = Protocol.extend();
 
 /**
  * Protocol for targets that can execute functions.
  * @class Invoking
  * @extends StrictProtocol
  */
-export const Invoking = StrictProtocol.extend({
+const Invoking = StrictProtocol.extend({
     /**
      * Invokes the `fn` with `dependencies`.
      * @method invoke
@@ -2280,7 +1932,7 @@ export const Invoking = StrictProtocol.extend({
  * @class Parenting
  * @extends Protocol
  */
-export const Parenting = Protocol.extend({
+const Parenting = Protocol.extend({
     /**
      * Creates a new child of the parent.
      * @method newChild
@@ -2294,7 +1946,7 @@ export const Parenting = Protocol.extend({
  * @class Starting
  * @extends Protocol
  */
-export const Starting = Protocol.extend({
+const Starting = Protocol.extend({
     /**
      * Starts the reciever.
      * @method start
@@ -2308,7 +1960,7 @@ export const Starting = Protocol.extend({
  * @uses Starting
  * @extends Base
  */
-export const Startup = Base.extend(Starting, {
+const Startup = Base.extend(Starting, {
     start() {}
 });
 
@@ -2318,7 +1970,7 @@ export const Startup = Base.extend(Starting, {
  * @param    {Any}     target  - target to test
  * @returns  {boolean} true if a class (and not a protocol).
  */
-export function $isClass(target) {
+function $isClass(target) {
     if (!target || $isProtocol(target)) return false;    
     if (target.prototype instanceof Base) return true;
     const name = target.name;  // use Capital name convention
@@ -2331,7 +1983,7 @@ export function $isClass(target) {
  * @param    {Object}  instance  - object
  * @returns  {Function} instance class. 
  */
-export function $classOf(instance) {
+function $classOf(instance) {
     return instance == null ? undefined : instance.constructor;
 }
 
@@ -2342,7 +1994,7 @@ export function $classOf(instance) {
  * @param   {Object}   decorations  -  object defining decorations
  * @erturns {Function} function to build decorators.
  */
-export function $decorator(decorations) {
+function $decorator(decorations) {
     return function (decoratee) {
         if ($isNothing(decoratee)) {
             throw new TypeError("No decoratee specified.");
@@ -2367,7 +2019,7 @@ export function $decorator(decorations) {
  * @param   {Object}   decorations  -  object defining decorations
  * @erturns {Function} function to build decorators.
  */
-export function $decorate(decoratee, decorations) {
+function $decorate(decoratee, decorations) {
     return $decorator(decorations)(decoratee);
 }
 
@@ -2379,7 +2031,7 @@ export function $decorate(decoratee, decorations) {
  * @param   {boolean}  deepest    -  true if deepest decoratee, false if nearest.
  * @erturns {Object}   decoratee if present, otherwise decorator.
  */
-export function $decorated(decorator, deepest) {
+function $decorated(decorator, deepest) {
     let decoratee;
     while (decorator && (decoratee = decorator.decoratee)) {
         if (!deepest) return decoratee;
@@ -2392,758 +2044,4 @@ function isUpperCase(char) {
     return char.toUpperCase() === char;
 }
 
-/**
- * Protocol for targets that manage disposal lifecycle.
- * @class Disposing
- * @extends Protocol
- */
-export const Disposing = Protocol.extend({
-    /**
-     * Releases any resources managed by the receiver.
-     * @method dispose
-     */
-    dispose() {}
-});
-
-/**
- * Mixin for {{#crossLink "Disposing"}}{{/crossLink}} implementation.
- * @class DisposingMixin
- * @uses Disposing
- * @extends Module
- */
-export const DisposingMixin = Module.extend({
-    dispose(object) {
-        if ($isFunction(object._dispose)) {
-            const result = object._dispose();
-            object.dispose = Undefined;  // dispose once
-            return result;
-        }
-    }
-});
-
-/**
- * Convenience function for disposing resources.
- * @method $using
- * @param    {Disposing}           disposing  - object to dispose
- * @param    {Function | Promise}  action     - block or Promise
- * @param    {Object}              [context]  - block context
- * @returns  {Any} result of executing the action in context.
- */
-export function $using(disposing, action, context) {
-    if (disposing && $isFunction(disposing.dispose)) {
-        if (!$isPromise(action)) {
-            let result;
-            try {
-                result = $isFunction(action)
-                    ? action.call(context, disposing)
-                    : action;
-                if (!$isPromise(result)) {
-                    return result;
-                }
-            } finally {
-                if ($isPromise(result)) {
-                    action = result;
-                } else {
-                    const dresult = disposing.dispose();
-                    if (dresult !== undefined) {
-                        return dresult;
-                    }
-                }
-            }
-        }
-        return action.then(function (res) {
-            const dres = disposing.dispose();
-            return dres !== undefined ? dres : res;
-        }, function (err) {
-            const dres = disposing.dispose();
-            return dres !== undefined ? dres : Promise.reject(err);
-        });
-    }
-}
-
-/**
- * TraversingAxis enum
- * @class TraversingAxis
- * @extends Enum
- */
-export const TraversingAxis = Enum({
-    /**
-     * Traverse only current node.
-     * @property {number} Self
-     */
-    Self: 1,
-    /**
-     * Traverse only current node root.
-     * @property {number} Root
-     */
-    Root: 2,
-    /**
-     * Traverse current node children.
-     * @property {number} Child
-     */
-    Child: 3,
-    /**
-     * Traverse current node siblings.
-     * @property {number} Sibling
-     */
-    Sibling: 4,
-    /**
-     * Traverse current node ancestors.
-     * @property {number} Ancestor
-     */
-    Ancestor: 5,
-    /**
-     * Traverse current node descendants.
-     * @property {number} Descendant
-     */
-    Descendant: 6,
-    /**
-     * Traverse current node descendants in reverse.
-     * @property {number} DescendantReverse
-     */
-    DescendantReverse: 7,
-    /**
-     * Traverse current node and children.
-     * @property {number} SelfOrChild
-     */
-    SelfOrChild: 8,
-    /**
-     * Traverse current node and siblings.
-     * @property {number} SelfOrSibling
-     */
-    SelfOrSibling: 9,
-    /**
-     * Traverse current node and ancestors.
-     * @property {number} SelfOrAncestor
-     */
-    SelfOrAncestor: 10,
-    /**
-     * Traverse current node and descendents.
-     * @property {number} SelfOrDescendant
-     */
-    SelfOrDescendant: 11,
-    /**
-     * Traverse current node and descendents in reverse.
-     * @property {number} SelfOrDescendantReverse
-     */
-    SelfOrDescendantReverse: 12,
-    /**
-     * Traverse current node, ancestors and siblings.
-     * @property {number} SelfSiblingOrAncestor 
-     */
-    SelfSiblingOrAncestor: 13
-});
-
-/**
- * Protocol for traversing an abitrary graph of objects.
- * @class Traversing
- * @extends Protocol
- */
-export const Traversing = Protocol.extend({
-    /**
-     * Traverse a graph of objects.
-     * @method traverse
-     * @param {TraversingAxis}  axis       -  axis of traversal
-     * @param {Function}        visitor    -  receives visited nodes
-     * @param {Object}          [context]  -  visitor callback context
-     */
-    traverse(axis, visitor, context) {}
-});
-
-/**
- * Mixin for Traversing functionality.
- * @class TraversingMixin
- * @uses Traversing
- * @extends Module
- */
-export const TraversingMixin = Module.extend({
-    traverse(object, axis, visitor, context) {
-        if ($isFunction(axis)) {
-            context = visitor;
-            visitor = axis;
-            axis    = TraversingAxis.Child;
-        }
-        if (!$isFunction(visitor)) return;
-        switch (axis) {
-        case TraversingAxis.Self:
-            traverseSelf.call(object, visitor, context);
-            break;
-            
-        case TraversingAxis.Root:
-            traverseRoot.call(object, visitor, context);
-            break;
-            
-        case TraversingAxis.Child:
-            traverseChildren.call(object, visitor, false, context);
-            break;
-
-        case TraversingAxis.Sibling:
-            traverseSelfSiblingOrAncestor.call(object, visitor, false, false, context);
-            break;
-            
-        case TraversingAxis.SelfOrChild:
-            traverseChildren.call(object, visitor, true, context);
-            break;
-
-        case TraversingAxis.SelfOrSibling:
-            traverseSelfSiblingOrAncestor.call(object, visitor, true, false, context);
-            break;
-            
-        case TraversingAxis.Ancestor:
-            traverseAncestors.call(object, visitor, false, context);
-            break;
-            
-        case TraversingAxis.SelfOrAncestor:
-            traverseAncestors.call(object, visitor, true, context);
-            break;
-            
-        case TraversingAxis.Descendant:
-            traverseDescendants.call(object, visitor, false, context);
-            break;
-            
-        case TraversingAxis.DescendantReverse:
-            traverseDescendantsReverse.call(object, visitor, false, context);
-            break;
-            
-        case TraversingAxis.SelfOrDescendant:
-            traverseDescendants.call(object, visitor, true, context);
-            break;
-
-        case TraversingAxis.SelfOrDescendantReverse:
-            traverseDescendantsReverse.call(object, visitor, true, context);
-            break;
-            
-        case TraversingAxis.SelfSiblingOrAncestor:
-            traverseSelfSiblingOrAncestor.call(object, visitor, true, true, context);
-            break;
-
-        default:
-            throw new Error(`Unrecognized TraversingAxis ${axis}.`);
-        }
-    }
-});
-
-function checkCircularity(visited, node) {
-    if (visited.indexOf(node) !== -1) {
-        throw new Error(`Circularity detected for node ${node}`);
-    }
-    visited.push(node);
-    return node;
-}
-
-function traverseSelf(visitor, context) {
-    visitor.call(context, this);
-}
-
-function traverseRoot(visitor, context) {
-    let parent, root = this, visited = [this];
-    while (parent = root.parent) {
-        checkCircularity(visited, parent);
-        root = parent;   
-    }
-    visitor.call(context, root);
-}
-
-function traverseChildren(visitor, withSelf, context) {
-    if ((withSelf && visitor.call(context, this))) {
-        return;
-    }
-    for (const child of this.children) {
-        if (visitor.call(context, child)) {
-            return;
-        }
-    }
-}
-
-function traverseAncestors(visitor, withSelf, context) {
-    let parent = this, visited = [this];
-    if (withSelf && visitor.call(context, this)) {
-        return;
-    }
-    while ((parent = parent.parent) && !visitor.call(context, parent)) {
-        checkCircularity(visited, parent);
-    }
-}
-
-function traverseDescendants(visitor, withSelf, context) {
-    if (withSelf) {
-        Traversal.levelOrder(this, visitor, context);
-    } else {
-        Traversal.levelOrder(this, node =>
-            !$equals(this, node) && visitor.call(context, node),
-            context);
-    }
-}
-
-function traverseDescendantsReverse(visitor, withSelf, context) {
-    if (withSelf) {
-        Traversal.reverseLevelOrder(this, visitor, context);
-    } else {
-        Traversal.reverseLevelOrder(this, node =>
-            !$equals(this, node) && visitor.call(context, node),
-            context);
-    }
-}
-
-function traverseSelfSiblingOrAncestor(visitor, withSelf, withAncestor, context) {
-    if (withSelf && visitor.call(context, this)) {
-        return;
-    }
-    const parent = this.parent;
-    if (parent) {
-        for (const sibling of parent.children) {
-            if (!$equals(this, sibling) && visitor.call(context, sibling)) {
-                return;
-            }
-        }
-        if (withAncestor) {
-            traverseAncestors.call(parent, visitor, true, context);
-        }
-    }
-}
-
-/**
- * Helper class for traversing a graph.
- * @static
- * @class Traversal
- * @extends Abstract
- */
-export const Traversal = Abstract.extend({}, {
-    /**
-     * Performs a pre-order graph traversal.
-     * @static
-     * @method preOrder
-     * @param  {Traversing}  node       -  node to traverse
-     * @param  {Function}    visitor    -  receives visited nodes
-     * @param  {Object}      [context]  -  visitor calling context
-     */
-    preOrder(node, visitor, context) {
-        return preOrder(node, visitor, context);
-    },
-    /**
-     * Performs a post-order graph traversal.
-     * @static
-     * @method postOrder
-     * @param  {Traversing}  node       -  node to traverse
-     * @param  {Function}    visitor    -  receives visited nodes
-     * @param  {Object}      [context]  -  visitor calling context
-     */
-    postOrder(node, visitor, context) {
-        return postOrder(node, visitor, context);
-    },
-    /**
-     * Performs a level-order graph traversal.
-     * @static
-     * @method levelOrder
-     * @param  {Traversing}  node       -  node to traverse
-     * @param  {Function}    visitor    -  receives visited nodes
-     * @param  {Object}      [context]  -  visitor calling context
-     */
-    levelOrder(node, visitor, context) {
-        return levelOrder(node, visitor, context);
-    },
-    /**
-     * Performs a reverse level-order graph traversal.
-     * @static
-     * @method levelOrder
-     * @param  {Traversing}  node       -  node to traverse
-     * @param  {Function}    visitor    -  receives visited nodes
-     * @param  {Object}      [context]  -  visitor calling context
-     */
-    reverseLevelOrder(node, visitor, context) {
-        return reverseLevelOrder(node, visitor, context);
-    }
-});
-
-function preOrder(node, visitor, context, visited = []) {
-    checkCircularity(visited, node);
-    if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
-        return true;
-    }
-    if ($isFunction(node.traverse))
-        node.traverse(child => preOrder(child, visitor, context, visited));
-    return false;
-}
-
-function postOrder(node, visitor, context, visited = []) {
-    checkCircularity(visited, node);
-    if (!node || !$isFunction(visitor)) {
-        return true;
-    }
-    if ($isFunction(node.traverse))
-        node.traverse(child => postOrder(child, visitor, context, visited));
-    return visitor.call(context, node);
-}
-
-function levelOrder(node, visitor, context, visited = []) {
-    if (!node || !$isFunction(visitor)) {
-        return;
-    }
-    const queue = [node];
-    while (queue.length > 0) {
-        const next = queue.shift();
-        checkCircularity(visited, next);
-        if (visitor.call(context, next)) {
-            return;
-        }
-        if ($isFunction(next.traverse))
-            next.traverse(child => {
-                if (child) queue.push(child);
-            });
-    }
-}
-
-function reverseLevelOrder(node, visitor, context, visited = []) {
-    if (!node || !$isFunction(visitor)) {
-        return;
-    }
-    const queue = [node],
-          stack = [];
-    while (queue.length > 0) {
-        const next = queue.shift();
-        checkCircularity(visited, next);
-        stack.push(next);
-        const level = [];
-        if ($isFunction(next.traverse))
-            next.traverse(child => {
-                if (child) level.unshift(child);
-            });
-        queue.push.apply(queue, level);
-    }
-    while (stack.length > 0) {
-        if (visitor.call(context, stack.pop())) {
-            return;
-        }
-    }
-}
-
-export const Policy = Base.extend({
-    /**
-     * Merges this policy data into `policy`.
-     * @method mergeInto
-     * @param   {Policy}  policy  -  policy to receive data
-     * @returns {boolean} true if policy could be merged into.
-     */
-    mergeInto(policy) {
-        if (!(policy instanceof this.constructor)) {
-            return false;
-        }
-        const descriptors = getPropertyDescriptors(this),
-              keys        = Reflect.ownKeys(descriptors);
-        keys.forEach(key => {
-            const keyValue = this[key];
-            if ($isFunction(keyValue)) { return; }
-            if (keyValue !== undefined && this.hasOwnProperty(key)) {
-                const policyValue = policy[key];
-                if (policyValue === undefined || !policy.hasOwnProperty(key)) {
-                    policy[key] = _copyPolicyValue(keyValue);
-                } else if ($isFunction(keyValue.mergeInto)) {
-                    keyValue.mergeInto(policyValue);
-                }
-            }
-        });
-        return true;
-    },
-    copy() {
-        var policy = Reflect.construct(this.constructor, emptyArray);
-        this.mergeInto(policy);
-        return policy;
-    }
-}, {
-    coerce(...args) { return Reflect.construct(this, args); }
-});
-
-function _copyPolicyValue(policyValue) {
-    if ($isNothing(policyValue)) {
-        return policyValue;
-    }
-    if (Array.isArray(policyValue)) {
-        return policyValue.map(_copyPolicyValue);
-    }
-    if ($isFunction(policyValue.copy)) {
-        return policyValue.copy();
-    }
-    return policyValue;
-}
-
-/**
- * Facet choices for proxies.
- * @class Facet
- */
-export const Facet = Object.freeze({
-    /**
-     * @property {string} Parameters
-     */
-    Parameters: "proxy:parameters",
-    /**
-     * @property {string} Interceptors
-     */        
-    Interceptors: "proxy:interceptors",
-    /**
-     * @property {string} InterceptorSelectors
-     */                
-    InterceptorSelectors: "proxy:interceptorSelectors",
-    /**
-     * @property {string} Delegate
-     */                        
-    Delegate: "proxy:delegate"
-});
-
-/**
- * Base class for method interception.
- * @class Interceptor
- * @extends Base
- */
-export const Interceptor = Base.extend({
-    /**
-     * @method intercept
-     * @param    {Object} invocation  - invocation
-     * @returns  {Any} invocation result
-     */
-    intercept(invocation) { return invocation.proceed(); }
-});
-
-/**
- * Responsible for selecting which interceptors to apply to a method.
- * @class InterceptorSelector
- * @extends Base
- */
-export const InterceptorSelector = Base.extend({
-    /**
-     * Selects `interceptors` to apply to `method`.
-     * @method selectInterceptors
-     * @param    {Type}    type         - intercepted type
-     * @param    {string}  method       - intercepted method name
-     * @param    {Array}   interceptors - available interceptors
-     * @returns  {Array} interceptors to apply to method.
-     */
-    selectInterceptors(type, method, interceptors) {
-        return interceptors;
-    }
-});
-
-/**
- * Builds proxy classes for interception.
- * @class ProxyBuilder
- * @extends Base
- */
-export const ProxyBuilder = Base.extend({
-    /**
-     * Builds a proxy class for the supplied types.
-     * @method buildProxy
-     * @param    {Array}     ...types  -  classes and protocols
-     * @param    {Object}    options   -  literal options
-     * @returns  {Function}  proxy class.
-     */
-    buildProxy(types, options) {
-        if (!Array.isArray(types)) {
-            throw new TypeError("ProxyBuilder requires an array of types to proxy.");
-        }
-        const classes   = types.filter($isClass),
-              protocols = types.filter($isProtocol);
-        return buildProxy(classes, protocols, options || {});
-    }
-});
-
-function buildProxy(classes, protocols, options) {
-    const base  = options.baseType || classes.shift() || Base,
-          proxy = base.extend(...classes.concat(protocols), {
-            constructor(facets) {
-                const spec = {};
-                spec.value = facets[Facet.InterceptorSelectors]
-                if (spec.value && spec.value.length > 0) {
-                    Object.defineProperty(this, "selectors", spec);
-                }
-                spec.value = facets[Facet.Interceptors];
-                if (spec.value && spec.value.length > 0) {
-                    Object.defineProperty(this, "interceptors", spec);
-                }
-                spec.value = facets[Facet.Delegate];
-                if (spec.value) {
-                    spec.writable = true;
-                    Object.defineProperty(this, "delegate", spec);
-                }
-                const ctor = proxyMethod("constructor", this.base, base);
-                ctor.apply(this, facets[Facet.Parameters]);
-                delete spec.writable;
-                delete spec.value;
-            },
-            getInterceptors(source, method) {
-                const selectors = this.selectors;
-                return selectors ? selectors.reduce((interceptors, selector) =>
-                           selector.selectInterceptors(source, method, interceptors),
-                           this.interceptors)
-                     : this.interceptors;
-            },
-            extend: extendProxyInstance
-        }, {
-            shouldProxy: options.shouldProxy
-        });
-    proxyClass(proxy, protocols);
-    proxy.extend = proxy.implement = throwProxiesSealedExeception;
-    return proxy;
-}
-
-function throwProxiesSealedExeception()
-{
-    throw new TypeError("Proxy classes are sealed and cannot be extended from.");
-}
-
-const noProxyMethods = {
-    base: true, extend: true, constructor: true, conformsTo: true,
-    getInterceptors: true, getDelegate: true, setDelegate: true
-};
-
-function proxyClass(proxy, protocols) {
-    const sources = [proxy].concat($protocols(proxy), protocols),
-          proxied = {};
-    for (let i = 0; i < sources.length; ++i) {
-        const source     = sources[i],
-              isProtocol = $isProtocol(source),
-              props      = getPropertyDescriptors(source.prototype);
-        Reflect.ownKeys(props).forEach(key => {
-            if (proxied.hasOwnProperty(key) || (key in noProxyMethods)) return;
-            if (proxy.shouldProxy && !proxy.shouldProxy(key, source)) return;
-            const descriptor = props[key];
-            if (!descriptor.enumerable) return;
-            let { value, get, set } = descriptor;
-            if ($isFunction(value)) {
-                if (isProtocol) value = null;
-                descriptor.value = proxyMethod(key, value, proxy);
-            } else {
-                if (descriptor.hasOwnProperty("value")) {
-                    const field = Symbol();
-                    get = function () { return this[field]; },
-                    set = function (value) { this[field] = value; };
-                    delete descriptor.value;
-                    delete descriptor.writable;
-                }
-                if (get) {
-                    if (isProtocol) get = null;
-                    descriptor.get = proxyMethod(key, get, proxy, MethodType.Get);
-                }
-                if (set) {
-                    if (isProtocol) set = null;                    
-                    descriptor.set = proxyMethod(key, set, proxy, MethodType.Set);
-                }
-            }
-            Object.defineProperty(proxy.prototype, key, descriptor);
-            proxied[key] = true;
-        });
-    }
-}
-
-function proxyMethod(key, method, source, type) {
-    let interceptors;    
-    function methodProxy(...args) {
-        const _this    = this;
-        let   delegate = this.delegate,
-              idx      = -1;
-        if (!interceptors) {
-            interceptors = this.getInterceptors(source, key);
-        }
-        type = type || MethodType.Invoke;
-        const invocation = {
-            method:     key,
-            methodType: type,            
-            source:     source,
-            args:       args,
-            useDelegate(value) { delegate = value; },
-            replaceDelegate(value) {
-                _this.delegate = delegate = value;
-            },
-            get canProceed() {
-                if (interceptors && (idx + 1 < interceptors.length)) {
-                    return true;
-                }
-                if (delegate) {
-                    return $isFunction(delegate[key]);
-                }
-                return !!method;
-            },
-            proceed() {
-                ++idx;
-                if (interceptors && idx < interceptors.length) {
-                    const interceptor = interceptors[idx];
-                    return interceptor.intercept(invocation);
-                }
-                if (delegate) {
-                    switch(type) {
-                    case MethodType.Get:
-                        return delegate[key];
-                    case MethodType.Set:
-                        delegate[key] = args[0];
-                        break;
-                    case MethodType.Invoke:
-                        const invoke = delegate[key];
-                        if ($isFunction(invoke)) {
-                            return invoke.apply(delegate, this.args);
-                        }
-                        break;
-                    }
-                } else if (method) {
-                    return method.apply(_this, this.args);
-                }
-                throw new Error(`Interceptor cannot proceed without a class or delegate method '${key}'.`);
-            }
-        };
-        return invocation.proceed();
-    }
-    methodProxy.baseMethod = method;
-    return methodProxy;
-}
-
-function extendProxyInstance(key, value) {
-    const proxy     = this.constructor,
-          overrides = arguments.length === 1
-                    ? key : { [key]: value },
-          props     = getPropertyDescriptors(overrides);
-    Reflect.ownKeys(props).forEach(key => {
-        const descriptor = props[key];        
-        if (!descriptor.enumerable) return;
-        let { value, get, set } = descriptor,
-            baseDescriptor = getPropertyDescriptors(this, key);
-        if (!baseDescriptor) return;
-        if (value) {
-            if ($isFunction(value)) {
-                const baseValue = baseDescriptor.value;
-                if ($isFunction(value) && value.baseMethod) {
-                    baseDescriptor.value = value.baseMethod;
-                }
-            }
-        } else if (get) {
-            const baseGet = baseDescriptor.get;
-            if (baseGet && get.baseMethod) {
-                baseDescriptor.get = get.baseMethod;
-            }
-        } else if (set) {
-            const baseSet = baseDescriptor.set;
-            if (baseSet && set.baseMethod) {
-                baseDescriptor.set = set.baseMethod;
-            }            
-        }
-        Object.defineProperty(this, key, baseDescriptor);
-    });
-    this.base(overrides);
-    Reflect.ownKeys(props).forEach(key => {
-        if (key in noProxyMethods) return;
-        if (proxy.shouldProxy && !proxy.shouldProxy(key, proxy)) return;
-        const descriptor = props[key];
-        if (!descriptor.enumerable) return;
-        let { value, get, set } = descriptor;        
-        if ($isFunction(value)) {
-            descriptor.value = proxyMethod(key, value, proxy);
-        } else if (!(get || set)) {
-            return;
-        } else {
-            if (get) {
-                descriptor.get = proxyMethod(key, get, proxy, MethodType.Get);
-            }
-            if (set) {
-                descriptor.set = proxyMethod(key, set, proxy, MethodType.Set);
-            }
-        }
-        Object.defineProperty(this, key, descriptor);
-    });
-    return this;
-}
+export { emptyArray, nothing, MethodType, Variance, mixin, Initializing, Resolving, Invoking, Parenting, Starting, Startup, $isClass, $classOf, $decorator, $decorate, $decorated };
