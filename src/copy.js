@@ -1,5 +1,5 @@
 import { decorate, isDescriptor } from "./decorate";
-
+import { $isFunction } from "./util.js";
 /**
  * Applies copy semantics on properties and return values.
  * @method copy

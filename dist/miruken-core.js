@@ -694,48 +694,6 @@ function isDescriptor(desc) {
 }
 
 /**
- * Applies copy semantics on properties and return values.
- * @method copy
- */
-function copy(...args) {
-    return decorate(_copy, args);
-}
-
-function _copy(target, key, descriptor) {
-    if (!isDescriptor(descriptor)) {
-        throw new SyntaxError("@copy can only be applied to methods or properties");
-    }
-    const { get, set, value, initializer } = descriptor;
-    if ($isFunction(value)) {
-        descriptor.value = function () {
-            return _copyOf(value.apply(this, arguments));
-        };
-    }
-    if ($isFunction(initializer)) {
-        descriptor.initializer = function () {
-            return _copyOf(initializer.apply(this));
-        };
-    }
-    if ($isFunction(get)) {
-        descriptor.get = function () {
-            return _copyOf(get.apply(this));
-        };
-    }
-    if ($isFunction(set)) {
-        descriptor.set = function (value) {
-            return set.call(this, _copyOf(value));
-        };
-    }
-}
-
-function _copyOf(value) {
-    if (value != null && $isFunction(value.copy)) {
-        value = value.copy();
-    }
-    return value;
-}
-
-/**
  * Helper class to simplify array manipulation.
  * @class ArrayManager
  * @constructor
@@ -1047,7 +1005,7 @@ function $isSymbol(str) {
  * @param    {Any}     fn  -  function to test
  * @returns  {boolean} true if a function.
  */
-function $isFunction$1(fn) {
+function $isFunction(fn) {
     return fn instanceof Function;
 }
 
@@ -1078,7 +1036,7 @@ function $isPlainObject(obj) {
  * @returns  {boolean} true if a promise. 
  */
 function $isPromise(promise) {
-    return promise && $isFunction$1(promise.then);
+    return promise && $isFunction(promise.then);
 }
 
 /**
@@ -1140,9 +1098,9 @@ function $equals(obj1, obj2) {
     if (obj1 === obj2) {
         return true;
     }
-    if (obj1 && $isFunction$1(obj1.equals)) {
+    if (obj1 && $isFunction(obj1.equals)) {
         return obj1.equals(obj2);
-    } else if (obj2 && $isFunction$1(obj2.equals)) {
+    } else if (obj2 && $isFunction(obj2.equals)) {
         return obj2.equals(obj1);
     }
     return false;
@@ -1175,6 +1133,48 @@ function $debounce(fn, wait, immediate, defaultReturnValue) {
         }
         return defaultReturnValue;
     };
+}
+
+/**
+ * Applies copy semantics on properties and return values.
+ * @method copy
+ */
+function copy(...args) {
+    return decorate(_copy, args);
+}
+
+function _copy(target, key, descriptor) {
+    if (!isDescriptor(descriptor)) {
+        throw new SyntaxError("@copy can only be applied to methods or properties");
+    }
+    const { get, set, value, initializer } = descriptor;
+    if ($isFunction(value)) {
+        descriptor.value = function () {
+            return _copyOf(value.apply(this, arguments));
+        };
+    }
+    if ($isFunction(initializer)) {
+        descriptor.initializer = function () {
+            return _copyOf(initializer.apply(this));
+        };
+    }
+    if ($isFunction(get)) {
+        descriptor.get = function () {
+            return _copyOf(get.apply(this));
+        };
+    }
+    if ($isFunction(set)) {
+        descriptor.set = function (value) {
+            return set.call(this, _copyOf(value));
+        };
+    }
+}
+
+function _copyOf(value) {
+    if (value != null && $isFunction(value.copy)) {
+        value = value.copy();
+    }
+    return value;
 }
 
 /**
@@ -1332,7 +1332,7 @@ const Metadata = Abstract.extend(null, {
             creator   = targetKey;
             targetKey = undefined;
         }        
-        if (!$isFunction$1(creator)) {
+        if (!$isFunction(creator)) {
             throw new TypeError("creator must be a function");
         }
         let metadata = this.getOwn(metadataKey, target, targetKey);
@@ -1446,7 +1446,7 @@ const Metadata = Abstract.extend(null, {
             collector = targetKey;
             targetKey = undefined;
         }
-        if (!$isFunction$1(collector)) {
+        if (!$isFunction(collector)) {
             throw new TypeError("collector must be a function");
         }
         while (target) {
@@ -1487,7 +1487,7 @@ function _metadataGetter(metadataKey, own, target, targetKey) {
 
 function _metadataKeyGetter(metadataKey, own,  target, callback) {
     let found = false;
-    if (!$isFunction$1(callback)) return false;
+    if (!$isFunction(callback)) return false;
     const keys = Reflect.ownKeys(own ? target : getPropertyDescriptors(target))
           .concat("constructor");
     keys.forEach(key => {
@@ -1503,15 +1503,15 @@ function _metadataKeyGetter(metadataKey, own,  target, callback) {
 }
 
 function _metadataCollector(metadataKey, target, targetKey, callback) {
-    if (!callback && $isFunction$1(targetKey)) {
+    if (!callback && $isFunction(targetKey)) {
         [targetKey, callback] = [null, targetKey];
     }
-    if (!$isFunction$1(callback)) return;
+    if (!$isFunction(callback)) return;
     this.collect(metadataKey, target, targetKey, callback);
 }
 
 function _metadataKeyCollector(metadataKey, target, callback) {
-    if (!$isFunction$1(callback)) return;
+    if (!$isFunction(callback)) return;
     const keys = Reflect.ownKeys(getPropertyDescriptors(target))
           .concat("constructor");
     keys.forEach(key => this.collect(metadataKey, target, key, callback));
@@ -1543,7 +1543,7 @@ const Protocol = Base.extend({
         if ($isNothing(delegate$$1)) {
             delegate$$1 = new Delegate();
         } else if (!(delegate$$1 instanceof Delegate)) {
-            if ($isFunction$1(delegate$$1.toDelegate)) {
+            if ($isFunction(delegate$$1.toDelegate)) {
                 delegate$$1 = delegate$$1.toDelegate();
                 if (!(delegate$$1 instanceof Delegate)) {
                     throw new TypeError("'toDelegate' method did not return a Delegate.");
@@ -1594,7 +1594,7 @@ const Protocol = Base.extend({
         if (this === target || (target && target.prototype instanceof this)) {
             return true;
         }
-        const metaTarget = $isFunction$1(target) ? target.prototype : target;        
+        const metaTarget = $isFunction(target) ? target.prototype : target;        
         return Metadata.collect(protocolMetadataKey, metaTarget,
                                 protocols => protocols.has(this) ||
                                 [...protocols].some(p => this.isAdoptedBy(p)));
@@ -1608,13 +1608,13 @@ const Protocol = Base.extend({
      */    
     adoptBy(target) {
         if (!target) return;
-        const metaTarget = $isFunction$1(target) ? target.prototype : target;
+        const metaTarget = $isFunction(target) ? target.prototype : target;
         if (Metadata.collect(protocolMetadataKey, metaTarget, p => p.has(this))) {
             return false;
         }
         const protocols = Metadata.getOrCreateOwn(protocolMetadataKey, metaTarget, () => new Set());
         protocols.add(this);
-        if ($isFunction$1(target.protocolAdopted)) {
+        if ($isFunction(target.protocolAdopted)) {
             target.protocolAdopted(this);
         }
         return true;
@@ -1676,7 +1676,7 @@ const $isProtocol = Protocol.isProtocol;
  */
 function $protocols(target, own) {
     if (!target) return [];
-    if ($isFunction$1(target)) {
+    if ($isFunction(target)) {
         target = target.prototype;
     }
     const protocols = !own ? new Set()
@@ -1704,14 +1704,14 @@ function protocol(...args) {
 }
 
 function _protocol(target) {
-    if ($isFunction$1(target)) {
+    if ($isFunction(target)) {
         target = target.prototype;
     }
     Reflect.ownKeys(target).forEach(key => {
         if (key === "constructor") return;
         const descriptor = Object.getOwnPropertyDescriptor(target, key);
         if (!descriptor.enumerable) return;
-        if ($isFunction$1(descriptor.value)) {
+        if ($isFunction(descriptor.value)) {
             descriptor.value = function (...args) {
                 return this[protocolInvoke](key, args);
             };
@@ -1959,7 +1959,7 @@ Base.extend = function (...args) {
         } else if (constraint.prototype instanceof Base ||
                    constraint.prototype instanceof Module) {
             decorators.push(mixin(constraint));
-        } else if ($isFunction$1(constraint)) {
+        } else if ($isFunction(constraint)) {
             decorators.push(constraint);
         }
         else {
@@ -2010,7 +2010,7 @@ Base.prototype.extend = function (key, value) {
 function mixin(...behaviors) {
     behaviors = $flatten(behaviors, true);
     return function (target) {
-        if (behaviors.length > 0 && $isFunction$1(target.implement)) {
+        if (behaviors.length > 0 && $isFunction(target.implement)) {
             behaviors.forEach(b => target.implement(b));
         }
     };
@@ -2099,7 +2099,7 @@ function $isClass(target) {
     if (!target || $isProtocol(target)) return false;    
     if (target.prototype instanceof Base) return true;
     const name = target.name;  // use Capital name convention
-    return name && $isFunction$1(target) && isUpperCase(name.charAt(0));
+    return name && $isFunction(target) && isUpperCase(name.charAt(0));
 }
 
 /**
@@ -2129,7 +2129,7 @@ function $decorator(decorations) {
             configurable: false,
             value:        decoratee
         });
-        if (decorations && $isFunction$1(decorator.extend)) {
+        if (decorations && $isFunction(decorator.extend)) {
             decorator.extend(decorations);
         }
         return decorator;
@@ -2210,7 +2210,7 @@ const design = DesignMetadata.decorator(designMetadataKey,
             return;
         }
         const { value } = descriptor;
-        if ($isFunction$1(value)) {
+        if ($isFunction(value)) {
             if (value.length > types.length) {
                 throw new SyntaxError(
                     `@design for method '${key}' expects at least ${value.length} parameters but only ${types.length} specified`);
@@ -2235,7 +2235,7 @@ function _validateTypes(types) {
             }
             type = type[0];
         }
-        if (!$isFunction$1(type)) {
+        if (!$isFunction(type)) {
             throw new SyntaxError("@design expects basic types, classes or protocols");
         }
     }
@@ -2262,7 +2262,7 @@ const Disposing = Protocol.extend({
  */
 const DisposingMixin = Module.extend({
     dispose(object) {
-        if ($isFunction$1(object._dispose)) {
+        if ($isFunction(object._dispose)) {
             const result = object._dispose();
             object.dispose = Undefined;  // dispose once
             return result;
@@ -2279,11 +2279,11 @@ const DisposingMixin = Module.extend({
  * @returns  {Any} result of executing the action in context.
  */
 function $using(disposing, action, context) {
-    if (disposing && $isFunction$1(disposing.dispose)) {
+    if (disposing && $isFunction(disposing.dispose)) {
         if (!$isPromise(action)) {
             let result;
             try {
-                result = $isFunction$1(action)
+                result = $isFunction(action)
                     ? action.call(context, disposing)
                     : action;
                 if (!$isPromise(result)) {
@@ -2407,12 +2407,12 @@ const Traversing = Protocol.extend({
  */
 const TraversingMixin = Module.extend({
     traverse(object, axis, visitor, context) {
-        if ($isFunction$1(axis)) {
+        if ($isFunction(axis)) {
             context = visitor;
             visitor = axis;
             axis    = TraversingAxis.Child;
         }
-        if (!$isFunction$1(visitor)) return;
+        if (!$isFunction(visitor)) return;
         switch (axis) {
         case TraversingAxis.Self:
             traverseSelf.call(object, visitor, context);
@@ -2606,26 +2606,26 @@ const Traversal = Abstract.extend({}, {
 
 function preOrder(node, visitor, context, visited = []) {
     checkCircularity(visited, node);
-    if (!node || !$isFunction$1(visitor) || visitor.call(context, node)) {
+    if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
         return true;
     }
-    if ($isFunction$1(node.traverse))
+    if ($isFunction(node.traverse))
         node.traverse(child => preOrder(child, visitor, context, visited));
     return false;
 }
 
 function postOrder(node, visitor, context, visited = []) {
     checkCircularity(visited, node);
-    if (!node || !$isFunction$1(visitor)) {
+    if (!node || !$isFunction(visitor)) {
         return true;
     }
-    if ($isFunction$1(node.traverse))
+    if ($isFunction(node.traverse))
         node.traverse(child => postOrder(child, visitor, context, visited));
     return visitor.call(context, node);
 }
 
 function levelOrder(node, visitor, context, visited = []) {
-    if (!node || !$isFunction$1(visitor)) {
+    if (!node || !$isFunction(visitor)) {
         return;
     }
     const queue = [node];
@@ -2635,7 +2635,7 @@ function levelOrder(node, visitor, context, visited = []) {
         if (visitor.call(context, next)) {
             return;
         }
-        if ($isFunction$1(next.traverse))
+        if ($isFunction(next.traverse))
             next.traverse(child => {
                 if (child) queue.push(child);
             });
@@ -2643,7 +2643,7 @@ function levelOrder(node, visitor, context, visited = []) {
 }
 
 function reverseLevelOrder(node, visitor, context, visited = []) {
-    if (!node || !$isFunction$1(visitor)) {
+    if (!node || !$isFunction(visitor)) {
         return;
     }
     const queue = [node],
@@ -2653,7 +2653,7 @@ function reverseLevelOrder(node, visitor, context, visited = []) {
         checkCircularity(visited, next);
         stack.push(next);
         const level = [];
-        if ($isFunction$1(next.traverse))
+        if ($isFunction(next.traverse))
             next.traverse(child => {
                 if (child) level.unshift(child);
             });
@@ -2682,7 +2682,7 @@ const inject = Metadata.decorator(injectMetadataKey,
         }
         const { value } = descriptor;        
         dependencies = $flatten(dependencies);
-        if ($isFunction$1(value)) {
+        if ($isFunction(value)) {
             Metadata.define(injectMetadataKey, dependencies, target, key);
         } else if (dependencies.length !== 1) {
             throw new SyntaxError(`@inject for property '${key}' requires single key to be specified`);
@@ -2816,12 +2816,12 @@ const Policy = Base.extend({
               keys        = Reflect.ownKeys(descriptors);
         keys.forEach(key => {
             const keyValue = this[key];
-            if ($isFunction$1(keyValue)) { return; }
+            if ($isFunction(keyValue)) { return; }
             if (keyValue !== undefined && this.hasOwnProperty(key)) {
                 const policyValue = policy[key];
                 if (policyValue === undefined || !policy.hasOwnProperty(key)) {
                     policy[key] = _copyPolicyValue(keyValue);
-                } else if ($isFunction$1(keyValue.mergeInto)) {
+                } else if ($isFunction(keyValue.mergeInto)) {
                     keyValue.mergeInto(policyValue);
                 }
             }
@@ -2844,7 +2844,7 @@ function _copyPolicyValue(policyValue) {
     if (Array.isArray(policyValue)) {
         return policyValue.map(_copyPolicyValue);
     }
-    if ($isFunction$1(policyValue.copy)) {
+    if ($isFunction(policyValue.copy)) {
         return policyValue.copy();
     }
     return policyValue;
@@ -3005,7 +3005,7 @@ function proxyClass(proxy, protocols) {
             const descriptor = props[key];
             if (!descriptor.enumerable) return;
             let { value, get, set } = descriptor;
-            if ($isFunction$1(value)) {
+            if ($isFunction(value)) {
                 if (isProtocol) value = null;
                 descriptor.value = proxyMethod(key, value, proxy);
             } else {
@@ -3055,7 +3055,7 @@ function proxyMethod(key, method, source, type) {
                     return true;
                 }
                 if (delegate$$1) {
-                    return $isFunction$1(delegate$$1[key]);
+                    return $isFunction(delegate$$1[key]);
                 }
                 return !!method;
             },
@@ -3074,7 +3074,7 @@ function proxyMethod(key, method, source, type) {
                         break;
                     case MethodType.Invoke:
                         const invoke = delegate$$1[key];
-                        if ($isFunction$1(invoke)) {
+                        if ($isFunction(invoke)) {
                             return invoke.apply(delegate$$1, this.args);
                         }
                         break;
@@ -3103,9 +3103,9 @@ function extendProxyInstance(key, value) {
             baseDescriptor = getPropertyDescriptors(this, key);
         if (!baseDescriptor) return;
         if (value) {
-            if ($isFunction$1(value)) {
+            if ($isFunction(value)) {
                 const baseValue = baseDescriptor.value;
-                if ($isFunction$1(value) && value.baseMethod) {
+                if ($isFunction(value) && value.baseMethod) {
                     baseDescriptor.value = value.baseMethod;
                 }
             }
@@ -3129,7 +3129,7 @@ function extendProxyInstance(key, value) {
         const descriptor = props[key];
         if (!descriptor.enumerable) return;
         let { value, get, set } = descriptor;        
-        if ($isFunction$1(value)) {
+        if ($isFunction(value)) {
             descriptor.value = proxyMethod(key, value, proxy);
         } else if (!(get || set)) {
             return;
@@ -3146,4 +3146,4 @@ function extendProxyInstance(key, value) {
     return this;
 }
 
-export { Undefined, Null, True, False, Base, Package, Abstract, Module, pcopy, extend, getPropertyDescriptors, instanceOf, typeOf, assignID, format, csv, bind, partial, delegate, copy, emptyArray, nothing, MethodType, Variance, mixin, Initializing, Resolving, Invoking, Parenting, Starting, Startup, $isClass, $classOf, $decorator, $decorate, $decorated, decorate, isDescriptor, Delegate, ObjectDelegate, ArrayDelegate, design, Disposing, DisposingMixin, $using, Enum, Flags, TraversingAxis, Traversing, TraversingMixin, Traversal, inject, Metadata, $eq, $use, $lazy, $eval, $every, $child, $optional, $promise, $instant, Modifier, $createModifier, Policy, Protocol, StrictProtocol, $isProtocol, $protocols, protocol, conformsTo, Facet, Interceptor, InterceptorSelector, ProxyBuilder, ArrayManager, IndexedList, $isString, $isSymbol, $isFunction$1 as $isFunction, $isObject, $isPlainObject, $isPromise, $isNothing, $isSomething$1 as $isSomething, $lift, $flatten, $equals, $debounce };
+export { Undefined, Null, True, False, Base, Package, Abstract, Module, pcopy, extend, getPropertyDescriptors, instanceOf, typeOf, assignID, format, csv, bind, partial, delegate, copy, emptyArray, nothing, MethodType, Variance, mixin, Initializing, Resolving, Invoking, Parenting, Starting, Startup, $isClass, $classOf, $decorator, $decorate, $decorated, decorate, isDescriptor, Delegate, ObjectDelegate, ArrayDelegate, design, Disposing, DisposingMixin, $using, Enum, Flags, TraversingAxis, Traversing, TraversingMixin, Traversal, inject, Metadata, $eq, $use, $lazy, $eval, $every, $child, $optional, $promise, $instant, Modifier, $createModifier, Policy, Protocol, StrictProtocol, $isProtocol, $protocols, protocol, conformsTo, Facet, Interceptor, InterceptorSelector, ProxyBuilder, ArrayManager, IndexedList, $isString, $isSymbol, $isFunction, $isObject, $isPlainObject, $isPromise, $isNothing, $isSomething$1 as $isSomething, $lift, $flatten, $equals, $debounce };

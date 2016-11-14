@@ -662,52 +662,6 @@ define(["exports", "reflect-metadata"], function (exports) {
         return false;
     }
 
-    function copy() {
-        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-            args[_key] = arguments[_key];
-        }
-
-        return decorate(_copy, args);
-    }
-
-    function _copy(target, key, descriptor) {
-        if (!isDescriptor(descriptor)) {
-            throw new SyntaxError("@copy can only be applied to methods or properties");
-        }
-        var get = descriptor.get,
-            set = descriptor.set,
-            value = descriptor.value,
-            initializer = descriptor.initializer;
-
-        if ($isFunction(value)) {
-            descriptor.value = function () {
-                return _copyOf(value.apply(this, arguments));
-            };
-        }
-        if ($isFunction(initializer)) {
-            descriptor.initializer = function () {
-                return _copyOf(initializer.apply(this));
-            };
-        }
-        if ($isFunction(get)) {
-            descriptor.get = function () {
-                return _copyOf(get.apply(this));
-            };
-        }
-        if ($isFunction(set)) {
-            descriptor.set = function (value) {
-                return set.call(this, _copyOf(value));
-            };
-        }
-    }
-
-    function _copyOf(value) {
-        if (value != null && $isFunction(value.copy)) {
-            value = value.copy();
-        }
-        return value;
-    }
-
     var ArrayManager = Base.extend({
         constructor: function constructor(items) {
             var _items = [];
@@ -897,7 +851,7 @@ define(["exports", "reflect-metadata"], function (exports) {
         return Object(str) instanceof Symbol;
     }
 
-    function $isFunction$1(fn) {
+    function $isFunction(fn) {
         return fn instanceof Function;
     }
 
@@ -910,7 +864,7 @@ define(["exports", "reflect-metadata"], function (exports) {
     }
 
     function $isPromise(promise) {
-        return promise && $isFunction$1(promise.then);
+        return promise && $isFunction(promise.then);
     }
 
     function $isNothing(value) {
@@ -942,9 +896,9 @@ define(["exports", "reflect-metadata"], function (exports) {
         if (obj1 === obj2) {
             return true;
         }
-        if (obj1 && $isFunction$1(obj1.equals)) {
+        if (obj1 && $isFunction(obj1.equals)) {
             return obj1.equals(obj2);
-        } else if (obj2 && $isFunction$1(obj2.equals)) {
+        } else if (obj2 && $isFunction(obj2.equals)) {
             return obj2.equals(obj1);
         }
         return false;
@@ -969,6 +923,52 @@ define(["exports", "reflect-metadata"], function (exports) {
             }
             return defaultReturnValue;
         };
+    }
+
+    function copy() {
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+        }
+
+        return decorate(_copy, args);
+    }
+
+    function _copy(target, key, descriptor) {
+        if (!isDescriptor(descriptor)) {
+            throw new SyntaxError("@copy can only be applied to methods or properties");
+        }
+        var get = descriptor.get,
+            set = descriptor.set,
+            value = descriptor.value,
+            initializer = descriptor.initializer;
+
+        if ($isFunction(value)) {
+            descriptor.value = function () {
+                return _copyOf(value.apply(this, arguments));
+            };
+        }
+        if ($isFunction(initializer)) {
+            descriptor.initializer = function () {
+                return _copyOf(initializer.apply(this));
+            };
+        }
+        if ($isFunction(get)) {
+            descriptor.get = function () {
+                return _copyOf(get.apply(this));
+            };
+        }
+        if ($isFunction(set)) {
+            descriptor.set = function (value) {
+                return set.call(this, _copyOf(value));
+            };
+        }
+    }
+
+    function _copyOf(value) {
+        if (value != null && $isFunction(value.copy)) {
+            value = value.copy();
+        }
+        return value;
     }
 
     var Delegate = Base.extend({
@@ -1043,7 +1043,7 @@ define(["exports", "reflect-metadata"], function (exports) {
                 creator = targetKey;
                 targetKey = undefined;
             }
-            if (!$isFunction$1(creator)) {
+            if (!$isFunction(creator)) {
                 throw new TypeError("creator must be a function");
             }
             var metadata = this.getOwn(metadataKey, target, targetKey);
@@ -1107,7 +1107,7 @@ define(["exports", "reflect-metadata"], function (exports) {
                 collector = targetKey;
                 targetKey = undefined;
             }
-            if (!$isFunction$1(collector)) {
+            if (!$isFunction(collector)) {
                 throw new TypeError("collector must be a function");
             }
             while (target) {
@@ -1145,7 +1145,7 @@ define(["exports", "reflect-metadata"], function (exports) {
         var _this6 = this;
 
         var found = false;
-        if (!$isFunction$1(callback)) return false;
+        if (!$isFunction(callback)) return false;
         var keys = Reflect.ownKeys(own ? target : getPropertyDescriptors(target)).concat("constructor");
         keys.forEach(function (key) {
             var metadata = own ? _this6.getOwn(metadataKey, target, key) : _this6.get(metadataKey, target, key);
@@ -1158,19 +1158,19 @@ define(["exports", "reflect-metadata"], function (exports) {
     }
 
     function _metadataCollector(metadataKey, target, targetKey, callback) {
-        if (!callback && $isFunction$1(targetKey)) {
+        if (!callback && $isFunction(targetKey)) {
             var _ref2 = [null, targetKey];
             targetKey = _ref2[0];
             callback = _ref2[1];
         }
-        if (!$isFunction$1(callback)) return;
+        if (!$isFunction(callback)) return;
         this.collect(metadataKey, target, targetKey, callback);
     }
 
     function _metadataKeyCollector(metadataKey, target, callback) {
         var _this7 = this;
 
-        if (!$isFunction$1(callback)) return;
+        if (!$isFunction(callback)) return;
         var keys = Reflect.ownKeys(getPropertyDescriptors(target)).concat("constructor");
         keys.forEach(function (key) {
             return _this7.collect(metadataKey, target, key, callback);
@@ -1191,7 +1191,7 @@ define(["exports", "reflect-metadata"], function (exports) {
             if ($isNothing(delegate$$1)) {
                 delegate$$1 = new Delegate();
             } else if (!(delegate$$1 instanceof Delegate)) {
-                if ($isFunction$1(delegate$$1.toDelegate)) {
+                if ($isFunction(delegate$$1.toDelegate)) {
                     delegate$$1 = delegate$$1.toDelegate();
                     if (!(delegate$$1 instanceof Delegate)) {
                         throw new TypeError("'toDelegate' method did not return a Delegate.");
@@ -1224,7 +1224,7 @@ define(["exports", "reflect-metadata"], function (exports) {
             if (this === target || target && target.prototype instanceof this) {
                 return true;
             }
-            var metaTarget = $isFunction$1(target) ? target.prototype : target;
+            var metaTarget = $isFunction(target) ? target.prototype : target;
             return Metadata.collect(protocolMetadataKey, metaTarget, function (protocols) {
                 return protocols.has(_this8) || [].concat(_toConsumableArray(protocols)).some(function (p) {
                     return _this8.isAdoptedBy(p);
@@ -1235,7 +1235,7 @@ define(["exports", "reflect-metadata"], function (exports) {
             var _this9 = this;
 
             if (!target) return;
-            var metaTarget = $isFunction$1(target) ? target.prototype : target;
+            var metaTarget = $isFunction(target) ? target.prototype : target;
             if (Metadata.collect(protocolMetadataKey, metaTarget, function (p) {
                 return p.has(_this9);
             })) {
@@ -1245,7 +1245,7 @@ define(["exports", "reflect-metadata"], function (exports) {
                 return new Set();
             });
             protocols.add(this);
-            if ($isFunction$1(target.protocolAdopted)) {
+            if ($isFunction(target.protocolAdopted)) {
                 target.protocolAdopted(this);
             }
             return true;
@@ -1274,7 +1274,7 @@ define(["exports", "reflect-metadata"], function (exports) {
 
     function $protocols(target, own) {
         if (!target) return [];
-        if ($isFunction$1(target)) {
+        if ($isFunction(target)) {
             target = target.prototype;
         }
         var protocols = !own ? new Set() : Metadata.getOwn(protocolMetadataKey, target);
@@ -1305,14 +1305,14 @@ define(["exports", "reflect-metadata"], function (exports) {
     }
 
     function _protocol(target) {
-        if ($isFunction$1(target)) {
+        if ($isFunction(target)) {
             target = target.prototype;
         }
         Reflect.ownKeys(target).forEach(function (key) {
             if (key === "constructor") return;
             var descriptor = Object.getOwnPropertyDescriptor(target, key);
             if (!descriptor.enumerable) return;
-            if ($isFunction$1(descriptor.value)) {
+            if ($isFunction(descriptor.value)) {
                 descriptor.value = function () {
                     for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
                         args[_key4] = arguments[_key4];
@@ -1505,7 +1505,7 @@ define(["exports", "reflect-metadata"], function (exports) {
                 decorators.push(conformsTo(constraint));
             } else if (constraint.prototype instanceof Base || constraint.prototype instanceof Module) {
                 decorators.push(mixin(constraint));
-            } else if ($isFunction$1(constraint)) {
+            } else if ($isFunction(constraint)) {
                 decorators.push(constraint);
             } else {
                 break;
@@ -1553,7 +1553,7 @@ define(["exports", "reflect-metadata"], function (exports) {
 
         behaviors = $flatten(behaviors, true);
         return function (target) {
-            if (behaviors.length > 0 && $isFunction$1(target.implement)) {
+            if (behaviors.length > 0 && $isFunction(target.implement)) {
                 behaviors.forEach(function (b) {
                     return target.implement(b);
                 });
@@ -1587,7 +1587,7 @@ define(["exports", "reflect-metadata"], function (exports) {
         if (!target || $isProtocol(target)) return false;
         if (target.prototype instanceof Base) return true;
         var name = target.name;
-        return name && $isFunction$1(target) && isUpperCase(name.charAt(0));
+        return name && $isFunction(target) && isUpperCase(name.charAt(0));
     }
 
     function $classOf(instance) {
@@ -1604,7 +1604,7 @@ define(["exports", "reflect-metadata"], function (exports) {
                 configurable: false,
                 value: decoratee
             });
-            if (decorations && $isFunction$1(decorator.extend)) {
+            if (decorations && $isFunction(decorator.extend)) {
                 decorator.extend(decorations);
             }
             return decorator;
@@ -1658,7 +1658,7 @@ define(["exports", "reflect-metadata"], function (exports) {
         }
         var value = descriptor.value;
 
-        if ($isFunction$1(value)) {
+        if ($isFunction(value)) {
             if (value.length > types.length) {
                 throw new SyntaxError("@design for method '" + key + "' expects at least " + value.length + " parameters but only " + types.length + " specified");
             }
@@ -1684,7 +1684,7 @@ define(["exports", "reflect-metadata"], function (exports) {
                 }
                 type = type[0];
             }
-            if (!$isFunction$1(type)) {
+            if (!$isFunction(type)) {
                 throw new SyntaxError("@design expects basic types, classes or protocols");
             }
         }
@@ -1696,7 +1696,7 @@ define(["exports", "reflect-metadata"], function (exports) {
 
     var DisposingMixin = Module.extend({
         dispose: function dispose(object) {
-            if ($isFunction$1(object._dispose)) {
+            if ($isFunction(object._dispose)) {
                 var result = object._dispose();
                 object.dispose = Undefined;
                 return result;
@@ -1705,11 +1705,11 @@ define(["exports", "reflect-metadata"], function (exports) {
     });
 
     function $using(disposing, action, context) {
-        if (disposing && $isFunction$1(disposing.dispose)) {
+        if (disposing && $isFunction(disposing.dispose)) {
             if (!$isPromise(action)) {
                 var result = void 0;
                 try {
-                    result = $isFunction$1(action) ? action.call(context, disposing) : action;
+                    result = $isFunction(action) ? action.call(context, disposing) : action;
                     if (!$isPromise(result)) {
                         return result;
                     }
@@ -1768,12 +1768,12 @@ define(["exports", "reflect-metadata"], function (exports) {
 
     var TraversingMixin = Module.extend({
         traverse: function traverse(object, axis, visitor, context) {
-            if ($isFunction$1(axis)) {
+            if ($isFunction(axis)) {
                 context = visitor;
                 visitor = axis;
                 axis = TraversingAxis.Child;
             }
-            if (!$isFunction$1(visitor)) return;
+            if (!$isFunction(visitor)) return;
             switch (axis) {
                 case TraversingAxis.Self:
                     traverseSelf.call(object, visitor, context);
@@ -1981,10 +1981,10 @@ define(["exports", "reflect-metadata"], function (exports) {
         var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
         checkCircularity(visited, node);
-        if (!node || !$isFunction$1(visitor) || visitor.call(context, node)) {
+        if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
             return true;
         }
-        if ($isFunction$1(node.traverse)) node.traverse(function (child) {
+        if ($isFunction(node.traverse)) node.traverse(function (child) {
             return _preOrder(child, visitor, context, visited);
         });
         return false;
@@ -1994,10 +1994,10 @@ define(["exports", "reflect-metadata"], function (exports) {
         var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
         checkCircularity(visited, node);
-        if (!node || !$isFunction$1(visitor)) {
+        if (!node || !$isFunction(visitor)) {
             return true;
         }
-        if ($isFunction$1(node.traverse)) node.traverse(function (child) {
+        if ($isFunction(node.traverse)) node.traverse(function (child) {
             return _postOrder(child, visitor, context, visited);
         });
         return visitor.call(context, node);
@@ -2006,7 +2006,7 @@ define(["exports", "reflect-metadata"], function (exports) {
     function _levelOrder(node, visitor, context) {
         var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
-        if (!node || !$isFunction$1(visitor)) {
+        if (!node || !$isFunction(visitor)) {
             return;
         }
         var queue = [node];
@@ -2016,7 +2016,7 @@ define(["exports", "reflect-metadata"], function (exports) {
             if (visitor.call(context, next)) {
                 return;
             }
-            if ($isFunction$1(next.traverse)) next.traverse(function (child) {
+            if ($isFunction(next.traverse)) next.traverse(function (child) {
                 if (child) queue.push(child);
             });
         }
@@ -2025,7 +2025,7 @@ define(["exports", "reflect-metadata"], function (exports) {
     function _reverseLevelOrder(node, visitor, context) {
         var visited = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
-        if (!node || !$isFunction$1(visitor)) {
+        if (!node || !$isFunction(visitor)) {
             return;
         }
         var queue = [node],
@@ -2036,7 +2036,7 @@ define(["exports", "reflect-metadata"], function (exports) {
             checkCircularity(visited, next);
             stack.push(next);
             var level = [];
-            if ($isFunction$1(next.traverse)) next.traverse(function (child) {
+            if ($isFunction(next.traverse)) next.traverse(function (child) {
                 if (child) level.unshift(child);
             });
             queue.push.apply(queue, level);
@@ -2063,7 +2063,7 @@ define(["exports", "reflect-metadata"], function (exports) {
         var value = descriptor.value;
 
         dependencies = $flatten(dependencies);
-        if ($isFunction$1(value)) {
+        if ($isFunction(value)) {
             Metadata.define(injectMetadataKey, dependencies, target, key);
         } else if (dependencies.length !== 1) {
             throw new SyntaxError("@inject for property '" + key + "' requires single key to be specified");
@@ -2140,14 +2140,14 @@ define(["exports", "reflect-metadata"], function (exports) {
                 keys = Reflect.ownKeys(descriptors);
             keys.forEach(function (key) {
                 var keyValue = _this12[key];
-                if ($isFunction$1(keyValue)) {
+                if ($isFunction(keyValue)) {
                     return;
                 }
                 if (keyValue !== undefined && _this12.hasOwnProperty(key)) {
                     var policyValue = policy[key];
                     if (policyValue === undefined || !policy.hasOwnProperty(key)) {
                         policy[key] = _copyPolicyValue(keyValue);
-                    } else if ($isFunction$1(keyValue.mergeInto)) {
+                    } else if ($isFunction(keyValue.mergeInto)) {
                         keyValue.mergeInto(policyValue);
                     }
                 }
@@ -2176,7 +2176,7 @@ define(["exports", "reflect-metadata"], function (exports) {
         if (Array.isArray(policyValue)) {
             return policyValue.map(_copyPolicyValue);
         }
-        if ($isFunction$1(policyValue.copy)) {
+        if ($isFunction(policyValue.copy)) {
             return policyValue.copy();
         }
         return policyValue;
@@ -2299,7 +2299,7 @@ define(["exports", "reflect-metadata"], function (exports) {
                     get = descriptor.get,
                     set = descriptor.set;
 
-                if ($isFunction$1(value)) {
+                if ($isFunction(value)) {
                     if (isProtocol) value = null;
                     descriptor.value = proxyMethod(key, value, proxy);
                 } else {
@@ -2365,7 +2365,7 @@ define(["exports", "reflect-metadata"], function (exports) {
                         return true;
                     }
                     if (delegate$$1) {
-                        return $isFunction$1(delegate$$1[key]);
+                        return $isFunction(delegate$$1[key]);
                     }
                     return !!method;
                 },
@@ -2384,7 +2384,7 @@ define(["exports", "reflect-metadata"], function (exports) {
                                 break;
                             case MethodType.Invoke:
                                 var invoke = delegate$$1[key];
-                                if ($isFunction$1(invoke)) {
+                                if ($isFunction(invoke)) {
                                     return invoke.apply(delegate$$1, this.args);
                                 }
                                 break;
@@ -2417,9 +2417,9 @@ define(["exports", "reflect-metadata"], function (exports) {
 
             if (!baseDescriptor) return;
             if (value) {
-                if ($isFunction$1(value)) {
+                if ($isFunction(value)) {
                     var baseValue = baseDescriptor.value;
-                    if ($isFunction$1(value) && value.baseMethod) {
+                    if ($isFunction(value) && value.baseMethod) {
                         baseDescriptor.value = value.baseMethod;
                     }
                 }
@@ -2446,7 +2446,7 @@ define(["exports", "reflect-metadata"], function (exports) {
                 get = descriptor.get,
                 set = descriptor.set;
 
-            if ($isFunction$1(value)) {
+            if ($isFunction(value)) {
                 descriptor.value = proxyMethod(key, value, proxy);
             } else if (!(get || set)) {
                 return;
@@ -2542,7 +2542,7 @@ define(["exports", "reflect-metadata"], function (exports) {
     exports.IndexedList = IndexedList;
     exports.$isString = $isString;
     exports.$isSymbol = $isSymbol;
-    exports.$isFunction = $isFunction$1;
+    exports.$isFunction = $isFunction;
     exports.$isObject = $isObject;
     exports.$isPlainObject = $isPlainObject;
     exports.$isPromise = $isPromise;
