@@ -871,7 +871,7 @@ define(["exports", "reflect-metadata"], function (exports) {
         return value == null;
     }
 
-    function $isSomething$1(value) {
+    function $isSomething(value) {
         return value != null;
     }
 
@@ -888,7 +888,7 @@ define(["exports", "reflect-metadata"], function (exports) {
         var items = arr.map(function (item) {
             return $flatten(item, prune);
         });
-        if (prune) items = items.filter($isSomething$1);
+        if (prune) items = items.filter($isSomething);
         return (_ref = []).concat.apply(_ref, _toConsumableArray(items));
     }
 
@@ -2547,7 +2547,7 @@ define(["exports", "reflect-metadata"], function (exports) {
     exports.$isPlainObject = $isPlainObject;
     exports.$isPromise = $isPromise;
     exports.$isNothing = $isNothing;
-    exports.$isSomething = $isSomething$1;
+    exports.$isSomething = $isSomething;
     exports.$lift = $lift;
     exports.$flatten = $flatten;
     exports.$equals = $equals;

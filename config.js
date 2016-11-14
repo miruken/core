@@ -19,6 +19,7 @@ System.config({
     "babel-runtime": "npm:babel-runtime@5.8.38",
     "chai": "npm:chai@3.5.0",
     "core-js": "npm:core-js@1.2.7",
+    "miruken-core": "npm:miruken-core@0.0.1",
     "reflect-metadata": "npm:reflect-metadata@0.1.8",
     "–latest": "npm:babel-core@5.8.38",
     "–latest-runtime": "npm:babel-runtime@5.8.38",
@@ -276,6 +277,9 @@ System.config({
     "npm:minimatch@3.0.3": {
       "brace-expansion": "npm:brace-expansion@1.1.6",
       "path": "github:jspm/nodelibs-path@0.1.0"
+    },
+    "npm:miruken-core@0.0.1": {
+      "reflect-metadata": "npm:reflect-metadata@0.1.8"
     },
     "npm:mkdirp@0.5.1": {
       "fs": "github:jspm/nodelibs-fs@0.1.2",

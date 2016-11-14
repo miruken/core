@@ -404,7 +404,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
         return value == null;
     }
 
-    function $isSomething$1(value) {
+    function $isSomething(value) {
         return value != null;
     }
 
@@ -421,7 +421,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
         var items = arr.map(function (item) {
             return $flatten(item, prune);
         });
-        if (prune) items = items.filter($isSomething$1);
+        if (prune) items = items.filter($isSomething);
         return (_ref = []).concat.apply(_ref, _toConsumableArray(items));
     }
 
@@ -2632,7 +2632,7 @@ System.register(["reflect-metadata"], function (_export, _context) {
 
             _export("$isNothing", $isNothing);
 
-            _export("$isSomething", $isSomething$1);
+            _export("$isSomething", $isSomething);
 
             _export("$lift", $lift);
 

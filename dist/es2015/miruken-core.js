@@ -845,7 +845,7 @@ function $isNothing(value) {
     return value == null;
 }
 
-function $isSomething$1(value) {
+function $isSomething(value) {
     return value != null;
 }
 
@@ -862,7 +862,7 @@ function $flatten(arr, prune) {
     var items = arr.map(function (item) {
         return $flatten(item, prune);
     });
-    if (prune) items = items.filter($isSomething$1);
+    if (prune) items = items.filter($isSomething);
     return (_ref = []).concat.apply(_ref, _toConsumableArray(items));
 }
 
@@ -2521,7 +2521,7 @@ exports.$isObject = $isObject;
 exports.$isPlainObject = $isPlainObject;
 exports.$isPromise = $isPromise;
 exports.$isNothing = $isNothing;
-exports.$isSomething = $isSomething$1;
+exports.$isSomething = $isSomething;
 exports.$lift = $lift;
 exports.$flatten = $flatten;
 exports.$equals = $equals;
