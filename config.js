@@ -1,13 +1,6 @@
 System.config({
   defaultJSExtensions: true,
   transpiler: false,
-  babelOptions: {
-    "optional": [
-      "runtime",
-      "optimisation.modules.system"
-    ],
-    "stage": 0
-  },
   paths: {
     "github:*": "jspm_packages/github/*",
     "npm:*": "jspm_packages/npm/*"

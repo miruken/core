@@ -1,4 +1,4 @@
-define(['exports', 'reflect-metadata'], function (exports, reflectMetadata) { 'use strict';
+import 'reflect-metadata';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
@@ -38,7 +38,7 @@ var _subclass = function _subclass(_instance, _static) {
             var cast = cls.coerce.apply(_class, arguments);
             if (cast) return cast;
           }
-        } while ((cls = cls.ancestor) && cls != exports.Base);
+        } while ((cls = cls.ancestor) && cls != Base);
         return _extend(target, _prototype);
       }
     }
@@ -55,7 +55,7 @@ var _subclass = function _subclass(_instance, _static) {
   return _class;
 };
 
-exports.Base = _subclass.call(Object, {
+var Base = _subclass.call(Object, {
   constructor: function constructor() {
     if (arguments.length > 0 && typeOf(arguments[0]) === 'object') {
       this.extend(arguments[0]);
@@ -71,7 +71,7 @@ exports.Base = _subclass.call(Object, {
       return "[object " + this.constructor.toString().slice(1, -1) + "]";
     }
   }
-}, exports.Base = {
+}, Base = {
   ancestorOf: function ancestorOf(klass) {
     return _ancestorOf(this, klass);
   },
@@ -88,9 +88,9 @@ exports.Base = _subclass.call(Object, {
   }
 });
 
-exports.Base.base = exports.Base.prototype.base = function () {};
+Base.base = Base.prototype.base = function () {};
 
-var Package = exports.Base.extend({
+var Package = Base.extend({
   constructor: function constructor(_private, _public) {
     var pkg = this,
         openPkg;
@@ -150,7 +150,7 @@ var Package = exports.Base.extend({
       _private["_label_" + pkg.name] = function () {
         for (var name in nsPkg) {
           var object = nsPkg[name];
-          if (object && object.ancestorOf == exports.Base.ancestorOf && name != "constructor") {
+          if (object && object.ancestorOf == Base.ancestorOf && name != "constructor") {
             object.toString = K("[" + packageName + "." + name + "]");
           }
         }
@@ -187,7 +187,7 @@ var Package = exports.Base.extend({
       this[name] = value;
       this.exports += "," + name;
       this.namespace += format("var %1=%2.%1;", name, this.name);
-      if (value && value.ancestorOf == exports.Base.ancestorOf && name != "constructor") {
+      if (value && value.ancestorOf == Base.ancestorOf && name != "constructor") {
         value.toString = K("[" + this.toString().slice(1, -1) + "." + name + "]");
       }
       if (this.exported) this.exported([name]);
@@ -210,7 +210,7 @@ var Package = exports.Base.extend({
   }
 });
 
-var Abstract = exports.Base.extend({
+var Abstract = Base.extend({
   constructor: function constructor() {
     throw new TypeError("Abstract class cannot be instantiated.");
   }
@@ -493,9 +493,9 @@ function instanceOf(object, klass) {
 
   if (object instanceof klass) return true;
 
-  if (exports.Base.ancestorOf == klass.ancestorOf) return false;
+  if (Base.ancestorOf == klass.ancestorOf) return false;
 
-  if (exports.Base.ancestorOf == object.constructor.ancestorOf) return klass == Object;
+  if (Base.ancestorOf == object.constructor.ancestorOf) return klass == Object;
 
   switch (klass) {
     case Array:
@@ -627,7 +627,7 @@ function isDescriptor(desc) {
 
 function _toConsumableArray$1(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-var ArrayManager = exports.Base.extend({
+var ArrayManager = Base.extend({
     constructor: function constructor(items) {
         var _items = [];
         this.extend({
@@ -692,7 +692,7 @@ var ArrayManager = exports.Base.extend({
     }
 });
 
-var IndexedList = exports.Base.extend({
+var IndexedList = Base.extend({
     constructor: function constructor() {
         var order = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultOrder;
 
@@ -936,7 +936,7 @@ function _copyOf(value) {
     return value;
 }
 
-var Delegate = exports.Base.extend({
+var Delegate = Base.extend({
     get: function get(protocol, key, strict) {},
     set: function set(protocol, key, value, strict) {},
     invoke: function invoke(protocol, methodName, args, strict) {}
@@ -1155,7 +1155,7 @@ var protocolDelegate = Symbol();
 var protocolStrict = Symbol();
 var protocolMetadataKey = Symbol();
 
-var Protocol = exports.Base.extend((_Base$extend = {
+var Protocol = Base.extend((_Base$extend = {
     constructor: function constructor(delegate$$1, strict) {
         var _Object$definePropert;
 
@@ -1334,7 +1334,7 @@ function conformsTo() {
 
 var Defining = Symbol();
 
-var Enum = exports.Base.extend({
+var Enum = Base.extend({
     constructor: function constructor(value, name, ordinal) {
         this.constructing(value, name);
         Object.defineProperties(this, {
@@ -1430,9 +1430,9 @@ var Flags = Enum.extend({
     }
 });
 
-var baseExtend = exports.Base.extend;
-var baseImplement = exports.Base.implement;
-var baseProtoExtend = exports.Base.prototype.extend;
+var baseExtend = Base.extend;
+var baseImplement = Base.implement;
+var baseProtoExtend = Base.prototype.extend;
 
 var emptyArray = Object.freeze([]);
 var nothing = undefined;
@@ -1453,7 +1453,7 @@ var Variance = Enum({
     Invariant: 3
 });
 
-exports.Base.extend = function () {
+Base.extend = function () {
     for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
     }
@@ -1474,7 +1474,7 @@ exports.Base.extend = function () {
             break;
         } else if ($isProtocol(constraint)) {
             decorators.push(conformsTo(constraint));
-        } else if (constraint.prototype instanceof exports.Base || constraint.prototype instanceof Module) {
+        } else if (constraint.prototype instanceof Base || constraint.prototype instanceof Module) {
             decorators.push(mixin(constraint));
         } else if ($isFunction(constraint)) {
             decorators.push(constraint);
@@ -1494,7 +1494,7 @@ exports.Base.extend = function () {
     return derived;
 };
 
-exports.Base.implement = function (source) {
+Base.implement = function (source) {
     if (source && $isProtocol(this) && $isObject(source)) {
         source = protocol(source) || source;
     }
@@ -1503,7 +1503,7 @@ exports.Base.implement = function (source) {
     return type;
 };
 
-exports.Base.prototype.extend = function (key, value) {
+Base.prototype.extend = function (key, value) {
     if (!key) return this;
     var numArgs = arguments.length;
     if (numArgs === 1) {
@@ -1550,13 +1550,13 @@ var Starting = Protocol.extend({
     start: function start() {}
 });
 
-var Startup = exports.Base.extend(Starting, {
+var Startup = Base.extend(Starting, {
     start: function start() {}
 });
 
 function $isClass(target) {
     if (!target || $isProtocol(target)) return false;
-    if (target.prototype instanceof exports.Base) return true;
+    if (target.prototype instanceof Base) return true;
     var name = target.name;
     return name && $isFunction(target) && isUpperCase(name.charAt(0));
 }
@@ -2100,7 +2100,7 @@ function $createModifier() {
     return modifier;
 }
 
-var Policy = exports.Base.extend({
+var Policy = Base.extend({
     mergeInto: function mergeInto(policy) {
         var _this = this;
 
@@ -2186,19 +2186,19 @@ var Facet = Object.freeze({
     Delegate: "proxy:delegate"
 });
 
-var Interceptor = exports.Base.extend({
+var Interceptor = Base.extend({
     intercept: function intercept(invocation) {
         return invocation.proceed();
     }
 });
 
-var InterceptorSelector = exports.Base.extend({
+var InterceptorSelector = Base.extend({
     selectInterceptors: function selectInterceptors(type, method, interceptors) {
         return interceptors;
     }
 });
 
-var ProxyBuilder = exports.Base.extend({
+var ProxyBuilder = Base.extend({
     buildProxy: function buildProxy(types, options) {
         if (!Array.isArray(types)) {
             throw new TypeError("ProxyBuilder requires an array of types to proxy.");
@@ -2210,7 +2210,7 @@ var ProxyBuilder = exports.Base.extend({
 });
 
 function _buildProxy(classes, protocols, options) {
-    var base = options.baseType || classes.shift() || exports.Base,
+    var base = options.baseType || classes.shift() || Base,
         proxy = base.extend.apply(base, _toConsumableArray$3(classes.concat(protocols)).concat([{
         constructor: function constructor(facets) {
             var spec = {};
@@ -2438,95 +2438,4 @@ function extendProxyInstance(key, value) {
     return this;
 }
 
-exports.extend = _extend;
-exports.partial = _partial;
-exports.Undefined = Undefined;
-exports.Null = Null;
-exports.True = True;
-exports.False = False;
-exports.Package = Package;
-exports.Abstract = Abstract;
-exports.Module = Module;
-exports.pcopy = pcopy;
-exports.getPropertyDescriptors = getPropertyDescriptors;
-exports.instanceOf = instanceOf;
-exports.typeOf = typeOf;
-exports.assignID = assignID;
-exports.format = format;
-exports.csv = csv;
-exports.bind = bind;
-exports.delegate = delegate;
-exports.copy = copy$1;
-exports.emptyArray = emptyArray;
-exports.nothing = nothing;
-exports.MethodType = MethodType;
-exports.Variance = Variance;
-exports.mixin = mixin;
-exports.Initializing = Initializing;
-exports.Resolving = Resolving;
-exports.Invoking = Invoking;
-exports.Parenting = Parenting;
-exports.Starting = Starting;
-exports.Startup = Startup;
-exports.$isClass = $isClass;
-exports.$classOf = $classOf;
-exports.$decorator = $decorator;
-exports.$decorate = $decorate;
-exports.$decorated = $decorated;
-exports.decorate = decorate;
-exports.isDescriptor = isDescriptor;
-exports.Delegate = Delegate;
-exports.ObjectDelegate = ObjectDelegate;
-exports.ArrayDelegate = ArrayDelegate;
-exports.design = design;
-exports.Disposing = Disposing;
-exports.DisposingMixin = DisposingMixin;
-exports.$using = $using;
-exports.Enum = Enum;
-exports.Flags = Flags;
-exports.TraversingAxis = TraversingAxis;
-exports.Traversing = Traversing;
-exports.TraversingMixin = TraversingMixin;
-exports.Traversal = Traversal;
-exports.inject = inject;
-exports.Metadata = Metadata;
-exports.$eq = $eq;
-exports.$use = $use;
-exports.$lazy = $lazy;
-exports.$eval = $eval;
-exports.$every = $every;
-exports.$child = $child;
-exports.$optional = $optional;
-exports.$promise = $promise;
-exports.$instant = $instant;
-exports.Modifier = Modifier;
-exports.$createModifier = $createModifier;
-exports.Policy = Policy;
-exports.Protocol = Protocol;
-exports.StrictProtocol = StrictProtocol;
-exports.$isProtocol = $isProtocol;
-exports.$protocols = $protocols;
-exports.protocol = protocol;
-exports.conformsTo = conformsTo;
-exports.Facet = Facet;
-exports.Interceptor = Interceptor;
-exports.InterceptorSelector = InterceptorSelector;
-exports.ProxyBuilder = ProxyBuilder;
-exports.ArrayManager = ArrayManager;
-exports.IndexedList = IndexedList;
-exports.$isString = $isString;
-exports.$isSymbol = $isSymbol;
-exports.$isFunction = $isFunction;
-exports.$isObject = $isObject;
-exports.$isPlainObject = $isPlainObject;
-exports.$isPromise = $isPromise;
-exports.$isNothing = $isNothing;
-exports.$isSomething = $isSomething;
-exports.$lift = $lift;
-exports.$flatten = $flatten;
-exports.$equals = $equals;
-exports.$debounce = $debounce;
-
-Object.defineProperty(exports, '__esModule', { value: true });
-
-});
+export { _extend as extend, _partial as partial, Undefined, Null, True, False, Base, Package, Abstract, Module, pcopy, getPropertyDescriptors, instanceOf, typeOf, assignID, format, csv, bind, delegate, copy$1 as copy, emptyArray, nothing, MethodType, Variance, mixin, Initializing, Resolving, Invoking, Parenting, Starting, Startup, $isClass, $classOf, $decorator, $decorate, $decorated, decorate, isDescriptor, Delegate, ObjectDelegate, ArrayDelegate, design, Disposing, DisposingMixin, $using, Enum, Flags, TraversingAxis, Traversing, TraversingMixin, Traversal, inject, Metadata, $eq, $use, $lazy, $eval, $every, $child, $optional, $promise, $instant, Modifier, $createModifier, Policy, Protocol, StrictProtocol, $isProtocol, $protocols, protocol, conformsTo, Facet, Interceptor, InterceptorSelector, ProxyBuilder, ArrayManager, IndexedList, $isString, $isSymbol, $isFunction, $isObject, $isPlainObject, $isPromise, $isNothing, $isSomething, $lift, $flatten, $equals, $debounce };

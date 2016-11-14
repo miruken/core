@@ -1,19 +1,10 @@
-"use strict";
+'use strict';
 
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.$debounce = exports.$equals = exports.$flatten = exports.$lift = exports.$isSomething = exports.$isNothing = exports.$isPromise = exports.$isPlainObject = exports.$isObject = exports.$isFunction = exports.$isSymbol = exports.$isString = exports.IndexedList = exports.ArrayManager = exports.ProxyBuilder = exports.InterceptorSelector = exports.Interceptor = exports.Facet = exports.conformsTo = exports.protocol = exports.$protocols = exports.$isProtocol = exports.StrictProtocol = exports.Protocol = exports.Policy = exports.$createModifier = exports.Modifier = exports.$instant = exports.$promise = exports.$optional = exports.$child = exports.$every = exports.$eval = exports.$lazy = exports.$use = exports.$eq = exports.Metadata = exports.inject = exports.Traversal = exports.TraversingMixin = exports.Traversing = exports.TraversingAxis = exports.Flags = exports.Enum = exports.$using = exports.DisposingMixin = exports.Disposing = exports.design = exports.ArrayDelegate = exports.ObjectDelegate = exports.Delegate = exports.isDescriptor = exports.decorate = exports.$decorated = exports.$decorate = exports.$decorator = exports.$classOf = exports.$isClass = exports.Startup = exports.Starting = exports.Parenting = exports.Invoking = exports.Resolving = exports.Initializing = exports.mixin = exports.Variance = exports.MethodType = exports.nothing = exports.emptyArray = exports.copy = exports.delegate = exports.partial = exports.bind = exports.csv = exports.format = exports.assignID = exports.typeOf = exports.instanceOf = exports.getPropertyDescriptors = exports.extend = exports.pcopy = exports.Module = exports.Abstract = exports.Package = exports.Base = exports.False = exports.True = exports.Null = exports.Undefined = undefined;
+Object.defineProperty(exports, '__esModule', { value: true });
 
-var _Base$extend;
+var reflectMetadata = require('reflect-metadata');
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-require("reflect-metadata");
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 var Undefined = K();
 var Null = K(null);
@@ -29,587 +20,589 @@ var _HIDDEN = ["constructor", "toString"];
 var _slice = Array.prototype.slice;
 
 var _subclass = function _subclass(_instance, _static) {
-    __prototyping = this.prototype;
-    var _prototype = new this();
-    if (_instance) _extend(_prototype, _instance);
-    __prototyping = undefined;
+  __prototyping = this.prototype;
+  var _prototype = new this();
+  if (_instance) _extend(_prototype, _instance);
+  __prototyping = undefined;
 
-    var _constructor = _prototype.constructor;
-    function _class() {
-        if (!__prototyping) {
-            if (this && (this.constructor == _class || this.__constructing)) {
-                this.__constructing = true;
-                var instance = _constructor.apply(this, arguments);
-                delete this.__constructing;
-                if (instance) return instance;
-            } else {
-                var target = arguments[0];
-                if (target instanceof _class) return target;
-                var cls = _class;
-                do {
-                    if (cls.coerce) {
-                        var cast = cls.coerce.apply(_class, arguments);
-                        if (cast) return cast;
-                    }
-                } while ((cls = cls.ancestor) && cls != Base);
-                return _extend(target, _prototype);
-            }
-        }
-        return this;
+  var _constructor = _prototype.constructor;
+  function _class() {
+    if (!__prototyping) {
+      if (this && (this.constructor == _class || this.__constructing)) {
+        this.__constructing = true;
+        var instance = _constructor.apply(this, arguments);
+        delete this.__constructing;
+        if (instance) return instance;
+      } else {
+        var target = arguments[0];
+        if (target instanceof _class) return target;
+        var cls = _class;
+        do {
+          if (cls.coerce) {
+            var cast = cls.coerce.apply(_class, arguments);
+            if (cast) return cast;
+          }
+        } while ((cls = cls.ancestor) && cls != exports.Base);
+        return _extend(target, _prototype);
+      }
     }
-    _prototype.constructor = _class;
+    return this;
+  }
+  _prototype.constructor = _class;
 
-    Object.setPrototypeOf(_class, this);
-    if (_static) _extend(_class, _static);
-    _class.ancestor = this;
-    _class.prototype = _prototype;
-    if (_class.init) _class.init();
+  Object.setPrototypeOf(_class, this);
+  if (_static) _extend(_class, _static);
+  _class.ancestor = this;
+  _class.prototype = _prototype;
+  if (_class.init) _class.init();
 
-    return _class;
+  return _class;
 };
 
-var Base = _subclass.call(Object, {
-    constructor: function constructor() {
-        if (arguments.length > 0 && typeOf(arguments[0]) === 'object') {
-            this.extend(arguments[0]);
-        }
-    },
-
-    extend: delegate(_extend),
-
-    toString: function toString() {
-        if (this.constructor.toString == Function.prototype.toString) {
-            return "[object base2.Base]";
-        } else {
-            return "[object " + this.constructor.toString().slice(1, -1) + "]";
-        }
+exports.Base = _subclass.call(Object, {
+  constructor: function constructor() {
+    if (arguments.length > 0 && typeOf(arguments[0]) === 'object') {
+      this.extend(arguments[0]);
     }
-}, exports.Base = Base = {
-    ancestorOf: function ancestorOf(klass) {
-        return _ancestorOf(this, klass);
-    },
+  },
 
-    extend: _subclass,
+  extend: delegate(_extend),
 
-    implement: function implement(source) {
-        if (typeof source == "function") {
-            source = source.prototype;
-        }
-
-        _extend(this.prototype, source);
-        return this;
+  toString: function toString() {
+    if (this.constructor.toString == Function.prototype.toString) {
+      return "[object base2.Base]";
+    } else {
+      return "[object " + this.constructor.toString().slice(1, -1) + "]";
     }
+  }
+}, exports.Base = {
+  ancestorOf: function ancestorOf(klass) {
+    return _ancestorOf(this, klass);
+  },
+
+  extend: _subclass,
+
+  implement: function implement(source) {
+    if (typeof source == "function") {
+      source = source.prototype;
+    }
+
+    _extend(this.prototype, source);
+    return this;
+  }
 });
 
-Base.base = Base.prototype.base = function () {};
+exports.Base.base = exports.Base.prototype.base = function () {};
 
-var Package = Base.extend({
-    constructor: function constructor(_private, _public) {
-        var pkg = this,
-            openPkg;
+var Package = exports.Base.extend({
+  constructor: function constructor(_private, _public) {
+    var pkg = this,
+        openPkg;
 
-        pkg.extend(_public);
+    pkg.extend(_public);
 
-        if (pkg.name && pkg.name != "base2") {
-            if (_public.parent === undefined) pkg.parent = base2;
-            openPkg = pkg.parent && pkg.parent[pkg.name];
-            if (openPkg) {
-                if (!(openPkg instanceof Package)) {
-                    throw new Error(format("'%1' is reserved and cannot be used as a package name", pkg.name));
-                }
-                pkg.namespace = openPkg.namespace;
-            } else {
-                if (pkg.parent) {
-                    pkg.version = pkg.version || pkg.parent.version;
-                    pkg.parent.addName(pkg.name, pkg);
-                }
-                pkg.namespace = format("var %1=%2;", pkg.name, pkg.toString().slice(1, -1));
-            }
+    if (pkg.name && pkg.name != "base2") {
+      if (_public.parent === undefined) pkg.parent = base2;
+      openPkg = pkg.parent && pkg.parent[pkg.name];
+      if (openPkg) {
+        if (!(openPkg instanceof Package)) {
+          throw new Error(format("'%1' is reserved and cannot be used as a package name", pkg.name));
         }
-
-        if (_private) {
-            _private.__package = this;
-            _private.package = openPkg || this;
-
-            var namespace = "var base2=(function(){return this.base2})(),_private=base2.toString;" + base2.namespace;
-            var imports = csv(pkg.imports),
-                name;
-            for (var i = 0; name = imports[i]; i++) {
-                var ns = lookup(name) || lookup("js." + name);
-                if (!ns) throw new ReferenceError(format("Object not found: '%1'.", name));
-                namespace += ns.namespace;
-            }
-            if (openPkg) namespace += openPkg.namespace;
-
-            _private.init = function () {
-                if (pkg.init) pkg.init();
-            };
-            _private.imports = namespace + lang.namespace + "this.init();";
-
-            namespace = "";
-            var nsPkg = openPkg || pkg;
-            var exports = csv(pkg.exports);
-            for (var i = 0; name = exports[i]; i++) {
-                var fullName = pkg.name + "." + name;
-                nsPkg.namespace += "var " + name + "=" + fullName + ";";
-                namespace += "if(!" + fullName + ")" + fullName + "=" + name + ";";
-            }
-            _private.exported = function () {
-                if (nsPkg.exported) nsPkg.exported(exports);
-            };
-            _private.exports = "if(!" + pkg.name + ")var " + pkg.name + "=this.__package;" + namespace + "this._label_" + pkg.name + "();this.exported();";
-
-            var packageName = pkg.toString().slice(1, -1);
-            _private["_label_" + pkg.name] = function () {
-                for (var name in nsPkg) {
-                    var object = nsPkg[name];
-                    if (object && object.ancestorOf == Base.ancestorOf && name != "constructor") {
-                        object.toString = K("[" + packageName + "." + name + "]");
-                    }
-                }
-            };
+        pkg.namespace = openPkg.namespace;
+      } else {
+        if (pkg.parent) {
+          pkg.version = pkg.version || pkg.parent.version;
+          pkg.parent.addName(pkg.name, pkg);
         }
-
-        if (openPkg) return openPkg;
-
-        function lookup(names) {
-            names = names.split(".");
-            var value = base2,
-                i = 0;
-            while (value && names[i] != null) {
-                value = value[names[i++]];
-            }
-            return value;
-        }
-    },
-
-    exports: "",
-    imports: "",
-    name: "",
-    namespace: "",
-    parent: null,
-
-    open: function open(_private, _public) {
-        _public.name = this.name;
-        _public.parent = this.parent;
-        return new Package(_private, _public);
-    },
-
-    addName: function addName(name, value) {
-        if (!this[name]) {
-            this[name] = value;
-            this.exports += "," + name;
-            this.namespace += format("var %1=%2.%1;", name, this.name);
-            if (value && value.ancestorOf == Base.ancestorOf && name != "constructor") {
-                value.toString = K("[" + this.toString().slice(1, -1) + "." + name + "]");
-            }
-            if (this.exported) this.exported([name]);
-        }
-    },
-
-    addPackage: function addPackage(name) {
-        var pkg = new Package(null, { name: name, parent: this });
-        this.addName(name, pkg);
-        return pkg;
-    },
-
-    package: function _package(_private, _public) {
-        _public.parent = this;
-        return new Package(_private, _public);
-    },
-
-    toString: function toString() {
-        return format("[%1]", this.parent ? this.parent.toString().slice(1, -1) + "." + this.name : this.name);
+        pkg.namespace = format("var %1=%2;", pkg.name, pkg.toString().slice(1, -1));
+      }
     }
+
+    if (_private) {
+      _private.__package = this;
+      _private.package = openPkg || this;
+
+      var namespace = "var base2=(function(){return this.base2})(),_private=base2.toString;" + base2.namespace;
+      var imports = csv(pkg.imports),
+          name;
+      for (var i = 0; name = imports[i]; i++) {
+        var ns = lookup(name) || lookup("js." + name);
+        if (!ns) throw new ReferenceError(format("Object not found: '%1'.", name));
+        namespace += ns.namespace;
+      }
+      if (openPkg) namespace += openPkg.namespace;
+
+      _private.init = function () {
+        if (pkg.init) pkg.init();
+      };
+      _private.imports = namespace + lang.namespace + "this.init();";
+
+      namespace = "";
+      var nsPkg = openPkg || pkg;
+      var exports = csv(pkg.exports);
+      for (var i = 0; name = exports[i]; i++) {
+        var fullName = pkg.name + "." + name;
+        nsPkg.namespace += "var " + name + "=" + fullName + ";";
+        namespace += "if(!" + fullName + ")" + fullName + "=" + name + ";";
+      }
+      _private.exported = function () {
+        if (nsPkg.exported) nsPkg.exported(exports);
+      };
+      _private.exports = "if(!" + pkg.name + ")var " + pkg.name + "=this.__package;" + namespace + "this._label_" + pkg.name + "();this.exported();";
+
+      var packageName = pkg.toString().slice(1, -1);
+      _private["_label_" + pkg.name] = function () {
+        for (var name in nsPkg) {
+          var object = nsPkg[name];
+          if (object && object.ancestorOf == exports.Base.ancestorOf && name != "constructor") {
+            object.toString = K("[" + packageName + "." + name + "]");
+          }
+        }
+      };
+    }
+
+    if (openPkg) return openPkg;
+
+    function lookup(names) {
+      names = names.split(".");
+      var value = base2,
+          i = 0;
+      while (value && names[i] != null) {
+        value = value[names[i++]];
+      }
+      return value;
+    }
+  },
+
+  exports: "",
+  imports: "",
+  name: "",
+  namespace: "",
+  parent: null,
+
+  open: function open(_private, _public) {
+    _public.name = this.name;
+    _public.parent = this.parent;
+    return new Package(_private, _public);
+  },
+
+  addName: function addName(name, value) {
+    if (!this[name]) {
+      this[name] = value;
+      this.exports += "," + name;
+      this.namespace += format("var %1=%2.%1;", name, this.name);
+      if (value && value.ancestorOf == exports.Base.ancestorOf && name != "constructor") {
+        value.toString = K("[" + this.toString().slice(1, -1) + "." + name + "]");
+      }
+      if (this.exported) this.exported([name]);
+    }
+  },
+
+  addPackage: function addPackage(name) {
+    var pkg = new Package(null, { name: name, parent: this });
+    this.addName(name, pkg);
+    return pkg;
+  },
+
+  package: function _package(_private, _public) {
+    _public.parent = this;
+    return new Package(_private, _public);
+  },
+
+  toString: function toString() {
+    return format("[%1]", this.parent ? this.parent.toString().slice(1, -1) + "." + this.name : this.name);
+  }
 });
 
-var Abstract = Base.extend({
-    constructor: function constructor() {
-        throw new TypeError("Abstract class cannot be instantiated.");
-    }
+var Abstract = exports.Base.extend({
+  constructor: function constructor() {
+    throw new TypeError("Abstract class cannot be instantiated.");
+  }
 });
 
 var _moduleCount = 0;
 
 var Module = Abstract.extend(null, {
-    namespace: "",
+  namespace: "",
 
-    extend: function extend(_interface, _static) {
-        var module = this.base();
-        var index = _moduleCount++;
-        module.namespace = "";
-        module.partial = this.partial;
-        module.toString = K("[base2.Module[" + index + "]]");
-        Module[index] = module;
+  extend: function extend(_interface, _static) {
+    var module = this.base();
+    var index = _moduleCount++;
+    module.namespace = "";
+    module.partial = this.partial;
+    module.toString = K("[base2.Module[" + index + "]]");
+    Module[index] = module;
 
-        module.implement(this);
+    module.implement(this);
 
-        if (_interface) module.implement(_interface);
+    if (_interface) module.implement(_interface);
 
-        if (_static) {
-            _extend(module, _static);
-            if (module.init) module.init();
-        }
-        return module;
-    },
-
-    implement: function implement(_interface) {
-        var module = this;
-        var id = module.toString().slice(1, -1);
-        if (typeof _interface == "function") {
-            if (!_ancestorOf(_interface, module)) {
-                this.base(_interface);
-            }
-            if (_ancestorOf(Module, _interface)) {
-                for (var name in _interface) {
-                    if (typeof module[name] == "undefined") {
-                        var property = _interface[name];
-                        if (typeof property == "function" && property.call && _interface.prototype[name]) {
-                            property = _createStaticModuleMethod(_interface, name);
-                        }
-                        module[name] = property;
-                    }
-                }
-                module.namespace += _interface.namespace.replace(/base2\.Module\[\d+\]/g, id);
-            }
-        } else {
-            _extend(module, _interface);
-
-            _extendModule(module, _interface);
-        }
-        return module;
-    },
-
-    partial: function partial() {
-        var module = Module.extend();
-        var id = module.toString().slice(1, -1);
-
-        module.namespace = this.namespace.replace(/(\w+)=b[^\)]+\)/g, "$1=" + id + ".$1");
-        this.forEach(function (method, name) {
-            module[name] = _partial(bind(method, module));
-        });
-        return module;
+    if (_static) {
+      _extend(module, _static);
+      if (module.init) module.init();
     }
+    return module;
+  },
+
+  implement: function implement(_interface) {
+    var module = this;
+    var id = module.toString().slice(1, -1);
+    if (typeof _interface == "function") {
+      if (!_ancestorOf(_interface, module)) {
+        this.base(_interface);
+      }
+      if (_ancestorOf(Module, _interface)) {
+        for (var name in _interface) {
+          if (typeof module[name] == "undefined") {
+            var property = _interface[name];
+            if (typeof property == "function" && property.call && _interface.prototype[name]) {
+              property = _createStaticModuleMethod(_interface, name);
+            }
+            module[name] = property;
+          }
+        }
+        module.namespace += _interface.namespace.replace(/base2\.Module\[\d+\]/g, id);
+      }
+    } else {
+      _extend(module, _interface);
+
+      _extendModule(module, _interface);
+    }
+    return module;
+  },
+
+  partial: function partial() {
+    var module = Module.extend();
+    var id = module.toString().slice(1, -1);
+
+    module.namespace = this.namespace.replace(/(\w+)=b[^\)]+\)/g, "$1=" + id + ".$1");
+    this.forEach(function (method, name) {
+      module[name] = _partial(bind(method, module));
+    });
+    return module;
+  }
 });
 
 Module.prototype.base = Module.prototype.extend = _IGNORE;
 
 function _extendModule(module, _interface) {
-    var proto = module.prototype;
-    var id = module.toString().slice(1, -1);
-    for (var name in _interface) {
-        var property = _interface[name],
-            namespace = "";
-        if (!proto[name]) {
-            if (name == name.toUpperCase()) {
-                namespace = "var " + name + "=" + id + "." + name + ";";
-            } else if (typeof property == "function" && property.call) {
-                namespace = "var " + name + "=base2.lang.bind('" + name + "'," + id + ");";
-                proto[name] = _createModuleMethod(module, name);
-            }
-            if (module.namespace.indexOf(namespace) == -1) {
-                module.namespace += namespace;
-            }
-        }
+  var proto = module.prototype;
+  var id = module.toString().slice(1, -1);
+  for (var name in _interface) {
+    var property = _interface[name],
+        namespace = "";
+    if (!proto[name]) {
+      if (name == name.toUpperCase()) {
+        namespace = "var " + name + "=" + id + "." + name + ";";
+      } else if (typeof property == "function" && property.call) {
+        namespace = "var " + name + "=base2.lang.bind('" + name + "'," + id + ");";
+        proto[name] = _createModuleMethod(module, name);
+      }
+      if (module.namespace.indexOf(namespace) == -1) {
+        module.namespace += namespace;
+      }
     }
+  }
 }
 
 function _createStaticModuleMethod(module, name) {
-    return function () {
-        return module[name].apply(module, arguments);
-    };
+  return function () {
+    return module[name].apply(module, arguments);
+  };
 }
 
 function _createModuleMethod(module, name) {
-    return function () {
-        var args = _slice.call(arguments);
-        args.unshift(this);
-        return module[name].apply(module, args);
-    };
+  return function () {
+    var args = _slice.call(arguments);
+    args.unshift(this);
+    return module[name].apply(module, args);
+  };
 }
 
 function pcopy(object) {
-    _dummy.prototype = object;
-    return new _dummy();
+  _dummy.prototype = object;
+  return new _dummy();
 }
 
 function _dummy() {}
 
 function _extend(object, source) {
-    if (object && source) {
-        var useProto = __prototyping;
-        if (arguments.length > 2) {
-            var key = source;
-            source = {};
-            source[key] = arguments[2];
-            useProto = true;
-        }
-        var proto = (typeof source == "function" ? Function : Object).prototype;
-
-        if (useProto) {
-            var i = _HIDDEN.length,
-                key;
-            while (key = _HIDDEN[--i]) {
-                var desc = getPropertyDescriptors(source, key);
-                if (!desc || desc.enumerable && desc.value != proto[key]) {
-                    desc = _override(object, key, desc);
-                    if (desc) Object.defineProperty(object, key, desc);
-                }
-            }
-        }
-
-        var props = getPropertyDescriptors(source);
-        Reflect.ownKeys(props).forEach(function (key) {
-            if (typeof proto[key] == "undefined" && key !== "base") {
-                var desc = props[key];
-                if (desc.enumerable) {
-                    desc = _override(object, key, desc);
-                    if (desc) Object.defineProperty(object, key, desc);
-                }
-            }
-        });
+  if (object && source) {
+    var useProto = __prototyping;
+    if (arguments.length > 2) {
+      var key = source;
+      source = {};
+      source[key] = arguments[2];
+      useProto = true;
     }
-    return object;
+    var proto = (typeof source == "function" ? Function : Object).prototype;
+
+    if (useProto) {
+      var i = _HIDDEN.length,
+          key;
+      while (key = _HIDDEN[--i]) {
+        var desc = getPropertyDescriptors(source, key);
+        if (!desc || desc.enumerable && desc.value != proto[key]) {
+          desc = _override(object, key, desc);
+          if (desc) Object.defineProperty(object, key, desc);
+        }
+      }
+    }
+
+    var props = getPropertyDescriptors(source);
+    Reflect.ownKeys(props).forEach(function (key) {
+      if (typeof proto[key] == "undefined" && key !== "base") {
+        var desc = props[key];
+        if (desc.enumerable) {
+          desc = _override(object, key, desc);
+          if (desc) Object.defineProperty(object, key, desc);
+        }
+      }
+    });
+  }
+  return object;
 }
 
 function _ancestorOf(ancestor, fn) {
-    while (fn) {
-        if (!fn.ancestor) return false;
-        fn = fn.ancestor;
-        if (fn == ancestor) return true;
-    }
-    return false;
+  while (fn) {
+    if (!fn.ancestor) return false;
+    fn = fn.ancestor;
+    if (fn == ancestor) return true;
+  }
+  return false;
 }
 
 function _override(object, key, desc) {
-    var value = desc.value;
-    if (value === _IGNORE) return;
-    if (typeof value !== "function" && "value" in desc) {
-        return desc;
+  var value = desc.value;
+  if (value === _IGNORE) return;
+  if (typeof value !== "function" && "value" in desc) {
+    return desc;
+  }
+  var ancestor = getPropertyDescriptors(object, key);
+  if (!ancestor) return desc;
+  var superObject = __prototyping;
+  if (superObject) {
+    var sprop = getPropertyDescriptors(superObject, key);
+    if (sprop && (sprop.value != ancestor.value || sprop.get != ancestor.get || sprop.set != ancestor.set)) {
+      superObject = null;
     }
-    var ancestor = getPropertyDescriptors(object, key);
-    if (!ancestor) return desc;
-    var superObject = __prototyping;
-    if (superObject) {
-        var sprop = getPropertyDescriptors(superObject, key);
-        if (sprop && (sprop.value != ancestor.value || sprop.get != ancestor.get || sprop.set != ancestor.set)) {
-            superObject = null;
-        }
-    }
-    if (value) {
-        var avalue = ancestor.value;
-        if (avalue && _BASE.test(value)) {
-            desc.value = function () {
-                var b = this.base;
-                this.base = function () {
-                    var b = this.base,
-                        method = superObject && superObject[key] || avalue;
-                    this.base = Undefined;
-                    var ret = method.apply(this, arguments);
-                    this.base = b;
-                    return ret;
-                };
-                var ret = value.apply(this, arguments);
-                this.base = b;
-                return ret;
-            };
-        }
-        return desc;
-    }
-    var get = desc.get,
-        aget = ancestor.get;
-    if (get) {
-        if (aget && _BASE.test(get)) {
-            desc.get = function () {
-                var b = this.base;
-                this.base = function () {
-                    var b = this.base,
-                        get = superObject && getPropertyDescriptors(superObject, key).get || aget;
-                    this.base = Undefined;
-                    var ret = get.apply(this, arguments);
-                    this.base = b;
-                    return ret;
-                };
-                var ret = get.apply(this, arguments);
-                this.base = b;
-                return ret;
-            };
-        }
-    } else if (superObject) {
-        desc.get = function () {
-            var get = getPropertyDescriptors(superObject, key).get;
-            return get.apply(this, arguments);
+  }
+  if (value) {
+    var avalue = ancestor.value;
+    if (avalue && _BASE.test(value)) {
+      desc.value = function () {
+        var b = this.base;
+        this.base = function () {
+          var b = this.base,
+              method = superObject && superObject[key] || avalue;
+          this.base = Undefined;
+          var ret = method.apply(this, arguments);
+          this.base = b;
+          return ret;
         };
-    } else {
-        desc.get = aget;
-    }
-    var set = desc.set,
-        aset = ancestor.set;
-    if (set) {
-        if (aset && _BASE.test(set)) {
-            desc.set = function () {
-                var b = this.base;
-                this.base = function () {
-                    var b = this.base,
-                        set = superObject && getPropertyDescriptors(superObject, key).set || aset;
-                    this.base = Undefined;
-                    var ret = set.apply(this, arguments);
-                    this.base = b;
-                    return ret;
-                };
-                var ret = set.apply(this, arguments);
-                this.base = b;
-                return ret;
-            };
-        }
-    } else if (superObject) {
-        desc.set = function () {
-            var set = getPropertyDescriptors(superObject, key).set;
-            return set.apply(this, arguments);
-        };
-    } else {
-        desc.set = aset;
+        var ret = value.apply(this, arguments);
+        this.base = b;
+        return ret;
+      };
     }
     return desc;
+  }
+  var get = desc.get,
+      aget = ancestor.get;
+  if (get) {
+    if (aget && _BASE.test(get)) {
+      desc.get = function () {
+        var b = this.base;
+        this.base = function () {
+          var b = this.base,
+              get = superObject && getPropertyDescriptors(superObject, key).get || aget;
+          this.base = Undefined;
+          var ret = get.apply(this, arguments);
+          this.base = b;
+          return ret;
+        };
+        var ret = get.apply(this, arguments);
+        this.base = b;
+        return ret;
+      };
+    }
+  } else if (superObject) {
+    desc.get = function () {
+      var get = getPropertyDescriptors(superObject, key).get;
+      return get.apply(this, arguments);
+    };
+  } else {
+    desc.get = aget;
+  }
+  var set = desc.set,
+      aset = ancestor.set;
+  if (set) {
+    if (aset && _BASE.test(set)) {
+      desc.set = function () {
+        var b = this.base;
+        this.base = function () {
+          var b = this.base,
+              set = superObject && getPropertyDescriptors(superObject, key).set || aset;
+          this.base = Undefined;
+          var ret = set.apply(this, arguments);
+          this.base = b;
+          return ret;
+        };
+        var ret = set.apply(this, arguments);
+        this.base = b;
+        return ret;
+      };
+    }
+  } else if (superObject) {
+    desc.set = function () {
+      var set = getPropertyDescriptors(superObject, key).set;
+      return set.apply(this, arguments);
+    };
+  } else {
+    desc.set = aset;
+  }
+  return desc;
 }
 
 function getPropertyDescriptors(obj, key) {
-    var props = key ? null : {},
-        own = false,
-        prop;
-    do {
-        if (key) {
-            prop = Reflect.getOwnPropertyDescriptor(obj, key);
-            if (prop) return prop.own = own, prop;
-        } else {
-            Reflect.ownKeys(obj).forEach(function (key) {
-                if (!Reflect.has(props, key)) {
-                    prop = Reflect.getOwnPropertyDescriptor(obj, key);
-                    if (prop) props[key] = (prop.own = own, prop);
-                }
-            });
+  var props = key ? null : {},
+      own = false,
+      prop;
+  do {
+    if (key) {
+      prop = Reflect.getOwnPropertyDescriptor(obj, key);
+      if (prop) return prop.own = own, prop;
+    } else {
+      Reflect.ownKeys(obj).forEach(function (key) {
+        if (!Reflect.has(props, key)) {
+          prop = Reflect.getOwnPropertyDescriptor(obj, key);
+          if (prop) props[key] = (prop.own = own, prop);
         }
-    } while ((own = false, obj = Object.getPrototypeOf(obj)));
-    return props;
+      });
+    }
+  } while ((own = false, obj = Object.getPrototypeOf(obj)));
+  return props;
 }
 
 function instanceOf(object, klass) {
 
-    if (typeof klass != "function") {
-        throw new TypeError("Invalid 'instanceOf' operand.");
-    }
+  if (typeof klass != "function") {
+    throw new TypeError("Invalid 'instanceOf' operand.");
+  }
 
-    if (object == null) return false;
+  if (object == null) return false;
 
-    if (object.constructor == klass) return true;
-    if (klass.ancestorOf) return klass.ancestorOf(object.constructor);
+  if (object.constructor == klass) return true;
+  if (klass.ancestorOf) return klass.ancestorOf(object.constructor);
 
-    if (object instanceof klass) return true;
+  if (object instanceof klass) return true;
 
-    if (Base.ancestorOf == klass.ancestorOf) return false;
+  if (exports.Base.ancestorOf == klass.ancestorOf) return false;
 
-    if (Base.ancestorOf == object.constructor.ancestorOf) return klass == Object;
+  if (exports.Base.ancestorOf == object.constructor.ancestorOf) return klass == Object;
 
-    switch (klass) {
-        case Array:
-            return _toString.call(object) == "[object Array]";
-        case Date:
-            return _toString.call(object) == "[object Date]";
-        case RegExp:
-            return _toString.call(object) == "[object RegExp]";
-        case Function:
-            return typeOf(object) == "function";
-        case String:
-        case Number:
-        case Boolean:
-            return typeOf(object) == _typeof(klass.prototype.valueOf());
-        case Object:
-            return true;
-    }
+  switch (klass) {
+    case Array:
+      return _toString.call(object) == "[object Array]";
+    case Date:
+      return _toString.call(object) == "[object Date]";
+    case RegExp:
+      return _toString.call(object) == "[object RegExp]";
+    case Function:
+      return typeOf(object) == "function";
+    case String:
+    case Number:
+    case Boolean:
+      return typeOf(object) == _typeof(klass.prototype.valueOf());
+    case Object:
+      return true;
+  }
 
-    return false;
+  return false;
 }
 
 var _toString = Object.prototype.toString;
 
 function typeOf(object) {
-    var type = typeof object === "undefined" ? "undefined" : _typeof(object);
-    switch (type) {
-        case "object":
-            return object == null ? "null" : typeof object.constructor == "function" && _toString.call(object) != "[object Date]" ? _typeof(object.constructor.prototype.valueOf()) : type;
-        case "function":
-            return typeof object.call == "function" ? type : "object";
-        default:
-            return type;
-    }
+  var type = typeof object === "undefined" ? "undefined" : _typeof(object);
+  switch (type) {
+    case "object":
+      return object == null ? "null" : typeof object.constructor == "function" && _toString.call(object) != "[object Date]" ? _typeof(object.constructor.prototype.valueOf()) : type;
+    case "function":
+      return typeof object.call == "function" ? type : "object";
+    default:
+      return type;
+  }
 }
 
 function assignID(object, name) {
-    if (!name) name = object.nodeType == 1 ? "uniqueID" : "base2ID";
-    if (!object.hasOwnProperty(name)) object[name] = "b2_" + _counter++;
-    return object[name];
+  if (!name) name = object.nodeType == 1 ? "uniqueID" : "base2ID";
+  if (!object.hasOwnProperty(name)) object[name] = "b2_" + _counter++;
+  return object[name];
 }
 
 function format(string) {
-    var args = arguments;
-    var pattern = new RegExp("%([1-" + (arguments.length - 1) + "])", "g");
-    return (string + "").replace(pattern, function (match, index) {
-        return args[index];
-    });
+  var args = arguments;
+  var pattern = new RegExp("%([1-" + (arguments.length - 1) + "])", "g");
+  return (string + "").replace(pattern, function (match, index) {
+    return args[index];
+  });
 }
 
 function csv(string) {
-    return string ? (string + "").split(/\s*,\s*/) : [];
+  return string ? (string + "").split(/\s*,\s*/) : [];
 }
 
 function bind(fn, context) {
-    var lateBound = typeof fn != "function";
-    if (arguments.length > 2) {
-        var args = _slice.call(arguments, 2);
-        return function () {
-            return (lateBound ? context[fn] : fn).apply(context, args.concat.apply(args, arguments));
-        };
-    } else {
-        return function () {
-            return (lateBound ? context[fn] : fn).apply(context, arguments);
-        };
-    }
+  var lateBound = typeof fn != "function";
+  if (arguments.length > 2) {
+    var args = _slice.call(arguments, 2);
+    return function () {
+      return (lateBound ? context[fn] : fn).apply(context, args.concat.apply(args, arguments));
+    };
+  } else {
+    return function () {
+      return (lateBound ? context[fn] : fn).apply(context, arguments);
+    };
+  }
 }
 
 function _partial(fn) {
-    var args = _slice.call(arguments, 1);
-    return function () {
-        var specialised = args.concat(),
-            i = 0,
-            j = 0;
-        while (i < args.length && j < arguments.length) {
-            if (specialised[i] === undefined) specialised[i] = arguments[j++];
-            i++;
-        }
-        while (j < arguments.length) {
-            specialised[i++] = arguments[j++];
-        }
-        if (Array2.contains(specialised, undefined)) {
-            specialised.unshift(fn);
-            return _partial.apply(null, specialised);
-        }
-        return fn.apply(this, specialised);
-    };
+  var args = _slice.call(arguments, 1);
+  return function () {
+    var specialised = args.concat(),
+        i = 0,
+        j = 0;
+    while (i < args.length && j < arguments.length) {
+      if (specialised[i] === undefined) specialised[i] = arguments[j++];
+      i++;
+    }
+    while (j < arguments.length) {
+      specialised[i++] = arguments[j++];
+    }
+    if (Array2.contains(specialised, undefined)) {
+      specialised.unshift(fn);
+      return _partial.apply(null, specialised);
+    }
+    return fn.apply(this, specialised);
+  };
 }
 
 function delegate(fn, context) {
-    return function () {
-        var args = _slice.call(arguments);
-        args.unshift(this);
-        return fn.apply(context, args);
-    };
+  return function () {
+    var args = _slice.call(arguments);
+    args.unshift(this);
+    return fn.apply(context, args);
+  };
 }
 
 function K(k) {
-    return function () {
-        return k;
-    };
+  return function () {
+    return k;
+  };
 }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 function decorate(decorator, args) {
     if (isDescriptor(args[args.length - 1])) {
@@ -636,7 +629,9 @@ function isDescriptor(desc) {
     return false;
 }
 
-var ArrayManager = Base.extend({
+function _toConsumableArray$1(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+var ArrayManager = exports.Base.extend({
     constructor: function constructor(items) {
         var _items = [];
         this.extend({
@@ -701,7 +696,7 @@ var ArrayManager = Base.extend({
     }
 });
 
-var IndexedList = Base.extend({
+var IndexedList = exports.Base.extend({
     constructor: function constructor() {
         var order = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultOrder;
 
@@ -863,7 +858,7 @@ function $flatten(arr, prune) {
         return $flatten(item, prune);
     });
     if (prune) items = items.filter($isSomething);
-    return (_ref = []).concat.apply(_ref, _toConsumableArray(items));
+    return (_ref = []).concat.apply(_ref, _toConsumableArray$1(items));
 }
 
 function $equals(obj1, obj2) {
@@ -899,7 +894,7 @@ function $debounce(fn, wait, immediate, defaultReturnValue) {
     };
 }
 
-function copy() {
+function copy$1() {
     for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
     }
@@ -945,7 +940,7 @@ function _copyOf(value) {
     return value;
 }
 
-var Delegate = Base.extend({
+var Delegate = exports.Base.extend({
     get: function get(protocol, key, strict) {},
     set: function set(protocol, key, value, strict) {},
     invoke: function invoke(protocol, methodName, args, strict) {}
@@ -1038,41 +1033,41 @@ var Metadata = Abstract.extend(null, {
         }
     },
     copyOwn: function copyOwn(target, source) {
-        var _this2 = this;
+        var _this = this;
 
         this.copyOwnKey(target, source);
         Reflect.ownKeys(source).forEach(function (sourceKey) {
-            return _this2.copyOwnKey(target, source, sourceKey);
+            return _this.copyOwnKey(target, source, sourceKey);
         });
     },
     copyOwnKey: function copyOwnKey(target, source, sourceKey) {
-        var _this3 = this;
+        var _this2 = this;
 
         var metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(function (metadataKey) {
-            var metadata = _this3.getOwn(metadataKey, source, sourceKey);
-            _this3.define(metadataKey, metadata, target, sourceKey);
+            var metadata = _this2.getOwn(metadataKey, source, sourceKey);
+            _this2.define(metadataKey, metadata, target, sourceKey);
         });
     },
     mergeOwn: function mergeOwn(target, source) {
-        var _this4 = this;
+        var _this3 = this;
 
         this.mergeOwnKey(target, source);
         Reflect.ownKeys(source).forEach(function (sourceKey) {
-            return _this4.mergeOwnKey(target, source, sourceKey);
+            return _this3.mergeOwnKey(target, source, sourceKey);
         });
     },
     mergeOwnKey: function mergeOwnKey(target, source, sourceKey) {
-        var _this5 = this;
+        var _this4 = this;
 
         var metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(function (metadataKey) {
-            var targetMetadata = _this5.getOwn(metadataKey, target, sourceKey),
-                sourceMetadata = _this5.getOwn(metadataKey, source, sourceKey);
+            var targetMetadata = _this4.getOwn(metadataKey, target, sourceKey),
+                sourceMetadata = _this4.getOwn(metadataKey, source, sourceKey);
             if (targetMetadata && targetMetadata.merge) {
                 targetMetadata.merge(sourceMetadata);x;
             } else {
-                _this5.define(metadataKey, sourceMetadata, target, sourceKey);
+                _this4.define(metadataKey, sourceMetadata, target, sourceKey);
             }
         });
     },
@@ -1095,8 +1090,8 @@ var Metadata = Abstract.extend(null, {
     },
     decorator: function decorator(metadataKey, handler) {
         function decorator() {
-            for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-                args[_key2] = arguments[_key2];
+            for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+                args[_key] = arguments[_key];
             }
 
             return decorate(handler, args);
@@ -1116,13 +1111,13 @@ function _metadataGetter(metadataKey, own, target, targetKey) {
 }
 
 function _metadataKeyGetter(metadataKey, own, target, callback) {
-    var _this6 = this;
+    var _this5 = this;
 
     var found = false;
     if (!$isFunction(callback)) return false;
     var keys = Reflect.ownKeys(own ? target : getPropertyDescriptors(target)).concat("constructor");
     keys.forEach(function (key) {
-        var metadata = own ? _this6.getOwn(metadataKey, target, key) : _this6.get(metadataKey, target, key);
+        var metadata = own ? _this5.getOwn(metadataKey, target, key) : _this5.get(metadataKey, target, key);
         if (metadata) {
             callback(metadata, key);
             found = true;
@@ -1133,23 +1128,29 @@ function _metadataKeyGetter(metadataKey, own, target, callback) {
 
 function _metadataCollector(metadataKey, target, targetKey, callback) {
     if (!callback && $isFunction(targetKey)) {
-        var _ref2 = [null, targetKey];
-        targetKey = _ref2[0];
-        callback = _ref2[1];
+        var _ref = [null, targetKey];
+        targetKey = _ref[0];
+        callback = _ref[1];
     }
     if (!$isFunction(callback)) return;
     this.collect(metadataKey, target, targetKey, callback);
 }
 
 function _metadataKeyCollector(metadataKey, target, callback) {
-    var _this7 = this;
+    var _this6 = this;
 
     if (!$isFunction(callback)) return;
     var keys = Reflect.ownKeys(getPropertyDescriptors(target)).concat("constructor");
     keys.forEach(function (key) {
-        return _this7.collect(metadataKey, target, key, callback);
+        return _this6.collect(metadataKey, target, key, callback);
     });
 }
+
+var _Base$extend;
+
+function _toConsumableArray$2(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 var protocolGet = Symbol();
 var protocolSet = Symbol();
@@ -1158,7 +1159,7 @@ var protocolDelegate = Symbol();
 var protocolStrict = Symbol();
 var protocolMetadataKey = Symbol();
 
-var Protocol = Base.extend((_Base$extend = {
+var Protocol = exports.Base.extend((_Base$extend = {
     constructor: function constructor(delegate$$1, strict) {
         var _Object$definePropert;
 
@@ -1192,7 +1193,7 @@ var Protocol = Base.extend((_Base$extend = {
         return target && target.prototype instanceof Protocol;
     },
     isAdoptedBy: function isAdoptedBy(target) {
-        var _this8 = this;
+        var _this = this;
 
         if (!target) return false;
         if (this === target || target && target.prototype instanceof this) {
@@ -1200,18 +1201,18 @@ var Protocol = Base.extend((_Base$extend = {
         }
         var metaTarget = $isFunction(target) ? target.prototype : target;
         return Metadata.collect(protocolMetadataKey, metaTarget, function (protocols) {
-            return protocols.has(_this8) || [].concat(_toConsumableArray(protocols)).some(function (p) {
-                return _this8.isAdoptedBy(p);
+            return protocols.has(_this) || [].concat(_toConsumableArray$2(protocols)).some(function (p) {
+                return _this.isAdoptedBy(p);
             });
         });
     },
     adoptBy: function adoptBy(target) {
-        var _this9 = this;
+        var _this2 = this;
 
         if (!target) return;
         var metaTarget = $isFunction(target) ? target.prototype : target;
         if (Metadata.collect(protocolMetadataKey, metaTarget, function (p) {
-            return p.has(_this9);
+            return p.has(_this2);
         })) {
             return false;
         }
@@ -1257,17 +1258,17 @@ function $protocols(target, own) {
             var add = protocols.add.bind(protocols);
             Metadata.collect(protocolMetadataKey, target, function (ps) {
                 return ps.forEach(function (p) {
-                    return [p].concat(_toConsumableArray($protocols(p))).forEach(add);
+                    return [p].concat(_toConsumableArray$2($protocols(p))).forEach(add);
                 });
             });
         })();
     }
-    return protocols && [].concat(_toConsumableArray(protocols)) || [];
+    return protocols && [].concat(_toConsumableArray$2(protocols)) || [];
 }
 
 function protocol() {
-    for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
-        args[_key3] = arguments[_key3];
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
     }
 
     if (args.length === 0) {
@@ -1288,8 +1289,8 @@ function _protocol(target) {
         if (!descriptor.enumerable) return;
         if ($isFunction(descriptor.value)) {
             descriptor.value = function () {
-                for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-                    args[_key4] = arguments[_key4];
+                for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+                    args[_key2] = arguments[_key2];
                 }
 
                 return this[protocolInvoke](key, args);
@@ -1316,8 +1317,8 @@ function _protocol(target) {
 }
 
 function conformsTo() {
-    for (var _len5 = arguments.length, protocols = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-        protocols[_key5] = arguments[_key5];
+    for (var _len3 = arguments.length, protocols = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+        protocols[_key3] = arguments[_key3];
     }
 
     protocols = $flatten(protocols, true);
@@ -1337,7 +1338,7 @@ function conformsTo() {
 
 var Defining = Symbol();
 
-var Enum = Base.extend({
+var Enum = exports.Base.extend({
     constructor: function constructor(value, name, ordinal) {
         this.constructing(value, name);
         Object.defineProperties(this, {
@@ -1433,9 +1434,9 @@ var Flags = Enum.extend({
     }
 });
 
-var baseExtend = Base.extend;
-var baseImplement = Base.implement;
-var baseProtoExtend = Base.prototype.extend;
+var baseExtend = exports.Base.extend;
+var baseImplement = exports.Base.implement;
+var baseProtoExtend = exports.Base.prototype.extend;
 
 var emptyArray = Object.freeze([]);
 var nothing = undefined;
@@ -1456,9 +1457,9 @@ var Variance = Enum({
     Invariant: 3
 });
 
-Base.extend = function () {
-    for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-        args[_key6] = arguments[_key6];
+exports.Base.extend = function () {
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
     }
 
     var constraints = args,
@@ -1477,7 +1478,7 @@ Base.extend = function () {
             break;
         } else if ($isProtocol(constraint)) {
             decorators.push(conformsTo(constraint));
-        } else if (constraint.prototype instanceof Base || constraint.prototype instanceof Module) {
+        } else if (constraint.prototype instanceof exports.Base || constraint.prototype instanceof Module) {
             decorators.push(mixin(constraint));
         } else if ($isFunction(constraint)) {
             decorators.push(constraint);
@@ -1497,7 +1498,7 @@ Base.extend = function () {
     return derived;
 };
 
-Base.implement = function (source) {
+exports.Base.implement = function (source) {
     if (source && $isProtocol(this) && $isObject(source)) {
         source = protocol(source) || source;
     }
@@ -1506,7 +1507,7 @@ Base.implement = function (source) {
     return type;
 };
 
-Base.prototype.extend = function (key, value) {
+exports.Base.prototype.extend = function (key, value) {
     if (!key) return this;
     var numArgs = arguments.length;
     if (numArgs === 1) {
@@ -1521,8 +1522,8 @@ Base.prototype.extend = function (key, value) {
 };
 
 function mixin() {
-    for (var _len7 = arguments.length, behaviors = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
-        behaviors[_key7] = arguments[_key7];
+    for (var _len2 = arguments.length, behaviors = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        behaviors[_key2] = arguments[_key2];
     }
 
     behaviors = $flatten(behaviors, true);
@@ -1553,13 +1554,13 @@ var Starting = Protocol.extend({
     start: function start() {}
 });
 
-var Startup = Base.extend(Starting, {
+var Startup = exports.Base.extend(Starting, {
     start: function start() {}
 });
 
 function $isClass(target) {
     if (!target || $isProtocol(target)) return false;
-    if (target.prototype instanceof Base) return true;
+    if (target.prototype instanceof exports.Base) return true;
     var name = target.name;
     return name && $isFunction(target) && isUpperCase(name.charAt(0));
 }
@@ -1874,25 +1875,25 @@ function traverseAncestors(visitor, withSelf, context) {
 }
 
 function traverseDescendants(visitor, withSelf, context) {
-    var _this10 = this;
+    var _this = this;
 
     if (withSelf) {
         Traversal.levelOrder(this, visitor, context);
     } else {
         Traversal.levelOrder(this, function (node) {
-            return !$equals(_this10, node) && visitor.call(context, node);
+            return !$equals(_this, node) && visitor.call(context, node);
         }, context);
     }
 }
 
 function traverseDescendantsReverse(visitor, withSelf, context) {
-    var _this11 = this;
+    var _this2 = this;
 
     if (withSelf) {
         Traversal.reverseLevelOrder(this, visitor, context);
     } else {
         Traversal.reverseLevelOrder(this, function (node) {
-            return !$equals(_this11, node) && visitor.call(context, node);
+            return !$equals(_this2, node) && visitor.call(context, node);
         }, context);
     }
 }
@@ -2103,9 +2104,9 @@ function $createModifier() {
     return modifier;
 }
 
-var Policy = Base.extend({
+var Policy = exports.Base.extend({
     mergeInto: function mergeInto(policy) {
-        var _this12 = this;
+        var _this = this;
 
         if (!(policy instanceof this.constructor)) {
             return false;
@@ -2113,11 +2114,11 @@ var Policy = Base.extend({
         var descriptors = getPropertyDescriptors(this),
             keys = Reflect.ownKeys(descriptors);
         keys.forEach(function (key) {
-            var keyValue = _this12[key];
+            var keyValue = _this[key];
             if ($isFunction(keyValue)) {
                 return;
             }
-            if (keyValue !== undefined && _this12.hasOwnProperty(key)) {
+            if (keyValue !== undefined && _this.hasOwnProperty(key)) {
                 var policyValue = policy[key];
                 if (policyValue === undefined || !policy.hasOwnProperty(key)) {
                     policy[key] = _copyPolicyValue(keyValue);
@@ -2135,8 +2136,8 @@ var Policy = Base.extend({
     }
 }, {
     coerce: function coerce() {
-        for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
-            args[_key8] = arguments[_key8];
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
         }
 
         return Reflect.construct(this, args);
@@ -2175,6 +2176,10 @@ if (Promise.delay === undefined) Promise.delay = function (ms) {
     });
 };
 
+function _defineProperty$1(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _toConsumableArray$3(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 var Facet = Object.freeze({
     Parameters: "proxy:parameters",
 
@@ -2185,19 +2190,19 @@ var Facet = Object.freeze({
     Delegate: "proxy:delegate"
 });
 
-var Interceptor = Base.extend({
+var Interceptor = exports.Base.extend({
     intercept: function intercept(invocation) {
         return invocation.proceed();
     }
 });
 
-var InterceptorSelector = Base.extend({
+var InterceptorSelector = exports.Base.extend({
     selectInterceptors: function selectInterceptors(type, method, interceptors) {
         return interceptors;
     }
 });
 
-var ProxyBuilder = Base.extend({
+var ProxyBuilder = exports.Base.extend({
     buildProxy: function buildProxy(types, options) {
         if (!Array.isArray(types)) {
             throw new TypeError("ProxyBuilder requires an array of types to proxy.");
@@ -2209,8 +2214,8 @@ var ProxyBuilder = Base.extend({
 });
 
 function _buildProxy(classes, protocols, options) {
-    var base = options.baseType || classes.shift() || Base,
-        proxy = base.extend.apply(base, _toConsumableArray(classes.concat(protocols)).concat([{
+    var base = options.baseType || classes.shift() || exports.Base,
+        proxy = base.extend.apply(base, _toConsumableArray$3(classes.concat(protocols)).concat([{
         constructor: function constructor(facets) {
             var spec = {};
             spec.value = facets[Facet.InterceptorSelectors];
@@ -2260,7 +2265,7 @@ function proxyClass(proxy, protocols) {
     var sources = [proxy].concat($protocols(proxy), protocols),
         proxied = {};
 
-    var _loop2 = function _loop2(i) {
+    var _loop = function _loop(i) {
         var source = sources[i],
             isProtocol = $isProtocol(source),
             props = getPropertyDescriptors(source.prototype);
@@ -2304,15 +2309,15 @@ function proxyClass(proxy, protocols) {
     };
 
     for (var i = 0; i < sources.length; ++i) {
-        _loop2(i);
+        _loop(i);
     }
 }
 
 function proxyMethod(key, method, source, type) {
     var interceptors = void 0;
     function methodProxy() {
-        for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
-            args[_key9] = arguments[_key9];
+        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
         }
 
         var _this = this;
@@ -2376,10 +2381,10 @@ function proxyMethod(key, method, source, type) {
 }
 
 function extendProxyInstance(key, value) {
-    var _this13 = this;
+    var _this2 = this;
 
     var proxy = this.constructor,
-        overrides = arguments.length === 1 ? key : _defineProperty({}, key, value),
+        overrides = arguments.length === 1 ? key : _defineProperty$1({}, key, value),
         props = getPropertyDescriptors(overrides);
     Reflect.ownKeys(props).forEach(function (key) {
         var descriptor = props[key];
@@ -2387,7 +2392,7 @@ function extendProxyInstance(key, value) {
         var value = descriptor.value,
             get = descriptor.get,
             set = descriptor.set,
-            baseDescriptor = getPropertyDescriptors(_this13, key);
+            baseDescriptor = getPropertyDescriptors(_this2, key);
 
         if (!baseDescriptor) return;
         if (value) {
@@ -2408,7 +2413,7 @@ function extendProxyInstance(key, value) {
                 baseDescriptor.set = set.baseMethod;
             }
         }
-        Object.defineProperty(_this13, key, baseDescriptor);
+        Object.defineProperty(_this2, key, baseDescriptor);
     });
     this.base(overrides);
     Reflect.ownKeys(props).forEach(function (key) {
@@ -2432,21 +2437,21 @@ function extendProxyInstance(key, value) {
                 descriptor.set = proxyMethod(key, set, proxy, MethodType.Set);
             }
         }
-        Object.defineProperty(_this13, key, descriptor);
+        Object.defineProperty(_this2, key, descriptor);
     });
     return this;
 }
 
+exports.extend = _extend;
+exports.partial = _partial;
 exports.Undefined = Undefined;
 exports.Null = Null;
 exports.True = True;
 exports.False = False;
-exports.Base = Base;
 exports.Package = Package;
 exports.Abstract = Abstract;
 exports.Module = Module;
 exports.pcopy = pcopy;
-exports.extend = _extend;
 exports.getPropertyDescriptors = getPropertyDescriptors;
 exports.instanceOf = instanceOf;
 exports.typeOf = typeOf;
@@ -2454,9 +2459,8 @@ exports.assignID = assignID;
 exports.format = format;
 exports.csv = csv;
 exports.bind = bind;
-exports.partial = _partial;
 exports.delegate = delegate;
-exports.copy = copy;
+exports.copy = copy$1;
 exports.emptyArray = emptyArray;
 exports.nothing = nothing;
 exports.MethodType = MethodType;
