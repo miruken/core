@@ -1,4 +1,5 @@
 import { Base } from "./base2";
+import { $isSomething } from "./util";
 
 /**
  * Defines an enumeration.

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-exports.ProxyBuilder = exports.InterceptorSelector = exports.Interceptor = exports.Facet = exports.Policy = exports.Traversal = exports.TraversingMixin = exports.Traversing = exports.TraversingAxis = exports.DisposingMixin = exports.Disposing = exports.Startup = exports.Starting = exports.Parenting = exports.Invoking = exports.Resolving = exports.Initializing = exports.Variance = exports.MethodType = exports.nothing = exports.emptyArray = exports.$isProtocol = exports.StrictProtocol = exports.Protocol = exports.inject = exports.design = exports.Metadata = exports.IndexedList = exports.ArrayManager = exports.Flags = exports.Enum = exports.ArrayDelegate = exports.ObjectDelegate = exports.Delegate = exports.partial = exports.extend = exports.Module = exports.Abstract = exports.Package = exports.Base = exports.False = exports.True = exports.Null = exports.Undefined = exports.$instant = exports.$promise = exports.$optional = exports.$child = exports.$every = exports.$eval = exports.$lazy = exports.$use = exports.$eq = undefined;
+exports.ProxyBuilder = exports.InterceptorSelector = exports.Interceptor = exports.Facet = exports.Policy = exports.Traversal = exports.TraversingMixin = exports.Traversing = exports.TraversingAxis = exports.DisposingMixin = exports.Disposing = exports.Startup = exports.Starting = exports.Parenting = exports.Invoking = exports.Resolving = exports.Initializing = exports.Variance = exports.MethodType = exports.nothing = exports.emptyArray = exports.$isProtocol = exports.StrictProtocol = exports.Protocol = exports.inject = exports.design = exports.Metadata = exports.Flags = exports.Enum = exports.IndexedList = exports.ArrayManager = exports.ArrayDelegate = exports.ObjectDelegate = exports.Delegate = exports.partial = exports.extend = exports.Module = exports.Abstract = exports.Package = exports.Base = exports.False = exports.True = exports.Null = exports.Undefined = exports.$instant = exports.$promise = exports.$optional = exports.$child = exports.$every = exports.$eval = exports.$lazy = exports.$use = exports.$eq = undefined;
 
 var _Base$extend;
 
@@ -22,7 +22,6 @@ exports.format = format;
 exports.csv = csv;
 exports.bind = bind;
 exports.delegate = delegate;
-exports.copy = copy;
 exports.$isString = $isString;
 exports.$isSymbol = $isSymbol;
 exports.$isFunction = $isFunction;
@@ -35,6 +34,7 @@ exports.$lift = $lift;
 exports.$flatten = $flatten;
 exports.$equals = $equals;
 exports.$debounce = $debounce;
+exports.copy = copy;
 exports.$protocols = $protocols;
 exports.protocol = protocol;
 exports.conformsTo = conformsTo;
@@ -751,52 +751,6 @@ function K(k) {
     };
 };
 
-function copy() {
-    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-        args[_key] = arguments[_key];
-    }
-
-    return decorate(_copy, args);
-}
-
-function _copy(target, key, descriptor) {
-    if (!isDescriptor(descriptor)) {
-        throw new SyntaxError("@copy can only be applied to methods or properties");
-    }
-    var get = descriptor.get;
-    var set = descriptor.set;
-    var value = descriptor.value;
-    var initializer = descriptor.initializer;
-
-    if ($isFunction(value)) {
-        descriptor.value = function () {
-            return _copyOf(value.apply(this, arguments));
-        };
-    }
-    if ($isFunction(initializer)) {
-        descriptor.initializer = function () {
-            return _copyOf(initializer.apply(this));
-        };
-    }
-    if ($isFunction(get)) {
-        descriptor.get = function () {
-            return _copyOf(get.apply(this));
-        };
-    }
-    if ($isFunction(set)) {
-        descriptor.set = function (value) {
-            return set.call(this, _copyOf(value));
-        };
-    }
-}
-
-function _copyOf(value) {
-    if (value != null && $isFunction(value.copy)) {
-        value = value.copy();
-    }
-    return value;
-}
-
 var Delegate = exports.Delegate = Base.extend({
     get: function get(protocol, key, strict) {},
     set: function set(protocol, key, value, strict) {},
@@ -850,104 +804,6 @@ var ArrayDelegate = exports.ArrayDelegate = Delegate.extend({
             var method = object[methodName];
             return method && (!strict || protocol.isAdoptedBy(object)) ? method.apply(object, args) : result;
         }, undefined);
-    }
-});
-
-var Defining = Symbol();
-
-var Enum = exports.Enum = Base.extend({
-    constructor: function constructor(value, name, ordinal) {
-        this.constructing(value, name);
-        Object.defineProperties(this, {
-            "value": {
-                value: value,
-                writable: false,
-                configurable: false
-            },
-            "name": {
-                value: name,
-                writable: false,
-                configurable: false
-            },
-            "ordinal": {
-                value: ordinal,
-                writable: false,
-                configurable: false
-            }
-
-        });
-    },
-    toString: function toString() {
-        return this.name;
-    },
-    constructing: function constructing(value, name) {
-        if (!this.constructor[Defining]) {
-            throw new TypeError("Enums cannot be instantiated.");
-        }
-    }
-}, {
-    coerce: function coerce(choices, behavior) {
-        if (this !== Enum && this !== Flags) {
-            return;
-        }
-        var en = this.extend(behavior, {
-            coerce: function coerce(value) {
-                return this.fromValue(value);
-            }
-        });
-        en[Defining] = true;
-        var names = Object.freeze(Object.keys(choices));
-        var items = Object.keys(choices).map(function (name, ordinal) {
-            return en[name] = new en(choices[name], name, ordinal);
-        });
-        en.names = Object.freeze(names);
-        en.items = Object.freeze(items);
-        en.fromValue = this.fromValue;
-        delete en[Defining];
-        return en;
-    },
-    fromValue: function fromValue(value) {
-        var match = this.items.find(function (item) {
-            return item.value == value;
-        });
-        if (!match) {
-            throw new TypeError(value + " is not a valid value for this Enum.");
-        }
-        return match;
-    }
-});
-Enum.prototype.valueOf = function () {
-    var value = +this.value;
-    return isNaN(value) ? this.ordinal : value;
-};
-
-var Flags = exports.Flags = Enum.extend({
-    hasFlag: function hasFlag(flag) {
-        flag = +flag;
-        return (this & flag) === flag;
-    },
-    addFlag: function addFlag(flag) {
-        return $isSomething(flag) ? this.constructor.fromValue(this | flag) : this;
-    },
-    removeFlag: function removeFlag(flag) {
-        return $isSomething(flag) ? this.constructor.fromValue(this & ~flag) : this;
-    },
-    constructing: function constructing(value, name) {}
-}, {
-    fromValue: function fromValue(value) {
-        value = +value;
-        var name = void 0,
-            names = this.names;
-        for (var i = 0; i < names.length; ++i) {
-            var flag = this[names[i]];
-            if (flag.value === value) {
-                return flag;
-            }
-            if ((value & flag.value) === flag.value) {
-                name = name ? name + "," + flag.name : flag.name;
-            }
-        }
-        return new this(value, name);
     }
 });
 
@@ -1214,6 +1070,150 @@ function $debounce(fn, wait, immediate, defaultReturnValue) {
     };
 };
 
+function copy() {
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+    }
+
+    return decorate(_copy, args);
+}
+
+function _copy(target, key, descriptor) {
+    if (!isDescriptor(descriptor)) {
+        throw new SyntaxError("@copy can only be applied to methods or properties");
+    }
+    var get = descriptor.get;
+    var set = descriptor.set;
+    var value = descriptor.value;
+    var initializer = descriptor.initializer;
+
+    if ($isFunction(value)) {
+        descriptor.value = function () {
+            return _copyOf(value.apply(this, arguments));
+        };
+    }
+    if ($isFunction(initializer)) {
+        descriptor.initializer = function () {
+            return _copyOf(initializer.apply(this));
+        };
+    }
+    if ($isFunction(get)) {
+        descriptor.get = function () {
+            return _copyOf(get.apply(this));
+        };
+    }
+    if ($isFunction(set)) {
+        descriptor.set = function (value) {
+            return set.call(this, _copyOf(value));
+        };
+    }
+}
+
+function _copyOf(value) {
+    if (value != null && $isFunction(value.copy)) {
+        value = value.copy();
+    }
+    return value;
+}
+
+var Defining = Symbol();
+
+var Enum = exports.Enum = Base.extend({
+    constructor: function constructor(value, name, ordinal) {
+        this.constructing(value, name);
+        Object.defineProperties(this, {
+            "value": {
+                value: value,
+                writable: false,
+                configurable: false
+            },
+            "name": {
+                value: name,
+                writable: false,
+                configurable: false
+            },
+            "ordinal": {
+                value: ordinal,
+                writable: false,
+                configurable: false
+            }
+
+        });
+    },
+    toString: function toString() {
+        return this.name;
+    },
+    constructing: function constructing(value, name) {
+        if (!this.constructor[Defining]) {
+            throw new TypeError("Enums cannot be instantiated.");
+        }
+    }
+}, {
+    coerce: function coerce(choices, behavior) {
+        if (this !== Enum && this !== Flags) {
+            return;
+        }
+        var en = this.extend(behavior, {
+            coerce: function coerce(value) {
+                return this.fromValue(value);
+            }
+        });
+        en[Defining] = true;
+        var names = Object.freeze(Object.keys(choices));
+        var items = Object.keys(choices).map(function (name, ordinal) {
+            return en[name] = new en(choices[name], name, ordinal);
+        });
+        en.names = Object.freeze(names);
+        en.items = Object.freeze(items);
+        en.fromValue = this.fromValue;
+        delete en[Defining];
+        return en;
+    },
+    fromValue: function fromValue(value) {
+        var match = this.items.find(function (item) {
+            return item.value == value;
+        });
+        if (!match) {
+            throw new TypeError(value + " is not a valid value for this Enum.");
+        }
+        return match;
+    }
+});
+Enum.prototype.valueOf = function () {
+    var value = +this.value;
+    return isNaN(value) ? this.ordinal : value;
+};
+
+var Flags = exports.Flags = Enum.extend({
+    hasFlag: function hasFlag(flag) {
+        flag = +flag;
+        return (this & flag) === flag;
+    },
+    addFlag: function addFlag(flag) {
+        return $isSomething(flag) ? this.constructor.fromValue(this | flag) : this;
+    },
+    removeFlag: function removeFlag(flag) {
+        return $isSomething(flag) ? this.constructor.fromValue(this & ~flag) : this;
+    },
+    constructing: function constructing(value, name) {}
+}, {
+    fromValue: function fromValue(value) {
+        value = +value;
+        var name = void 0,
+            names = this.names;
+        for (var i = 0; i < names.length; ++i) {
+            var flag = this[names[i]];
+            if (flag.value === value) {
+                return flag;
+            }
+            if ((value & flag.value) === flag.value) {
+                name = name ? name + "," + flag.name : flag.name;
+            }
+        }
+        return new this(value, name);
+    }
+});
+
 var Metadata = exports.Metadata = Abstract.extend(null, {
     get: function get(metadataKey, target, targetKey) {
         if (target) {
@@ -1283,7 +1283,7 @@ var Metadata = exports.Metadata = Abstract.extend(null, {
             var targetMetadata = _this5.getOwn(metadataKey, target, sourceKey),
                 sourceMetadata = _this5.getOwn(metadataKey, source, sourceKey);
             if (targetMetadata && targetMetadata.merge) {
-                targetMetadata.merge(sourceMetadata);x;
+                targetMetadata.merge(sourceMetadata);
             } else {
                 _this5.define(metadataKey, sourceMetadata, target, sourceKey);
             }
