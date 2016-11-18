@@ -1893,13 +1893,14 @@ export const Protocol = Base.extend({
     constructor(delegate, strict) {
         if ($isNothing(delegate)) {
             delegate = new Delegate();
-        } else if (!(delegate instanceof Delegate)) {
-            if ($isFunction(delegate.toDelegate)) {
-                delegate = delegate.toDelegate();
-                if (!(delegate instanceof Delegate)) {
-                    throw new TypeError("'toDelegate' method did not return a Delegate.");
-                }
-            } else if (Array.isArray(delegate)) {
+        } else if ($isFunction(delegate.toDelegate)) {
+            delegate = delegate.toDelegate();
+            if (!(delegate instanceof Delegate)) {
+                throw new TypeError("'toDelegate' method did not return a Delegate.");
+            }
+        }
+        else if (!(delegate instanceof Delegate)) {
+            if (Array.isArray(delegate)) {
                 delegate = new ArrayDelegate(delegate);
             } else {
                 delegate = new ObjectDelegate(delegate);

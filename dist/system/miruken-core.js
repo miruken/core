@@ -2202,13 +2202,13 @@ System.register(["reflect-metadata"], function (_export, _context) {
 
                     if ($isNothing(delegate)) {
                         delegate = new Delegate();
+                    } else if ($isFunction(delegate.toDelegate)) {
+                        delegate = delegate.toDelegate();
+                        if (!(delegate instanceof Delegate)) {
+                            throw new TypeError("'toDelegate' method did not return a Delegate.");
+                        }
                     } else if (!(delegate instanceof Delegate)) {
-                        if ($isFunction(delegate.toDelegate)) {
-                            delegate = delegate.toDelegate();
-                            if (!(delegate instanceof Delegate)) {
-                                throw new TypeError("'toDelegate' method did not return a Delegate.");
-                            }
-                        } else if (Array.isArray(delegate)) {
+                        if (Array.isArray(delegate)) {
                             delegate = new ArrayDelegate(delegate);
                         } else {
                             delegate = new ObjectDelegate(delegate);
