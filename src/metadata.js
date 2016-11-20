@@ -147,7 +147,7 @@ export const Metadata = Abstract.extend(null, {
             const targetMetadata = this.getOwn(metadataKey, target, sourceKey),
                   sourceMetadata = this.getOwn(metadataKey, source, sourceKey);
             if (targetMetadata && targetMetadata.merge) {
-                targetMetadata.merge(sourceMetadata);x
+                targetMetadata.merge(sourceMetadata);
             } else {
                 this.define(metadataKey, sourceMetadata, target, sourceKey);                
             }

@@ -3,8 +3,6 @@ var paths           = require('./build/paths');
 var compilerOptions = require('./build/babel-options');
 
 module.exports = function(config) {
-    var babelOptions = compilerOptions.system();
-    babelOptions.sourceMap = false;
 
     config.set({
         // base path that will be used to resolve all patterns (eg. files, exclude)
@@ -25,7 +23,7 @@ module.exports = function(config) {
         },
 
         babelPreprocessor: {
-            options: babelOptions
+            options: compilerOptions.system()
         },
 
         reporters: ['coverage', 'progress'],

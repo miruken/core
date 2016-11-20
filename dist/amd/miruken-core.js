@@ -1061,7 +1061,7 @@ var Metadata = Abstract.extend(null, {
             var targetMetadata = _this4.getOwn(metadataKey, target, sourceKey),
                 sourceMetadata = _this4.getOwn(metadataKey, source, sourceKey);
             if (targetMetadata && targetMetadata.merge) {
-                targetMetadata.merge(sourceMetadata);x;
+                targetMetadata.merge(sourceMetadata);
             } else {
                 _this4.define(metadataKey, sourceMetadata, target, sourceKey);
             }
@@ -1161,13 +1161,13 @@ var Protocol = exports.Base.extend((_Base$extend = {
 
         if ($isNothing(delegate$$1)) {
             delegate$$1 = new Delegate();
+        } else if ($isFunction(delegate$$1.toDelegate)) {
+            delegate$$1 = delegate$$1.toDelegate();
+            if (!(delegate$$1 instanceof Delegate)) {
+                throw new TypeError("'toDelegate' method did not return a Delegate.");
+            }
         } else if (!(delegate$$1 instanceof Delegate)) {
-            if ($isFunction(delegate$$1.toDelegate)) {
-                delegate$$1 = delegate$$1.toDelegate();
-                if (!(delegate$$1 instanceof Delegate)) {
-                    throw new TypeError("'toDelegate' method did not return a Delegate.");
-                }
-            } else if (Array.isArray(delegate$$1)) {
+            if (Array.isArray(delegate$$1)) {
                 delegate$$1 = new ArrayDelegate(delegate$$1);
             } else {
                 delegate$$1 = new ObjectDelegate(delegate$$1);
