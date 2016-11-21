@@ -1,6 +1,6 @@
 {
   "name": "miruken-core",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "registry": "npm",
   "description": "Enhancements to the javascript language",
   "keywords": [
