@@ -2528,4 +2528,4 @@ exports.$flatten = $flatten;
 exports.$equals = $equals;
 exports.$debounce = $debounce;
 
-}((this.miruken-core = this.miruken-core || {}),reflectMetadata));
+}((this.mirukenCore = this.mirukenCore || {}),reflectMetadata));
