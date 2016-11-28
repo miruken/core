@@ -23,11 +23,11 @@ export const Disposing = Protocol.extend({
  */
 export const DisposingMixin = Module.extend({
     dispose(object) {
-        if ($isFunction(object._dispose)) {
-            const result = object._dispose();
-            object.dispose = Undefined;  // dispose once
-            return result;
-        }
+        const dispose = object._dispose;
+        if ($isFunction(dispose)) {
+            object.dispose = Undefined;  // dispose once                
+            return dispose.call(object);
+        }        
     }
 });
 
