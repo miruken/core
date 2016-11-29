@@ -1667,10 +1667,10 @@ var Disposing = Protocol.extend({
 
 var DisposingMixin = Module.extend({
     dispose: function dispose(object) {
-        if ($isFunction(object._dispose)) {
-            var result = object._dispose();
+        var dispose = object._dispose;
+        if ($isFunction(dispose)) {
             object.dispose = Undefined;
-            return result;
+            return dispose.call(object);
         }
     }
 });
