@@ -937,30 +937,30 @@ function _copyOf(value) {
 }
 
 var Delegate = exports.Base.extend({
-    get: function get(protocol, key, strict) {},
-    set: function set(protocol, key, value, strict) {},
-    invoke: function invoke(protocol, methodName, args, strict) {}
+    get: function get(protocol, key) {},
+    set: function set(protocol, key, value) {},
+    invoke: function invoke(protocol, methodName, args) {}
 });
 
 var ObjectDelegate = Delegate.extend({
     constructor: function constructor(object) {
         Object.defineProperty(this, "object", { value: object });
     },
-    get: function get(protocol, key, strict) {
+    get: function get(protocol, key) {
         var object = this.object;
-        if (object && (!strict || protocol.isAdoptedBy(object))) {
+        if (object) {
             return object[key];
         }
     },
-    set: function set(protocol, key, value, strict) {
+    set: function set(protocol, key, value) {
         var object = this.object;
-        if (object && (!strict || protocol.isAdoptedBy(object))) {
+        if (object) {
             return object[key] = value;
         }
     },
-    invoke: function invoke(protocol, methodName, args, strict) {
+    invoke: function invoke(protocol, methodName, args) {
         var object = this.object;
-        if (object && (!strict || protocol.isAdoptedBy(object))) {
+        if (object) {
             var method = object[methodName];
             return method && method.apply(object, args);
         }
@@ -971,23 +971,23 @@ var ArrayDelegate = Delegate.extend({
     constructor: function constructor(array) {
         Object.defineProperty(this, "array", { value: array });
     },
-    get: function get(protocol, key, strict) {
+    get: function get(protocol, key) {
         var array = this.array;
         return array && array.reduce(function (result, object) {
-            return !strict || protocol.isAdoptedBy(object) ? object[key] : result;
+            return object[key];
         }, undefined);
     },
-    set: function set(protocol, key, value, strict) {
+    set: function set(protocol, key, value) {
         var array = this.array;
         return array && array.reduce(function (result, object) {
-            return !strict || protocol.isAdoptedBy(object) ? object[key] = value : result;
+            return object[key] = value;
         }, undefined);
     },
-    invoke: function invoke(protocol, methodName, args, strict) {
+    invoke: function invoke(protocol, methodName, args) {
         var array = this.array;
         return array && array.reduce(function (result, object) {
             var method = object[methodName];
-            return method && (!strict || protocol.isAdoptedBy(object)) ? method.apply(object, args) : result;
+            return method ? method.apply(object, args) : result;
         }, undefined);
     }
 });
@@ -1152,13 +1152,10 @@ var protocolGet = Symbol();
 var protocolSet = Symbol();
 var protocolInvoke = Symbol();
 var protocolDelegate = Symbol();
-var protocolStrict = Symbol();
 var protocolMetadataKey = Symbol();
 
 var Protocol = exports.Base.extend((_Base$extend = {
-    constructor: function constructor(delegate$$1, strict) {
-        var _Object$definePropert;
-
+    constructor: function constructor(delegate$$1) {
         if ($isNothing(delegate$$1)) {
             delegate$$1 = new Delegate();
         } else if ($isFunction(delegate$$1.toDelegate)) {
@@ -1173,17 +1170,20 @@ var Protocol = exports.Base.extend((_Base$extend = {
                 delegate$$1 = new ObjectDelegate(delegate$$1);
             }
         }
-        Object.defineProperties(this, (_Object$definePropert = {}, _defineProperty(_Object$definePropert, protocolDelegate, { value: delegate$$1, writable: false }), _defineProperty(_Object$definePropert, protocolStrict, { value: !!strict, writable: false }), _Object$definePropert));
+        Object.defineProperty(this, protocolDelegate, {
+            value: delegate$$1,
+            writable: false
+        });
     }
 }, _defineProperty(_Base$extend, protocolGet, function (key) {
     var delegate$$1 = this[protocolDelegate];
-    return delegate$$1 && delegate$$1.get(this.constructor, key, this[protocolStrict]);
+    return delegate$$1 && delegate$$1.get(this.constructor, key);
 }), _defineProperty(_Base$extend, protocolSet, function (key, value) {
     var delegate$$1 = this[protocolDelegate];
-    return delegate$$1 && delegate$$1.set(this.constructor, key, value, this[protocolStrict]);
+    return delegate$$1 && delegate$$1.set(this.constructor, key, value);
 }), _defineProperty(_Base$extend, protocolInvoke, function (methodName, args) {
     var delegate$$1 = this[protocolDelegate];
-    return delegate$$1 && delegate$$1.invoke(this.constructor, methodName, args, this[protocolStrict]);
+    return delegate$$1 && delegate$$1.invoke(this.constructor, methodName, args);
 }), _Base$extend), {
     isProtocol: function isProtocol(target) {
         return target && target.prototype instanceof Protocol;
@@ -1230,16 +1230,19 @@ var Protocol = exports.Base.extend((_Base$extend = {
             Object.defineProperty(prototype, key, props[key]);
         });
     },
-    coerce: function coerce(object, strict) {
-        return new this(object, strict);
+    isToplevel: function isToplevel(target) {
+        var _this3 = this;
+
+        return $protocols(target).every(function (p) {
+            return p === _this3 || !_this3.isAdoptedBy(p);
+        });
+    },
+    coerce: function coerce(object) {
+        return new this(object);
     }
 });
 
-var StrictProtocol = Protocol.extend({
-    constructor: function constructor(proxy, strict) {
-        this.base(proxy, strict === undefined || strict);
-    }
-});
+var StrictProtocol = Protocol.extend();
 
 var $isProtocol = Protocol.isProtocol;
 

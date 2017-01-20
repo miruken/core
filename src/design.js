@@ -4,7 +4,8 @@ import { Metadata } from "./metadata";
 
 const designMetadataKey = Symbol(),
       paramTypesKey     = "design:paramtypes",
-      propertyTypeKey   = "design:type";
+      propertyTypeKey   = "design:type",
+      returnTypeKey     = "design:returnType";
 
 /**
  * Custom Metadata to bridge Typescript annotations.

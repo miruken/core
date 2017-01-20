@@ -621,15 +621,7 @@ describe("Protocol", () => {
     it("should support specialization", () => {
         expect(CircusAnimal(new Dog()).fetch("bone")).to.equal("Fetched bone");
     });
-    
-    it("should ignore if strict and protocol not adopted", () => {
-        const Toy = Base.extend({
-            talk() { return "To infinity and beyond"; }
-        });
-        expect(Animal(new Toy()).talk()).to.equal("To infinity and beyond");
-        expect(Animal(new Toy(), true).talk()).to.be.undefined;
-    });
-    
+     
     describe("#isProtocol", () => {
         it("should determine if type is a protocol", () => {
             expect(Protocol.isProtocol(Animal)).to.be.true;
@@ -760,21 +752,6 @@ describe("Protocol", () => {
                 }),
                 dog = new SmartDog();
             expect(SmartTricks(dog).fetch("bone")).to.equal("Buried bone");
-        });
-
-        it("should support strict when redefining method", () => {
-            const SmartTricks = Tricks.extend({
-                    constructor(proxy) {
-                        this.base(proxy, true);
-                    },
-                    fetch(item) {}
-                }),
-                SmartDog = Dog.extend({
-                    fetch(item) { return "Buried " + item; }
-                }),
-                dog = new SmartDog();
-            expect(Tricks(dog).fetch("bone")).to.equal("Buried bone");
-            expect(SmartTricks(dog).fetch("bone")).to.be.undefined;
         });
     });
 

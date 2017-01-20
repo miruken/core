@@ -23,19 +23,17 @@ import { Metadata } from "./metadata";
  * </pre>
  * @class Protocol
  * @constructor
- * @param   {Delegate}  delegate        -  delegate
- * @param   {boolean}   [strict=false]  -  true if strict, false otherwise
+ * @param   {Delegate}  delegate  -  delegate
  * @extends Base
  */
 const protocolGet         = Symbol(),
       protocolSet         = Symbol(),
       protocolInvoke      = Symbol(),
       protocolDelegate    = Symbol(),
-      protocolStrict      = Symbol(),
       protocolMetadataKey = Symbol();
 
 export const Protocol = Base.extend({
-    constructor(delegate, strict) {
+    constructor(delegate) {
         if ($isNothing(delegate)) {
             delegate = new Delegate();
         } else if ($isFunction(delegate.toDelegate)) {
@@ -51,22 +49,22 @@ export const Protocol = Base.extend({
                 delegate = new ObjectDelegate(delegate);
             }
         }
-        Object.defineProperties(this, {
-            [protocolDelegate]: { value: delegate, writable: false },            
-            [protocolStrict]:   { value: !!strict, writable: false }
+        Object.defineProperty(this, protocolDelegate, {
+            value:     delegate,
+            writable: false
         });
     },
     [protocolGet](key) {
         const delegate = this[protocolDelegate];
-        return delegate && delegate.get(this.constructor, key, this[protocolStrict]);
+        return delegate && delegate.get(this.constructor, key);
     },
     [protocolSet](key, value) {
         const delegate = this[protocolDelegate];            
-        return delegate && delegate.set(this.constructor, key, value, this[protocolStrict]);
+        return delegate && delegate.set(this.constructor, key, value);
     },
     [protocolInvoke](methodName, args) {
         const delegate = this[protocolDelegate];                        
-        return delegate && delegate.invoke(this.constructor, methodName, args, this[protocolStrict]);
+        return delegate && delegate.invoke(this.constructor, methodName, args);
     }
 }, {
     /**
@@ -133,28 +131,33 @@ export const Protocol = Base.extend({
         });
     },
     /**
+     * Determines if `target` conforms to this protocol and is toplevel.
+     * @static
+     * @method isToplevel
+     * @param   {Any}      target    -  target to test
+     * @returns {boolean}  true if the target conforms to this toplevel protocol.
+     */    
+    isToplevel(target) {
+        return $protocols(target).every(p => p === this || !this.isAdoptedBy(p));
+    },
+    /**
      * Creates a protocol binding over the object.
      * @static
      * @method coerce
      * @param   {Object} object  -  object delegate
      * @returns {Object} protocol instance delegating to object. 
      */
-    coerce(object, strict) { return new this(object, strict); }
+    coerce(object) { return new this(object); }
 });
 
 /**
  * Protocol base requiring conformance to match methods.
  * @class StrictProtocol
  * @constructor
- * @param   {Delegate}  delegate       -  delegate
- * @param   {boolean}   [strict=true]  -  true ifstrict, false otherwise
- * @extends miruekn.Protocol     
+ * @param   {Delegate}  delegate  -  delegate
+ * @extends Protocol     
  */
-export const StrictProtocol = Protocol.extend({
-    constructor(proxy, strict) {
-        this.base(proxy, (strict === undefined) || strict);
-    }
-});
+export const StrictProtocol = Protocol.extend();
 
 /**
  * Determines if `protocol` is a protocol.
