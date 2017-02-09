@@ -1233,7 +1233,8 @@ var Protocol = Base.extend((_Base$extend = {
     isToplevel: function isToplevel(target) {
         var _this3 = this;
 
-        return $protocols(target).every(function (p) {
+        var protocols = $protocols(target);
+        return protocols.indexOf(this) >= 0 && protocols.every(function (p) {
             return p === _this3 || !_this3.isAdoptedBy(p);
         });
     },
@@ -1243,6 +1244,8 @@ var Protocol = Base.extend((_Base$extend = {
 });
 
 var StrictProtocol = Protocol.extend();
+
+var DuckTyping = Protocol.extend();
 
 var $isProtocol = Protocol.isProtocol;
 
@@ -2441,4 +2444,4 @@ function extendProxyInstance(key, value) {
     return this;
 }
 
-export { _extend as extend, _partial as partial, Undefined, Null, True, False, Base, Package, Abstract, Module, pcopy, getPropertyDescriptors, instanceOf, typeOf, assignID, format, csv, bind, delegate, copy$1 as copy, emptyArray, nothing, MethodType, Variance, mixin, Initializing, Resolving, Invoking, Parenting, Starting, Startup, $isClass, $classOf, $decorator, $decorate, $decorated, decorate, isDescriptor, Delegate, ObjectDelegate, ArrayDelegate, design, Disposing, DisposingMixin, $using, Enum, Flags, TraversingAxis, Traversing, TraversingMixin, Traversal, inject, Metadata, $eq, $use, $lazy, $eval, $every, $child, $optional, $promise, $instant, Modifier, $createModifier, Policy, Protocol, StrictProtocol, $isProtocol, $protocols, protocol, conformsTo, Facet, Interceptor, InterceptorSelector, ProxyBuilder, ArrayManager, IndexedList, $isString, $isSymbol, $isFunction, $isObject, $isPlainObject, $isPromise, $isNothing, $isSomething, $lift, $flatten, $equals, $debounce };
+export { _extend as extend, _partial as partial, Undefined, Null, True, False, Base, Package, Abstract, Module, pcopy, getPropertyDescriptors, instanceOf, typeOf, assignID, format, csv, bind, delegate, copy$1 as copy, emptyArray, nothing, MethodType, Variance, mixin, Initializing, Resolving, Invoking, Parenting, Starting, Startup, $isClass, $classOf, $decorator, $decorate, $decorated, decorate, isDescriptor, Delegate, ObjectDelegate, ArrayDelegate, design, Disposing, DisposingMixin, $using, Enum, Flags, TraversingAxis, Traversing, TraversingMixin, Traversal, inject, Metadata, $eq, $use, $lazy, $eval, $every, $child, $optional, $promise, $instant, Modifier, $createModifier, Policy, Protocol, StrictProtocol, DuckTyping, $isProtocol, $protocols, protocol, conformsTo, Facet, Interceptor, InterceptorSelector, ProxyBuilder, ArrayManager, IndexedList, $isString, $isSymbol, $isFunction, $isObject, $isPlainObject, $isPromise, $isNothing, $isSomething, $lift, $flatten, $equals, $debounce };

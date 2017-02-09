@@ -1237,7 +1237,8 @@ var Protocol = exports.Base.extend((_Base$extend = {
     isToplevel: function isToplevel(target) {
         var _this3 = this;
 
-        return $protocols(target).every(function (p) {
+        var protocols = $protocols(target);
+        return protocols.indexOf(this) >= 0 && protocols.every(function (p) {
             return p === _this3 || !_this3.isAdoptedBy(p);
         });
     },
@@ -1247,6 +1248,8 @@ var Protocol = exports.Base.extend((_Base$extend = {
 });
 
 var StrictProtocol = Protocol.extend();
+
+var DuckTyping = Protocol.extend();
 
 var $isProtocol = Protocol.isProtocol;
 
@@ -2511,6 +2514,7 @@ exports.$createModifier = $createModifier;
 exports.Policy = Policy;
 exports.Protocol = Protocol;
 exports.StrictProtocol = StrictProtocol;
+exports.DuckTyping = DuckTyping;
 exports.$isProtocol = $isProtocol;
 exports.$protocols = $protocols;
 exports.protocol = protocol;

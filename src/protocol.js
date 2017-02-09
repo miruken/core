@@ -138,7 +138,9 @@ export const Protocol = Base.extend({
      * @returns {boolean}  true if the target conforms to this toplevel protocol.
      */    
     isToplevel(target) {
-        return $protocols(target).every(p => p === this || !this.isAdoptedBy(p));
+        const protocols = $protocols(target);
+        return protocols.indexOf(this) >= 0 &&
+            protocols.every(p => p === this || !this.isAdoptedBy(p));
     },
     /**
      * Creates a protocol binding over the object.
@@ -151,13 +153,22 @@ export const Protocol = Base.extend({
 });
 
 /**
- * Protocol base requiring conformance to match methods.
+ * Protocol base requiring exact conformance (toplevel).
  * @class StrictProtocol
  * @constructor
  * @param   {Delegate}  delegate  -  delegate
  * @extends Protocol     
  */
 export const StrictProtocol = Protocol.extend();
+
+/**
+ * Protocol base requiring no conformance.
+ * @class DuckTyping
+ * @constructor
+ * @param   {Delegate}  delegate  -  delegate
+ * @extends Protocol     
+ */
+export const DuckTyping = Protocol.extend();
 
 /**
  * Determines if `protocol` is a protocol.
