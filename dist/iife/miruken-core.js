@@ -1,4 +1,4 @@
-(function (exports,reflectMetadata) {
+(function (exports) {
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -891,7 +891,7 @@ function $debounce(fn, wait, immediate, defaultReturnValue) {
     };
 }
 
-function copy$1() {
+function copy() {
     for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
     }
@@ -2463,7 +2463,7 @@ exports.format = format;
 exports.csv = csv;
 exports.bind = bind;
 exports.delegate = delegate;
-exports.copy = copy$1;
+exports.copy = copy;
 exports.emptyArray = emptyArray;
 exports.nothing = nothing;
 exports.MethodType = MethodType;
@@ -2535,4 +2535,4 @@ exports.$flatten = $flatten;
 exports.$equals = $equals;
 exports.$debounce = $debounce;
 
-}((this.mirukenCore = this.mirukenCore || {}),reflectMetadata));
+}((this.mirukenCore = this.mirukenCore || {})));

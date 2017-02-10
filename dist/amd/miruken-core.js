@@ -890,7 +890,7 @@ function $debounce(fn, wait, immediate, defaultReturnValue) {
     };
 }
 
-function copy$1() {
+function copy() {
     for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
     }
@@ -2462,7 +2462,7 @@ exports.format = format;
 exports.csv = csv;
 exports.bind = bind;
 exports.delegate = delegate;
-exports.copy = copy$1;
+exports.copy = copy;
 exports.emptyArray = emptyArray;
 exports.nothing = nothing;
 exports.MethodType = MethodType;
