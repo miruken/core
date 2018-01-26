@@ -29,6 +29,13 @@ export const DisposingMixin = Module.extend({
             return dispose.call(object);
         }        
     }
+}, {
+    coerce(target) {
+        // Behave as class decorator
+        if (arguments.length == 1) {
+            return target.implement(DisposingMixin);
+        }
+    }
 });
 
 /**
