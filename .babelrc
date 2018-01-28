@@ -1,5 +1,8 @@
 {
-	"plugins": ["transform-decorators-legacy"],
+	"plugins": [
+		"transform-decorators-legacy",
+        "transform-es2015-block-scoping"
+	],
     "presets": [
         ["env", {
 			"modules": false,
