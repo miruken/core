@@ -18,9 +18,9 @@
   },
   "jspm": {
     "main": "miruken-core.js",
-    "format": "amd",
+    "format": "esm",
     "directories": {
-      "dist": "dist/amd"
+      "dist": "dist/es"
     },
     "dependencies": {
       "reflect-metadata": "^0.1.8"
