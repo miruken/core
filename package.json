@@ -23,14 +23,14 @@
       "dist": "dist/amd"
     },
     "dependencies": {
-      "reflect-metadata": "^0.1.8"
+      "reflect-metadata": "^0.1.12"
     },
     "devDependencies": {
       "chai": "^3.5.0"
     }
   },
   "dependencies": {
-    "reflect-metadata": "^0.1.8"
+    "reflect-metadata": "^0.1.12"
   },
   "devDependencies": {
     "babel-core": "^6.16.0",

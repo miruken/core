@@ -1,5 +1,6 @@
 import { Base, Module, Undefined } from "./base2";
 import { $isFunction, $isPromise } from "./util";
+import { $isClass } from "./core";
 import { Protocol } from "./protocol";
 
 /**
@@ -28,6 +29,14 @@ export const DisposingMixin = Module.extend({
             object.dispose = Undefined;  // dispose once                
             return dispose.call(object);
         }        
+    }
+}, {
+    coerce(target) {
+        // Behave as class decorator
+        if (arguments.length == 1 && $isClass(target)) {
+            Disposing.adoptBy(target);
+            return target.implement(DisposingMixin);
+        }
     }
 });
 
