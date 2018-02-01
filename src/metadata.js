@@ -9,6 +9,40 @@ import "reflect-metadata";
  */
 export const Metadata = Abstract.extend(null, {
     /**
+     * Checks metadata on the prototype chain of an object or property.
+     * @static
+     * @method has
+     * @param   {Any}     metadataKey  -  metadata key
+     * @param   {Any}     target       -  originating target
+     * @param   {Any}     [targetKey]  -  property key
+     * @returns {boolean} true if found metadata for `metadataKey`. 
+     */
+    has(metadataKey, target, targetKey) {
+        if (target) {
+            return targetKey
+                 ? Reflect.hasMetadata(metadataKey, target, targetKey)
+                 : Reflect.hasMetadata(metadataKey, target);
+        }
+        return false;
+    },
+    /**
+     * Checks metadata on the object or property.
+     * @static
+     * @method hasOwn
+     * @param   {Any}     metadataKey  -  metadata key
+     * @param   {Any}     target       -  originating target
+     * @param   {Any}     [targetKey]  -  property key
+     * @returns {boolean} true if owns metadata for `metadataKey`. 
+     */
+    hasOwn(metadataKey, target, targetKey) {
+        if (target) {
+            return targetKey
+                 ? Reflect.hasOwnMetadata(metadataKey, target, targetKey)
+                 : Reflect.hasOwnMetadata(metadataKey, target);
+        }
+        return false;
+    },
+    /**
      * Gets metadata on the prototype chain of an object or property.
      * @static
      * @method get

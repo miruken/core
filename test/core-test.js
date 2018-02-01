@@ -1129,6 +1129,10 @@ describe("@design", () => {
         
               @design(Person, [Animal])
               constructor(zooKeeper, animals) {},
+
+              @design(Person)
+              get doctor() { return this._doctor; },
+              set doctor(value) { this._doctor = value; },
         
               @design(Dog, Elephant, AsianElephant)
               safari(dog, elephant, asianElephant) {}
@@ -1150,11 +1154,27 @@ describe("@design", () => {
         expect(types).to.eql([Dog, Elephant, AsianElephant]);
     });
 
-    it("should get property design", () => {
+    it("should get field design", () => {
         const type = design.get(Zoo.prototype, "trainer");
         expect(type).to.equal(Person);
     });
 
+    it("should get property design", () => {
+        const type = design.get(Zoo.prototype, "doctor");
+        expect(type).to.equal(Person);
+    });
+
+    it("should specify property design on getter or setter", () => {
+        expect(() => {
+            const Farm = Base.extend({
+                @design(Person)
+                get farmer() {},
+                @design(Person)            
+                set farmer(value) {}
+            });
+        }).to.throw(Error, "@design for property 'farmer' should only be specified on getter or setter");        
+    });
+        
     it("should apply class design to constructor", () => {
         const types = design.get(PettingZoo.prototype, "constructor");
         expect(types[0]).to.equal(Person);

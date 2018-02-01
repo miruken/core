@@ -53,6 +53,8 @@ export const design = DesignMetadata.decorator(designMetadataKey,
             DesignMetadata.define(paramTypesKey, types, target, key);        
         } else if (types.length !== 1) {
             throw new SyntaxError(`@design for property '${key}' requires a single type to be specified`);
+        } else if (DesignMetadata.has(propertyTypeKey, target, key)) {
+            throw new SyntaxError(`@design for property '${key}' should only be specified on getter or setter`);
         } else {
             _validateTypes(types);            
             DesignMetadata.define(propertyTypeKey, types[0], target, key);
