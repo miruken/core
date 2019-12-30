@@ -5,6 +5,7 @@ import "reflect-metadata";
 
 /**
  * Provides an abstraction for meta-data management.
+ * http://blog.wolksoftware.com/decorators-metadata-reflection-in-typescript-from-novice-to-expert-part-4
  * @class Metadata
  */
 export const Metadata = Abstract.extend(null, {

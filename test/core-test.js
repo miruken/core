@@ -17,7 +17,7 @@ import {
 } from "../src/proxy";
 import { Policy } from "../src/policy";
 
-import { design } from "../src/design";
+import { design, designWithReturn } from "../src/design";
 import { inject } from "../src/inject";
 
 import {
@@ -1135,7 +1135,12 @@ describe("@design", () => {
               set doctor(value) { this._doctor = value; },
         
               @design(Dog, Elephant, AsianElephant)
-              safari(dog, elephant, asianElephant) {}
+              safari(dog, elephant, asianElephant) {},
+
+              @designWithReturn(Animal, Dog, Elephant, AsianElephant)
+              race(dog, elephant, asianElephant) {
+                  return dog;
+              }
           }),
           PettingZoo = Zoo.extend(design(Person, Person, [Animal]), {
               constructor(zooKeeper, trainer, animals) {
@@ -1154,6 +1159,11 @@ describe("@design", () => {
         expect(types).to.eql([Dog, Elephant, AsianElephant]);
     });
 
+    it("should get method design with return", () => {
+        const types = designWithReturn.get(Zoo.prototype, "race");
+        expect(types).to.eql([Animal, Dog, Elephant, AsianElephant]);
+    });
+    
     it("should get field design", () => {
         const type = design.get(Zoo.prototype, "trainer");
         expect(type).to.equal(Person);
@@ -1162,17 +1172,6 @@ describe("@design", () => {
     it("should get property design", () => {
         const type = design.get(Zoo.prototype, "doctor");
         expect(type).to.equal(Person);
-    });
-
-    it("should specify property design on getter or setter", () => {
-        expect(() => {
-            const Farm = Base.extend({
-                @design(Person)
-                get farmer() {},
-                @design(Person)            
-                set farmer(value) {}
-            });
-        }).to.throw(Error, "@design for property 'farmer' should only be specified on getter or setter");        
     });
         
     it("should apply class design to constructor", () => {
@@ -1198,6 +1197,17 @@ describe("@design", () => {
                 friend: undefined
             });
         }).to.throw(Error, "@design for property 'friend' requires a single type to be specified");
+    });
+
+    it("should reject property design on both getter and setter", () => {
+        expect(() => {
+            const Farm = Base.extend({
+                @design(Person)
+                get farmer() {},
+                @design(Person)            
+                set farmer(value) {}
+            });
+        }).to.throw(Error, "@design for property 'farmer' should only be specified on getter or setter");        
     });
 
     it("should reject invalid array specifications", () => {

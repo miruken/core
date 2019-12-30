@@ -1,5 +1,5 @@
 import { Base } from "./base2";
-import { $isSomething } from "./util";
+import { $isSomething, $isFunction } from "./util";
 
 /**
  * Defines an enumeration.
@@ -37,10 +37,20 @@ export const Enum = Base.extend({
                 writable:     false,
                 configurable: false
             },
-            
         });
     },
     toString() { return this.name; },
+    toJSON() {
+        const value = this.value;
+        return value != null && $isFunction(value.toJSON)
+            ? value.toJSON()
+            : value;
+    },    
+    get description() {
+        const name = this.name;
+        return name == null ? "undefined"
+            : this.name.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
+    },    
     constructing(value, name) {
         if (!this.constructor[Defining]) {
             throw new TypeError("Enums cannot be instantiated.");
