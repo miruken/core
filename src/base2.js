@@ -503,7 +503,7 @@ function _override(object, key, desc) {
 };
     
 export function getPropertyDescriptors(obj, key) {
-    var props = key ? null : {},
+    var chain = key ? null : [],
         own   = false,
         prop;
     do {
@@ -511,15 +511,21 @@ export function getPropertyDescriptors(obj, key) {
         prop = Reflect.getOwnPropertyDescriptor(obj, key);
         if (prop) return prop.own = own, prop;
       } else {
-          Reflect.ownKeys(obj).forEach(function (key) {
-            if (!Reflect.has(props, key)) {
-              prop = Reflect.getOwnPropertyDescriptor(obj, key);
-              if (prop) props[key] = (prop.own = own, prop);
-            }
-          });
+          chain.unshift({obj, own});
         }
     } while (own = false, obj = Object.getPrototypeOf(obj));
-    return props;
+    if (chain) {
+        var props = {};
+        chain.forEach(function (c) {
+            Reflect.ownKeys(c.obj).forEach(function (key) {
+                if (!Reflect.has(props, key)) {
+                    prop = Reflect.getOwnPropertyDescriptor(c.obj, key);
+                    if (prop) props[key] = (prop.own = c.own, prop);
+                }
+            });
+        });
+        return props;
+    }
 }
 
 // =========================================================================
