@@ -22,7 +22,7 @@ import { inject } from "../src/inject";
 
 import {
     IndexedList, $isFunction, $isString,
-    $flatten, $merge, $match
+    $flatten, $merge, $match, debounce
 } from "../src/util";
 
 import "reflect-metadata";
@@ -489,6 +489,7 @@ describe("$decorator", () => {
             }),
             dogEcho = echo(dog);
         expect(dogEcho.name).to.equal("Snuffy Snuffy");
+        expect(dogEcho).to.be.an.instanceof(Dog);        
     });
 });
 
@@ -501,6 +502,22 @@ describe("$decorate", () => {
                 }
             });
         expect(reverse.name).to.equal("ykrapS");
+        expect(reverse).to.be.an.instanceof(Dog);
+    });
+
+    it("should decorate an instance with new property", () => {
+        const dog = new Dog("Sparky"),
+              add = $decorate(dog, {
+                  name: "Sputnik",
+                  appearance: {
+                      eyes:  "brown",
+                      color: "white"
+                  }
+            });
+        expect(add.name).to.equal("Sputnik");
+        expect(add.appearance.eyes).to.equal("brown");
+        expect(add.appearance.color).to.equal("white");
+        expect(add).to.be.an.instanceof(Dog);
     });
 });
 
@@ -1280,4 +1297,43 @@ describe("inject", () => {
         inject.getOwnKeys(Circus.prototype, (d, k) => deps.set(k,d));
         expect(deps.get("dancingDog")).to.eql([Dog]);
     });            
+});
+
+describe("debounce", () => {
+    const System = Base.extend({
+              constructor() {
+                  this.calls = 0;
+              },
+              @debounce(10)
+              lookup(word) {
+                  this.calls++;
+              },
+              @debounce(10, true)
+              api(command) {
+                  this.calls++;
+              }
+          });
+
+    let system;
+    beforeEach(() => {
+        system = new System();
+    });
+    
+    it("should debounce methods", done => {
+        for (let i = 0; i < 10; ++i) {
+            system.lookup("improving");
+        }
+        expect(system.calls).to.eql(0);        
+        setTimeout(() => {
+            expect(system.calls).to.eql(1);
+            done();
+        }, 20);
+    });
+
+    it("should debounce methods immediate", () => {
+        for (let i = 0; i < 10; ++i) {
+            system.api("fetch");
+        }
+        expect(system.calls).to.eql(1);
+    });    
 });

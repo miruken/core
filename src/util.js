@@ -1,4 +1,5 @@
 import { Base, typeOf } from "./base2";
+import { decorate } from "./decorate";
 
 /**
  * Helper class to simplify array manipulation.
@@ -426,7 +427,7 @@ export function $debounce(fn, wait, immediate, defaultReturnValue) {
     let timeout;
     return function () {
         const context = this, args = arguments;
-        const later = function () {
+        const later   = function () {
             timeout = null;
             if (!immediate) {
                 return fn.apply(context, args);
@@ -441,3 +442,23 @@ export function $debounce(fn, wait, immediate, defaultReturnValue) {
         return defaultReturnValue;
     };
 };
+
+/**
+ * Applies debouncing on functions.
+ * @method debounce
+ */
+export function debounce(...args) {
+    return decorate(_debounce, args);
+}
+
+function _debounce(target, key, descriptor,
+                   [wait, immediate, defaultReturnValue]) {
+    const { set, value } = descriptor;
+    if ($isFunction(value)) {
+        descriptor.value = $debounce(value, wait, immediate, defaultReturnValue);
+    } else if ($isFunction(set)) {
+        descriptor.set = $debounce(set, wait, immediate, defaultReturnValue);
+    } else {
+        throw new SyntaxError("@debounce can only be applied to methods and property setters");
+    }
+}

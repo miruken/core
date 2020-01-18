@@ -252,9 +252,9 @@ export function $decorator(decorations) {
             throw new TypeError("No decoratee specified.");
         }
         const decorator = Object.create(decoratee);
-        Object.defineProperty(decorator, "decoratee", {
+        Object.defineProperty(decorator, "getDecoratee", {
             configurable: false,
-            value:        decoratee
+            value:        () => decoratee
         });
         if (decorations && $isFunction(decorator.extend)) {
             decorator.extend(decorations);
@@ -284,8 +284,11 @@ export function $decorate(decoratee, decorations) {
  * @erturns {Object}   decoratee if present, otherwise decorator.
  */
 export function $decorated(decorator, deepest) {
-    let decoratee;
-    while (decorator && (decoratee = decorator.decoratee)) {
+    let getDecoratee, decoratee;
+    while (decorator &&
+           (getDecoratee = decorator.getDecoratee) &&
+           $isFunction(getDecoratee) &&
+           (decoratee = getDecoratee())) {
         if (!deepest) return decoratee;
         decorator = decoratee;
     }
