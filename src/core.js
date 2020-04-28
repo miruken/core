@@ -88,8 +88,7 @@ Base.extend = function (...args) {
             decorators.push(mixin(constraint));
         } else if ($isFunction(constraint)) {
             decorators.push(constraint);
-        }
-        else {
+        } else {
             break;
         }
         constraints.shift();
@@ -97,8 +96,8 @@ Base.extend = function (...args) {
     let members      = args.shift() || {},
         classMembers = args.shift() || {},
         derived      = baseExtend.call(this, members, classMembers);
-    Metadata.copyOwn(derived, classMembers);
-    Metadata.copyOwn(derived.prototype, members);
+    Metadata.transferOwn(derived, classMembers);
+    Metadata.transferOwn(derived.prototype, members);
     if (decorators.length > 0) {
         derived = Reflect.decorate(decorators, derived);
     }

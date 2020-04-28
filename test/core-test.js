@@ -22,8 +22,9 @@ import { inject } from "../src/inject";
 
 import {
     IndexedList, $isFunction, $isString,
-    $flatten, $merge, $match, debounce
+    $flatten, $merge, $match
 } from "../src/util";
+import { debounce } from "../src/debounce";
 
 import "reflect-metadata";
 import "../src/promise";

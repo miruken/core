@@ -158,6 +158,33 @@ export const Metadata = Abstract.extend(null, {
         });
     },
     /**
+     * Transfers all metadata from `source` onto `target`.
+     * @static
+     * @method copyOwn
+     * @param   {Any}  target  -  recieves metadata
+     * @param   {Any}  source  -  provides metadata
+     */
+    transferOwn(target, source) {
+        this.transferOwnKey(target, source);
+        Reflect.ownKeys(source).forEach(sourceKey => this.transferOwnKey(target, source, sourceKey));
+    },    
+    /**
+     * Transfers all `sourceKey` metadata from `source` onto `target`.
+     * @static
+     * @method copyOwnKey
+     * @param   {Any}  target     -  recieves metadata
+     * @param   {Any}  source     -  provides metadata
+     * @param   {Any}  sourceKey  -  source property to copy from
+     */
+    transferOwnKey(target, source, sourceKey) {
+        const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
+        metadataKeys.forEach(metadataKey => {
+            const metadata = this.getOwn(metadataKey, source, sourceKey);
+            this.define(metadataKey, metadata, target, sourceKey);
+            this.remove(metadataKey, source, sourceKey);
+        });
+    },    
+    /**
      * Merges all metadata from `source` onto `target`.
      * @static
      * @method mergeOwn
@@ -243,7 +270,7 @@ function _metadataGetter(metadataKey, own, target, targetKey) {
          : this.get(metadataKey, target, targetKey);
 }
 
-function _metadataKeyGetter(metadataKey, own,  target, callback) {
+function _metadataKeyGetter(metadataKey, own, target, callback) {
     let found = false;
     if (!$isFunction(callback)) return false;
     const keys = Reflect.ownKeys(own ? target : getPropertyDescriptors(target))
