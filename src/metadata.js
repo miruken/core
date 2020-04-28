@@ -188,22 +188,25 @@ export const Metadata = Abstract.extend(null, {
      * Merges all metadata from `source` onto `target`.
      * @static
      * @method mergeOwn
-     * @param   {Any}  target  -  recieves metadata
-     * @param   {Any}  source  -  provides metadata
+     * @param   {Any}      target            -  recieves metadata
+     * @param   {Any}      source            -  provides metadata
+     * @param   {boolean}  removeFromSource  -  true to remove source metadata
      */    
-    mergeOwn(target, source) {
-        this.mergeOwnKey(target, source);
-        Reflect.ownKeys(source).forEach(sourceKey => this.mergeOwnKey(target, source, sourceKey));
+    mergeOwn(target, source, removeFromSource) {
+        this.mergeOwnKey(target, source, undefined, removeFromSource);
+        Reflect.ownKeys(source).forEach(sourceKey => 
+            this.mergeOwnKey(target, source, sourceKey, removeFromSource));
     },
     /**
      * Merges all `sourceKey` metadata from `source` onto `target`.
      * @static
-     * @method copyOwnKey
-     * @param   {Any}  target     -  recieves metadata
-     * @param   {Any}  source     -  provides metadata
-     * @param   {Any}  sourceKey  -  source property to copy from
+     * @method mergeOwnKey
+     * @param   {Any}      target            -  recieves metadata
+     * @param   {Any}      source            -  provides metadata
+     * @param   {Any}      sourceKey         -  source property to copy from
+     * @param   {boolean}  removeFromSource  -  true to remove source metadata
      */    
-    mergeOwnKey(target, source, sourceKey) {
+    mergeOwnKey(target, source, sourceKey, removeFromSource) {
         const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(metadataKey => {
             const targetMetadata = this.getOwn(metadataKey, target, sourceKey),
@@ -212,6 +215,9 @@ export const Metadata = Abstract.extend(null, {
                 targetMetadata.merge(sourceMetadata);
             } else {
                 this.define(metadataKey, sourceMetadata, target, sourceKey);                
+            }
+            if (removeFromSource) {
+                this.remove(metadataKey, source, sourceKey);
             }
         });
     },

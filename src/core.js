@@ -109,7 +109,7 @@ Base.implement = function (source) {
         source = protocol(source) || source;
     }
     var type = baseImplement.call(this, source);
-    Metadata.mergeOwn(type.prototype, source);
+    Metadata.mergeOwn(type.prototype, source, true);
     return type;
 }
 
@@ -121,7 +121,7 @@ Base.prototype.extend = function (key, value) {
             key = protocol(key) || key;
         }
         const instance = baseProtoExtend.call(this, key);
-        Metadata.mergeOwn(instance, key);            
+        Metadata.mergeOwn(instance, key, true);            
         return instance;
     }
     return baseProtoExtend.call(this, key, value);
