@@ -15,7 +15,7 @@ import {
     Facet, Interceptor, InterceptorSelector,
     ProxyBuilder
 } from "../src/proxy";
-import { Policy } from "../src/policy";
+import { Options } from "../src/options";
 
 import { design, designWithReturn } from "../src/design";
 import { inject } from "../src/inject";
@@ -884,75 +884,75 @@ describe("Protocol", () => {
     });
 });
 
-describe("Policy", () => {
-    const MyPolicy = Policy.extend({
+describe("Options", () => {
+    const MyOptions = Options.extend({
         ack:   false,
         log:   false,
         child: undefined
     });
 
     describe("#copy", () => {
-        it("should copy policy", () => {
-            const policy     = new Policy({ack: true, log: true}),
-                  policyCopy = policy.copy();
-            expect(policyCopy).to.not.equal(policy);
-            expect(policyCopy.ack).to.be.true;
-            expect(policyCopy.log).to.be.true;
-            expect(policyCopy.child).to.be.undefined;
+        it("should copy options", () => {
+            const options     = new Options({ack: true, log: true}),
+                  optionsCopy = options.copy();
+            expect(optionsCopy).to.not.equal(options);
+            expect(optionsCopy.ack).to.be.true;
+            expect(optionsCopy.log).to.be.true;
+            expect(optionsCopy.child).to.be.undefined;
         });
 
-        it("should copy nested policy", () => {
-            const policy     = new Policy({
-                      ack: true,
-                      log: true,
-                      child: new MyPolicy({ack: true})
+        it("should copy nested Options", () => {
+            const options = new Options({
+                      ack:   true,
+                      log:   true,
+                      child: new MyOptions({ack: true})
                   }),
-                  policyCopy = policy.copy();
-            expect(policyCopy).to.not.equal(policy);
-            expect(policyCopy.ack).to.be.true;
-            expect(policyCopy.log).to.be.true;
-            expect(policyCopy.child).to.not.equal(policy.child);
-            expect(policyCopy.child.ack).to.be.true;
-            expect(policyCopy.child.log).to.be.false;
-            expect(policyCopy.child.child).to.be.undefined;            
+                  optionsCopy = options.copy();
+            expect(optionsCopy).to.not.equal(options);
+            expect(optionsCopy.ack).to.be.true;
+            expect(optionsCopy.log).to.be.true;
+            expect(optionsCopy.child).to.not.equal(options.child);
+            expect(optionsCopy.child.ack).to.be.true;
+            expect(optionsCopy.child.log).to.be.false;
+            expect(optionsCopy.child.child).to.be.undefined;            
         });        
     });
 
     describe("#mergeInto", () => {
-        it("should merge policy", () => {
-            const policy1 = new Policy({
-                      ack: true,
-                      log: true,
-                      child: new MyPolicy({ack: true})                
+        it("should merge options", () => {
+            const options1 = new Options({
+                      ack:   true,
+                      log:   true,
+                      child: new MyOptions({ack: true})                
                   }),
-                  policy2 = new Policy({log: false});
-            policy1.mergeInto(policy2);
-            expect(policy2.ack).to.be.true;
-            expect(policy2.log).to.be.false;
-            expect(policy2.child).to.not.equal(policy1.child);
-            expect(policy2.child.ack).to.be.true;
-            expect(policy2.child.log).to.be.false;            
+                  options2 = new Options({log: false});
+            options1.mergeInto(options2);
+            expect(options2.ack).to.be.true;
+            expect(options2.log).to.be.false;
+            expect(options2.child).to.not.equal(options1.child);
+            expect(options2.child.ack).to.be.true;
+            expect(options2.child.log).to.be.false;            
         });
 
-        it("should merge nested policy", () => {
-            const policy1 = new Policy({
-                      ack: true,
-                      log: true,
-                      child: new MyPolicy({ack: true})
+        it("should merge nested options", () => {
+            const options1 = new Options({
+                      ack:   true,
+                      log:   true,
+                      child: new MyOptions({ack: true})
                   }),
-                  policy2 = new Policy({
-                      log: false,
-                      child: new MyPolicy({
+                  options2 = new Options({
+                      log:   false,
+                      child: new MyOptions({
                           ack: false,
                           log: true
                       })
                   });
-            policy1.mergeInto(policy2);
-            expect(policy2.ack).to.be.true;
-            expect(policy2.log).to.be.false;
-            expect(policy2.child).to.not.equal(policy1.child);
-            expect(policy2.child.ack).to.be.false;
-            expect(policy2.child.log).to.be.true;            
+            options1.mergeInto(options2);
+            expect(options2.ack).to.be.true;
+            expect(options2.log).to.be.false;
+            expect(options2.child).to.not.equal(options1.child);
+            expect(options2.child.ack).to.be.false;
+            expect(options2.child.log).to.be.true;            
         });        
     });
 });
