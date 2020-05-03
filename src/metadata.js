@@ -91,7 +91,7 @@ export const Metadata = Abstract.extend(null, {
             targetKey = undefined;
         }        
         if (!$isFunction(creator)) {
-            throw new TypeError("creator must be a function");
+            throw new TypeError("creator must be a function.");
         }
         let metadata = this.getOwn(metadataKey, target, targetKey);
         if (metadata === undefined) {
@@ -238,7 +238,7 @@ export const Metadata = Abstract.extend(null, {
             targetKey = undefined;
         }
         if (!$isFunction(collector)) {
-            throw new TypeError("collector must be a function");
+            throw new TypeError("collector must be a function.");
         }
         while (target) {
             const metadata = this.getOwn(metadataKey, target, targetKey);

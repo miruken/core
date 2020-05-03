@@ -258,12 +258,12 @@ function _protocol(target) {
 export function conformsTo(...protocols) {
     protocols = $flatten(protocols, true);
     if (!protocols.every($isProtocol)) {
-        throw new TypeError("Only Protocols can be conformed to");
+        throw new TypeError("Only Protocols can be conformed to.");
     }
     return protocols.length === 0 ? Undefined : adopt;
     function adopt(target, key, descriptor) {
         if (isDescriptor(descriptor)) {
-            throw new SyntaxError("@conformsTo can only be applied to classes");
+            throw new SyntaxError("@conformsTo can only be applied to classes.");
         }
         protocols.forEach(protocol => protocol.adoptBy(target));
     }

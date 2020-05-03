@@ -1185,11 +1185,15 @@ describe("@design", () => {
     it("should get field design", () => {
         const type = design.get(Zoo.prototype, "trainer");
         expect(type).to.equal(Person);
+        const returnType = designWithReturn.get(Zoo.prototype, "trainer");
+        expect(returnType).to.equal(Person);         
     });
 
     it("should get property design", () => {
         const type = design.get(Zoo.prototype, "doctor");
         expect(type).to.equal(Person);
+        const returnType = designWithReturn.get(Zoo.prototype, "doctor");
+        expect(returnType).to.equal(Person);        
     });
         
     it("should apply class design to constructor", () => {

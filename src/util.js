@@ -9,117 +9,115 @@ import { Base, typeOf } from "./base2";
  */
 export const ArrayManager = Base.extend({
     constructor(items) {
-        let _items = [];
-        this.extend({
-            /** 
-             * Gets the array.
-             * @method getItems
-             * @returns  {Array} array.
-             */
-            getItems() { return _items; },
-            /** 
-             * Gets the item at array `index`.
-             * @method getIndex
-             * @param    {number}  index - index of item
-             * @returns  {Any} item at index.
-             */
-            getIndex(index) {
-                if (_items.length > index) {
-                    return _items[index];
-                }
-            },
-            /** 
-             * Sets `item` at array `index` if empty.
-             * @method setIndex
-             * @param    {number}  index - index of item
-             * @param    {Any}     item  - item to set
-             * @returns  {ArrayManager} array manager.
-             * @chainable
-             */
-            setIndex(index, item) {
-                if (_items[index] === undefined) {
-                    _items[index] = this.mapItem(item);
-                }
-                return this;
-            },
-            /** 
-             * Inserts `item` at array `index`.
-             * @method insertIndex
-             * @param    {number}   index - index of item
-             * @param    {Item}     item  - item to insert
-             * @returns  {ArrayManager} array manager.
-             * @chainable
-             */
-            insertIndex(index, item) {
-                _items.splice(index, 0, this.mapItem(item));
-                return this;
-            },
-            /** 
-             * Replaces `item` at array `index`.
-             * @method replaceIndex
-             * @param    {number}   index - index of item
-             * @param    {Item}     item  - item to replace
-             * @returns  {ArrayManager} array manager.
-             * @chainable
-             */
-            replaceIndex(index, item) {
-                _items[index] = this.mapItem(item);
-                return this;
-            },
-            /** 
-             * Removes the item at array `index`.
-             * @method removeIndex
-             * @param    {number}   index - index of item
-             * @returns  {ArrayManager} array manager.
-             * @chainable
-             */
-            removeIndex(index) {
-                if (_items.length > index) {
-                    _items.splice(index, 1);
-                }
-                return this;
-            },
-            /** 
-             * Appends one or more items to the end of the array.
-             * @method append
-             * @returns  {ArrayManager} array manager.
-             * @chainable
-             */
-            append(/* items */) {
-                let newItems;
-                if (arguments.length === 1 && Array.isArray(arguments[0])) {
-                    newItems = arguments[0];
-                } else if (arguments.length > 0) {
-                    newItems = arguments;
-                }
-                if (newItems) {
-                    for (let i = 0; i < newItems.length; ++i) {
-                        _items.push(this.mapItem(newItems[i]));
-                    }
-                }
-                return this;
-            },
-            /** 
-             * Merges the items into the array.
-             * @method merge
-             * @param    {Array}  items - items to merge from
-             * @returns  {ArrayManager} array manager.
-             * @chainable
-             */
-            merge(items) {
-                for (let index = 0; index < items.length; ++index) {
-                    const item = items[index];
-                    if (item !== undefined) {
-                        this.setIndex(index, item);
-                    }
-                }
-                return this;
-            }
-        });
+        this._items = [];
         if (items) {
             this.append(items);
         }
     },
+    /** 
+     * Gets the array.
+     * @method getItems
+     * @returns  {Array} array.
+     */
+    getItems() { return this._items; },
+    /** 
+     * Gets the item at array `index`.
+     * @method getIndex
+     * @param    {number}  index - index of item
+     * @returns  {Any} item at index.
+     */
+    getIndex(index) {
+        if (this._items.length > index) {
+            return this._items[index];
+        }
+    },
+    /** 
+     * Sets `item` at array `index` if empty.
+     * @method setIndex
+     * @param    {number}  index - index of item
+     * @param    {Any}     item  - item to set
+     * @returns  {ArrayManager} array manager.
+     * @chainable
+     */
+    setIndex(index, item) {
+        if (this._items[index] === undefined) {
+            this._items[index] = this.mapItem(item);
+        }
+        return this;
+    },
+    /** 
+     * Inserts `item` at array `index`.
+     * @method insertIndex
+     * @param    {number}   index - index of item
+     * @param    {Item}     item  - item to insert
+     * @returns  {ArrayManager} array manager.
+     * @chainable
+     */
+    insertIndex(index, item) {
+        this._items.splice(index, 0, this.mapItem(item));
+        return this;
+    },
+    /** 
+     * Replaces `item` at array `index`.
+     * @method replaceIndex
+     * @param    {number}   index - index of item
+     * @param    {Item}     item  - item to replace
+     * @returns  {ArrayManager} array manager.
+     * @chainable
+     */
+    replaceIndex(index, item) {
+        this._items[index] = this.mapItem(item);
+        return this;
+    },
+    /** 
+     * Removes the item at array `index`.
+     * @method removeIndex
+     * @param    {number}   index - index of item
+     * @returns  {ArrayManager} array manager.
+     * @chainable
+     */
+    removeIndex(index) {
+        if (this._items.length > index) {
+            this._items.splice(index, 1);
+        }
+        return this;
+    },
+    /** 
+     * Appends one or more items to the end of the array.
+     * @method append
+     * @returns  {ArrayManager} array manager.
+     * @chainable
+     */
+    append(/* items */) {
+        let newItems;
+        if (arguments.length === 1 && Array.isArray(arguments[0])) {
+            newItems = arguments[0];
+        } else if (arguments.length > 0) {
+            newItems = arguments;
+        }
+        if (newItems) {
+            for (let i = 0; i < newItems.length; ++i) {
+                this._items.push(this.mapItem(newItems[i]));
+            }
+        }
+        return this;
+    },
+    /** 
+     * Merges the items into the array.
+     * @method merge
+     * @param    {Array}  items - items to merge from
+     * @returns  {ArrayManager} array manager.
+     * @chainable
+     */
+    merge(items) {
+        for (let index = 0; index < items.length; ++index) {
+            const item = items[index];
+            if (item !== undefined) {
+                this.setIndex(index, item);
+            }
+        }
+        return this;
+    },    
     /** 
      * Optional mapping for items before adding to the array.
      * @method mapItem
@@ -139,147 +137,146 @@ export const ArrayManager = Base.extend({
  */
 export const IndexedList = Base.extend({
     constructor(order = defaultOrder) {
-        let _index = {};
-        this.extend({
-            /** 
-             * Determines if list is empty.
-             * @method isEmpty
-             * @returns  {boolean}  true if list is empty, false otherwise.
-             */
-            isEmpty() {
-                return !this.head;
-            },
-            /** 
-             * Determines if `node` is present in list using `$equals`.
-             * @method has
-             * @param   {Any} node  -  node to test for
-             * @returns  {boolean}  true if `node` exists.
-             */            
-            has(node) {
-                const index = node.index;
-                let   indexedNode = this.getFirst(index);
-                while (indexedNode && indexedNode.index === index) {
-                    if ($equals(indxedNode, node)) { return true; }
-                    indexedNode = indexedNode.next;
-                }
-                return false;
-            },
-            /** 
-             * Gets the first node at `index`.
-             * @method getFirst
-             * @param    {number} index  -  index of node
-             * @returns  {Any}  the first node at index.
-             */
-            getFirst(index) {
-                return index && _index[index];
-            },
-            /** 
-             * Inserts `node` at `index`.
-             * @method insert
-             * @param  {Any}     node   -  node to insert
-             * @param  {number}  index  -  index to insert at
-             * @returns  {IndexedList}  the updated list.
-             * @chainable
-             */
-            insert(node, index) {
-                const indexedNode = this.getFirst(index);
-                let insert = indexedNode;
-                if (index) {
-                    insert = insert || this.head;
-                    while (insert && order(node, insert) >= 0) {
-                        insert = insert.next;
-                    }
-                }
-                if (insert) {
-                    const prev  = insert.prev;
-                    node.next   = insert;
-                    node.prev   = prev;
-                    insert.prev = node;
-                    if (prev) {
-                        prev.next = node;
-                    }
-                    if (this.head === insert) {
-                        this.head = node;
-                    }
-                } else {
-                    delete node.next;
-                    const tail = this.tail;
-                    if (tail) {
-                        node.prev = tail;
-                        tail.next = node;
-                    } else {
-                        this.head = node;
-                        delete node.prev;
-                    }
-                    this.tail = node;
-                }
-                if (index) {
-                    node.index = index;
-                    if (!indexedNode) {
-                        _index[index] = node;
-                    }
-                }
-                return this;
-            },
-            /** 
-             * Removes `node` from the list.
-             * @method remove
-             * @param  {Any}  node  -  node to remove
-             * @returns  {IndexedList}  the updated list.
-             * @chainable
-             */
-            remove(node) {
-                const prev = node.prev,
-                      next = node.next;
-                if (prev) {
-                    if (next) {
-                        prev.next = next;
-                        next.prev = prev;
-                    } else {
-                        this.tail = prev;
-                        delete prev.next;
-                    }
-                } else if (next) {
-                    this.head = next;
-                    delete next.prev;
-                } else {
-                    delete this.head;
-                    delete this.tail;
-                }
-                const index = node.index;
-                if (this.getFirst(index) === node) {
-                    if (next && next.index === index) {
-                        _index[index] = next;
-                    } else {
-                        delete _index[index];
-                    }
-                }
-                return this;
-            },
-            /** 
-             * Merges `list` into this list.
-             * @method list
-             * @param  {IndexedList}  list  -  list to merge
-             * @returns  {IndexedList}  the updated list.
-             * @chainable
-             */
-            merge(list) {
-                if (!list) { return this; }
-                if (list.constructor !== this.constructor) {
-                    throw new TypeError("merge expects lists of equal type");
-                }
-                let node = list.head;
-                while (node) {
-                    const next = node.next;
-                    if (!this.has(node)) {
-                        this.insert(node, node.index);
-                    }
-                    node = next;
-                }
-                return this;
+        this._index = {};
+        this._order = order;
+    },
+    /** 
+     * Determines if list is empty.
+     * @method isEmpty
+     * @returns  {boolean}  true if list is empty, false otherwise.
+     */
+    isEmpty() {
+        return !this.head;
+    },
+    /** 
+     * Determines if `node` is present in list using `$equals`.
+     * @method has
+     * @param   {Any} node  -  node to test for
+     * @returns  {boolean}  true if `node` exists.
+     */            
+    has(node) {
+        const index = node.index;
+        let   indexedNode = this.getFirst(index);
+        while (indexedNode && indexedNode.index === index) {
+            if ($equals(indxedNode, node)) { return true; }
+            indexedNode = indexedNode.next;
+        }
+        return false;
+    },
+    /** 
+     * Gets the first node at `index`.
+     * @method getFirst
+     * @param    {number} index  -  index of node
+     * @returns  {Any}  the first node at index.
+     */
+    getFirst(index) {
+        return index && this._index[index];
+    },
+    /** 
+     * Inserts `node` at `index`.
+     * @method insert
+     * @param  {Any}     node   -  node to insert
+     * @param  {number}  index  -  index to insert at
+     * @returns  {IndexedList}  the updated list.
+     * @chainable
+     */
+    insert(node, index) {
+        const indexedNode = this.getFirst(index);
+        let insert = indexedNode;
+        if (index) {
+            insert = insert || this.head;
+            while (insert && this._order(node, insert) >= 0) {
+                insert = insert.next;
             }
-        });
-    }
+        }
+        if (insert) {
+            const prev  = insert.prev;
+            node.next   = insert;
+            node.prev   = prev;
+            insert.prev = node;
+            if (prev) {
+                prev.next = node;
+            }
+            if (this.head === insert) {
+                this.head = node;
+            }
+        } else {
+            delete node.next;
+            const tail = this.tail;
+            if (tail) {
+                node.prev = tail;
+                tail.next = node;
+            } else {
+                this.head = node;
+                delete node.prev;
+            }
+            this.tail = node;
+        }
+        if (index) {
+            node.index = index;
+            if (!indexedNode) {
+                this._index[index] = node;
+            }
+        }
+        return this;
+    },
+    /** 
+     * Removes `node` from the list.
+     * @method remove
+     * @param  {Any}  node  -  node to remove
+     * @returns  {IndexedList}  the updated list.
+     * @chainable
+     */
+    remove(node) {
+        const prev = node.prev,
+                next = node.next;
+        if (prev) {
+            if (next) {
+                prev.next = next;
+                next.prev = prev;
+            } else {
+                this.tail = prev;
+                delete prev.next;
+            }
+        } else if (next) {
+            this.head = next;
+            delete next.prev;
+        } else {
+            delete this.head;
+            delete this.tail;
+        }
+        const index = node.index;
+        if (this.getFirst(index) === node) {
+            if (next && next.index === index) {
+                this._index[index] = next;
+            } else {
+                delete this._index[index];
+            }
+        }
+        return this;
+    },
+    /** 
+     * Merges `list` into this list.
+     * @method list
+     * @param  {IndexedList}  list  -  list to merge
+     * @returns  {IndexedList}  the updated list.
+     * @chainable
+     */
+    merge(list) {
+        if (!list) { return this; }
+        if (list.constructor !== this.constructor) {
+            throw new TypeError("merge expects lists of equal type.");
+        }
+        let node = list.head;
+        while (node) {
+            const next = node.next;
+            if (!this.has(node)) {
+                this.insert(node, node.index);
+            }
+            node = next;
+        }
+        return this;
+    }    
 });
 
 function defaultOrder(a, b) {

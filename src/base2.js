@@ -37,7 +37,9 @@ const _subclass = function(_instance, _static) {
   function _class() {
     // Don't call the constructor function when prototyping.
     if (!__prototyping) {
-      if (this && (this.constructor == _class || this.__constructing)) {
+      if (this && (this.constructor == _class || this.__constructing ||
+          // The line below allows extension from real classes
+          Object.getPrototypeOf(this) instanceof _class)) {
         // Instantiation.
         this.__constructing = true;
         var instance = _constructor.apply(this, arguments);

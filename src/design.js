@@ -58,7 +58,7 @@ export const design = DesignMetadata.decorator(designMetadataKey,
         if (!isDescriptor(descriptor)) {
             if (target.length > key.length) {
                 throw new SyntaxError(
-                    `@design for constructor expects at least ${target.length} parameters but only ${key.length} specified`);
+                    `@design for constructor expects at least ${target.length} parameters but only ${key.length} specified.`);
             }            
             _validateTypes(key, 'design');
             DesignMetadata.define(paramTypesKey, key, target.prototype, "constructor");
@@ -68,14 +68,14 @@ export const design = DesignMetadata.decorator(designMetadataKey,
         if ($isFunction(value)) {
             if (value.length > types.length) {
                 throw new SyntaxError(
-                    `@design for method '${key}' expects at least ${value.length} parameters but only ${types.length} specified`);
+                    `@design for method '${key}' expects at least ${value.length} parameters but only ${types.length} specified.`);
             }
             _validateTypes(types, 'design');
             DesignMetadata.define(paramTypesKey, types, target, key);        
         } else if (types.length !== 1) {
-            throw new SyntaxError(`@design for property '${key}' requires a single type to be specified`);
+            throw new SyntaxError(`@design for property '${key}' requires a single type to be specified.`);
         } else if (DesignMetadata.has(propertyTypeKey, target, key)) {
-            throw new SyntaxError(`@design for property '${key}' should only be specified on getter or setter`);
+            throw new SyntaxError(`@design for property '${key}' should only be specified on getter or setter.`);
         } else {
             _validateTypes(types, 'design');
             DesignMetadata.define(propertyTypeKey, types[0], target, key);
@@ -89,23 +89,23 @@ export const design = DesignMetadata.decorator(designMetadataKey,
 export const designWithReturn = DesignWithReturnMetadata.decorator(designMetadataKey,
     (target, key, descriptor, [returnType, ...types]) => {
         if (!isDescriptor(descriptor)) {
-            throw new SyntaxError(`@designWithReturn cannot be applied to constructors`);
+            throw new SyntaxError(`@designWithReturn cannot be applied to constructors.`);
         }            
         const { value } = descriptor;
         if ($isFunction(value)) {
             if (!$isFunction(returnType)) {
                 throw new SyntaxError(
-                    `@designWithReturn for method '${key}' requires a valid return type`);
+                    `@designWithReturn for method '${key}' requires a valid return type.`);
             }
             if (value.length > types.length) {
                 throw new SyntaxError(
-                    `@designWithReturn for method '${key}' expects at least ${value.length} parameters but only ${types.length} specified`);
+                    `@designWithReturn for method '${key}' expects at least ${value.length} parameters but only ${types.length} specified.`);
             }
             _validateTypes(types, 'designWithReturn');
             DesignMetadata.define(returnTypeKey, returnType, target, key);                    
             DesignMetadata.define(paramTypesKey, types, target, key);
         } else {
-            throw new SyntaxError(`@designWithReturn ('${key}') cannot be applied to properties`);
+            throw new SyntaxError(`@designWithReturn ('${key}') cannot be applied to properties.`);
         }
     });
 
@@ -115,12 +115,12 @@ function _validateTypes(types, decorator) {
         if (type == null) { return };
         if (Array.isArray(type)) {
             if (type.length !== 1) {
-                throw new SyntaxError(`@${decorator} array specification at index ${i} expects a single type`);
+                throw new SyntaxError(`@${decorator} array specification at index ${i} expects a single type.`);
             }
             type = type[0];
         }
         if (!$isFunction(type)) {
-            throw new SyntaxError(`@${decorator} expects basic types, classes or protocols`);
+            throw new SyntaxError(`@${decorator} expects basic types, classes or protocols.`);
         }
     }
 }
