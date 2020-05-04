@@ -1,5 +1,4 @@
-import { createKey } from "private-parts";
-
+const { createKey } = require("private-parts");
 export { createKey as createPrivates };
 
 /*
