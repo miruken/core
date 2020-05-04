@@ -1,3 +1,7 @@
+import { createKey } from "private-parts";
+
+export { createKey as createPrivates };
+
 /*
   base2 - copyright 2007-2009, Dean Edwards
   http://code.google.com/p/base2/

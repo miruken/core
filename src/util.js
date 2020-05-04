@@ -1,5 +1,7 @@
 import { Base, typeOf } from "./base2";
 
+const _ = require("./base2").createPrivates();
+
 /**
  * Helper class to simplify array manipulation.
  * @class ArrayManager
@@ -9,17 +11,14 @@ import { Base, typeOf } from "./base2";
  */
 export const ArrayManager = Base.extend({
     constructor(items) {
-        this._items = [];
-        if (items) {
-            this.append(items);
-        }
+        _(this).items = items ? [...items] : [];
     },
     /** 
      * Gets the array.
      * @method getItems
      * @returns  {Array} array.
      */
-    getItems() { return this._items; },
+    getItems() { return _(this).items; },
     /** 
      * Gets the item at array `index`.
      * @method getIndex
@@ -27,8 +26,8 @@ export const ArrayManager = Base.extend({
      * @returns  {Any} item at index.
      */
     getIndex(index) {
-        if (this._items.length > index) {
-            return this._items[index];
+        if (_(this).items.length > index) {
+            return _(this).items[index];
         }
     },
     /** 
@@ -40,8 +39,8 @@ export const ArrayManager = Base.extend({
      * @chainable
      */
     setIndex(index, item) {
-        if (this._items[index] === undefined) {
-            this._items[index] = this.mapItem(item);
+        if (_(this).items[index] === undefined) {
+            _(this).items[index] = this.mapItem(item);
         }
         return this;
     },
@@ -54,7 +53,7 @@ export const ArrayManager = Base.extend({
      * @chainable
      */
     insertIndex(index, item) {
-        this._items.splice(index, 0, this.mapItem(item));
+        _(this).items.splice(index, 0, this.mapItem(item));
         return this;
     },
     /** 
@@ -66,7 +65,7 @@ export const ArrayManager = Base.extend({
      * @chainable
      */
     replaceIndex(index, item) {
-        this._items[index] = this.mapItem(item);
+        _(this).items[index] = this.mapItem(item);
         return this;
     },
     /** 
@@ -77,8 +76,8 @@ export const ArrayManager = Base.extend({
      * @chainable
      */
     removeIndex(index) {
-        if (this._items.length > index) {
-            this._items.splice(index, 1);
+        if (_(this).items.length > index) {
+            _(this).items.splice(index, 1);
         }
         return this;
     },
@@ -97,7 +96,7 @@ export const ArrayManager = Base.extend({
         }
         if (newItems) {
             for (let i = 0; i < newItems.length; ++i) {
-                this._items.push(this.mapItem(newItems[i]));
+                _(this).items.push(this.mapItem(newItems[i]));
             }
         }
         return this;
@@ -137,8 +136,8 @@ export const ArrayManager = Base.extend({
  */
 export const IndexedList = Base.extend({
     constructor(order = defaultOrder) {
-        this._index = {};
-        this._order = order;
+        _(this).index = {};
+        _(this).order = order;
     },
     /** 
      * Determines if list is empty.
@@ -170,7 +169,7 @@ export const IndexedList = Base.extend({
      * @returns  {Any}  the first node at index.
      */
     getFirst(index) {
-        return index && this._index[index];
+        return index && _(this).index[index];
     },
     /** 
      * Inserts `node` at `index`.
@@ -185,7 +184,7 @@ export const IndexedList = Base.extend({
         let insert = indexedNode;
         if (index) {
             insert = insert || this.head;
-            while (insert && this._order(node, insert) >= 0) {
+            while (insert && _(this).order(node, insert) >= 0) {
                 insert = insert.next;
             }
         }
@@ -215,7 +214,7 @@ export const IndexedList = Base.extend({
         if (index) {
             node.index = index;
             if (!indexedNode) {
-                this._index[index] = node;
+                _(this).index[index] = node;
             }
         }
         return this;
@@ -248,9 +247,9 @@ export const IndexedList = Base.extend({
         const index = node.index;
         if (this.getFirst(index) === node) {
             if (next && next.index === index) {
-                this._index[index] = next;
+                _(this).index[index] = next;
             } else {
-                delete this._index[index];
+                delete _(this).index[index];
             }
         }
         return this;

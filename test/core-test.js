@@ -21,8 +21,8 @@ import { design, designWithReturn } from "../src/design";
 import { inject } from "../src/inject";
 
 import {
-    IndexedList, $isFunction, $isString,
-    $flatten, $merge, $match
+    ArrayManager, IndexedList, $isFunction,
+    $isString, $flatten, $merge, $match
 } from "../src/util";
 import { debounce } from "../src/debounce";
 
@@ -30,6 +30,8 @@ import "reflect-metadata";
 import "../src/promise";
 
 import { expect } from "chai";
+
+const _ = require("../src/base2").createPrivates();
 
 const Code  = Symbol(),
       Breed = Symbol();
@@ -323,6 +325,12 @@ describe("Flags", () => {
             expect(DayOfWeek.Weekday.hasFlag(2)).to.be.true;            
         });        
     });    
+});
+
+describe("ArrayManager", () => {
+     it.only("should manage new array", () => {
+        const mgr = new ArrayManager();
+    });
 });
 
 describe("$isClass", () => {
@@ -1149,8 +1157,8 @@ describe("@design", () => {
               constructor(zooKeeper, animals) {},
 
               @design(Person)
-              get doctor() { return this._doctor; },
-              set doctor(value) { this._doctor = value; },
+              get doctor() { return _(this).doctor; },
+              set doctor(value) { _(this)._doctor = value; },
         
               @design(Dog, Elephant, AsianElephant)
               safari(dog, elephant, asianElephant) {},
