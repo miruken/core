@@ -1,6 +1,6 @@
 import { Base, typeOf } from "./base2";
 
-const _ = require("./base2").createPrivates();
+const _ = require("private-parts").createKey();
 
 /**
  * Helper class to simplify array manipulation.

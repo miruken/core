@@ -31,7 +31,7 @@ import "../src/promise";
 
 import { expect } from "chai";
 
-const _ = require("../src/base2").createPrivates();
+const _ = require("private-parts").createKey();
 
 const Code  = Symbol(),
       Breed = Symbol();

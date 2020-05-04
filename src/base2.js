@@ -1,5 +1,4 @@
 const { createKey } = require("private-parts");
-export { createKey as createPrivates };
 
 /*
   base2 - copyright 2007-2009, Dean Edwards
