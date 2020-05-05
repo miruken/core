@@ -1,7 +1,7 @@
 import { Base } from "./base2";
-import { createKey } from "./privates";
+import { createKeyChain } from "./core";
 
-const _ = createKey();
+const _ = createKeyChain();
 
 /**
  * Helper class to simplify array manipulation.

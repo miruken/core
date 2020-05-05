@@ -819,7 +819,7 @@ export function $decorated(decorator, deepest) {
  * @param {Function} key       object key to lookup
  * @param {Function} storeGet  gets value from the private store
  */
-export function createDecoratorChain(key, storeGet) {
+export function buildKeyChain(key, storeGet) {
     const decoratee = $decorated(key);
     return decoratee === key
          ? Object.create(null)
@@ -832,19 +832,19 @@ export function createDecoratorChain(key, storeGet) {
  * @param {Function} key       object key to lookup
  * @param {Function} storeGet  gets value from the private store
  */
-export function createDecorated(key, storeGet) {
+export function buildKeyInstance(key, storeGet) {
     const decoratee = $decorated(key, true);
     return decoratee === key
          ? Object.create(null)
          : storeGet(decoratee);
 }
 
-export function createKeyDecoratorChain() {
-    return createKey(createDecoratorChain);
+export function createKeyChain() {
+    return createKey(buildKeyChain);
 }
 
-export function createKeyDecorated() {
-    return createKey(createDecorated);
+export function createKeyInstance() {
+    return createKey(buildKeyInstance);
 }
 
 function isUpperCase(char) {

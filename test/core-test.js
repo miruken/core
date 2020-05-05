@@ -3,7 +3,7 @@ import createKey from "../src/privates";
 
 import {
     Enum, Flags, Protocol, MethodType,
-    createKeyDecorated, createKeyDecoratorChain,
+    createKeyInstance, createKeyChain,
     $isClass, $isFunction, $isString,
     $flatten, $protocols, $decorator,
     $decorate, $decorated
@@ -35,8 +35,8 @@ import "../src/promise";
 import { expect } from "chai";
 
 const _ = createKey(),
-      D = createKeyDecorated(),
-      C = createKeyDecoratorChain();
+      D = createKeyInstance(),
+      C = createKeyChain();
 
 const Code  = Symbol(),
       Breed = Symbol();
@@ -188,7 +188,7 @@ describe("privates", () => {
         });   
     });
 
-    describe("createDecorated", () => {
+    describe("buildKeyInstance", () => {
        const Player = Base.extend({
            constructor(name) {
               D(this).name = name;
@@ -228,7 +228,7 @@ describe("privates", () => {
         });   
     });
 
-    describe("createKeyDecoratorChain", () => {
+    describe("createKeyChain", () => {
        const Player = Base.extend({
            constructor(name) {
               C(this).name = name;
