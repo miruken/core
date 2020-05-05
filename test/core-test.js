@@ -29,7 +29,7 @@ import { debounce } from "../src/debounce";
 import "reflect-metadata";
 import "../src/promise";
 
-import { createKey as } from "private-parts";
+import { createKey } from "private-parts";
 import { expect } from "chai";
 
 const _ = createKey();
