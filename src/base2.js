@@ -1,4 +1,3 @@
-const { createKey } = require("private-parts");
 
 /*
   base2 - copyright 2007-2009, Dean Edwards
