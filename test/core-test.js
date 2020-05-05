@@ -1,38 +1,42 @@
 import { Base, assignID } from "../src/base2";
-import { Enum, Flags } from "../src/enum";
-import { Protocol, $protocols } from "../src/protocol";
+import createKey from "../src/privates";
+
 import {
-    MethodType, $isClass, $decorator,
-    $decorate, $decorated    
+    Enum, Flags, Protocol, MethodType,
+    createKeyDecorated, createKeyDecoratorChain,
+    $isClass, $isFunction, $isString,
+    $flatten, $protocols, $decorator,
+    $decorate, $decorated
 } from "../src/core";
+
 import {
     Modifier, $createModifier, $every
 } from "../src/modifier";
+
 import {
     Disposing, DisposingMixin, $using
 } from "../src/dispose";
+
 import {
     Facet, Interceptor, InterceptorSelector,
     ProxyBuilder
 } from "../src/proxy";
-import { Options } from "../src/options";
 
+import { Options } from "../src/options";
 import { design, designWithReturn } from "../src/design";
 import { inject } from "../src/inject";
 
-import {
-    ArrayManager, IndexedList, $isFunction,
-    $isString, $flatten, $merge, $match
-} from "../src/util";
+import { ArrayManager, IndexedList } from "../src/util";
 import { debounce } from "../src/debounce";
 
 import "reflect-metadata";
 import "../src/promise";
 
-import { createKey } from "private-parts";
 import { expect } from "chai";
 
-const _ = createKey();
+const _ = createKey(),
+      D = createKeyDecorated(),
+      C = createKeyDecoratorChain();
 
 const Code  = Symbol(),
       Breed = Symbol();
@@ -76,13 +80,15 @@ const CircusAnimal = Animal.extend(Tricks, {
 
 const Dog = Base.extend(Animal, Tricks, {
     constructor(name, color) {
-       this.extend({
-           get name() { return name; },
-           set name(value) { name = value; },
-           get color() { return color; },
-           set color(value) { color = value; }
-       });
+        C(this).name  = name;
+        C(this).color = color;
     },
+
+    get name() { return  C(this).name; },
+    set name(value) {  C(this).name = value; },
+    get color() { return C(this).color; },
+    set color(value) { C(this).color = value; },    
+
     talk() { return "Ruff Ruff"; },
     fetch(item) { return "Fetched " + item; },
     get [Code]() { return 1234; }    
@@ -99,13 +105,12 @@ const AsianElephant = Elephant.extend(Tracked);
 
 const ShoppingCart = Base.extend(Disposing, DisposingMixin, {
     constructor() {
-        let _items = [];
-        this.extend({
-            getItems() { return _items; },
-            addItem(item) { _items.push(item); }, 
-            _dispose() { _items = []; }
-        });
-    }
+        _(this).items = [];
+    },
+
+    getItems()    { return _(this).items; },
+    addItem(item) { _(this).items.push(item); }, 
+    _dispose()    { _(this).items = []; }    
 });
 
 const LogInterceptor = Interceptor.extend({
@@ -125,9 +130,9 @@ describe("miruken", () => {
             get name() { return "YO " + this.base(); }
         });
         const p = new Pincher("Poo");
-        expect(p.name).to.equal("Poo");
+        expect(p.name).to.equal("YO Poo");
         p.name = "Do";
-        expect(p.name).to.equal("Do");        
+        expect(p.name).to.equal("YO Do");        
     });
 
     const Math = Base.extend(null, {
@@ -149,6 +154,123 @@ describe("miruken", () => {
         expect(Geometry.add).to.equal(Math.add);
         expect(Geometry.identity(2)).to.equal(4);
     });
+});
+
+describe("privates", () => {
+    const echo = $decorator({
+        get name() {
+            return `${this.base()} ${this.base()}`;
+        }
+    });
+
+    describe("createKey", () => {
+       const Player = Base.extend({
+           constructor(name) {
+              _(this).name = name;
+           },
+
+           get name() { return _(this).name; },
+           set name(name) { _(this).name = name; }
+        });
+
+        it("should create privates", () => {
+            const player = new Player("Craig");
+            expect(player.name).to.equal("Craig");
+            player.name  = "Matthew";
+            expect(player.name).to.equal("Matthew");
+        });
+
+        it("should fail privates for decorators", () => {
+            const player = echo(new Player("Craig"));
+            expect(player.name).to.equal("undefined undefined");
+            player.name = "Matthew";
+            expect(player.name).to.equal("Matthew Matthew");
+        });   
+    });
+
+    describe("createDecorated", () => {
+       const Player = Base.extend({
+           constructor(name) {
+              D(this).name = name;
+           },
+
+           get name() { return D(this).name; },
+           set name(name) { D(this).name = name; }
+        });
+
+        it("should use decoratee store", () => {
+            const player     = new Player("Craig"),
+                  playerEcho = echo(player);
+            expect(D(player)).to.equal(D(playerEcho));
+        })
+
+        it("should create privates", () => {
+            const player     = new Player("Craig"),
+                  playerEcho = echo(player);
+            expect(player.name).to.equal("Craig");
+            expect(playerEcho.name).to.equal("Craig Craig");
+            player.name  = "Matthew";
+            expect(player.name).to.equal("Matthew");
+            expect(playerEcho.name).to.equal("Matthew Matthew");
+            playerEcho.name = "Lauren";
+            expect(player.name).to.equal("Lauren");
+            expect(playerEcho.name).to.equal("Lauren Lauren");
+            D(player).age = 13;
+            expect(D(player).age).to.equal(13);
+            expect(D(playerEcho).age).to.equal(13);            
+        });
+
+        it("should fail privates for decorators", () => {
+            const player     = new Player("Craig"),
+                  playerEcho = echo(player);
+            D(player).age = 13;
+            expect(_(playerEcho).age).to.be.undefined;
+        });   
+    });
+
+    describe("createKeyDecoratorChain", () => {
+       const Player = Base.extend({
+           constructor(name) {
+              C(this).name = name;
+           },
+
+           get name() { return C(this).name; },
+           set name(name) { C(this).name = name; }
+        });
+
+        it("should build decoratee chain", () => {
+            const player     = new Player("Craig"),
+                  playerEcho = echo(player);
+            expect(C(player)).to.not.equal(C(playerEcho));
+            expect(C(player)).to.equal(C(Object.getPrototypeOf(playerEcho)));
+        })
+
+        it("should create privates", () => {
+            const player     = new Player("Craig"),
+                  playerEcho = echo(player);
+            expect(player.name).to.equal("Craig");
+            expect(playerEcho.name).to.equal("Craig Craig");
+            player.name  = "Matthew";
+            expect(player.name).to.equal("Matthew");
+            expect(playerEcho.name).to.equal("Matthew Matthew");
+            playerEcho.name = "Lauren";
+            expect(player.name).to.equal("Matthew");
+            expect(playerEcho.name).to.equal("Lauren Lauren");
+            C(player).age = 13;
+            expect(C(player).age).to.equal(13);
+            expect(C(playerEcho).age).to.equal(13);
+            C(playerEcho).age = 16;
+            expect(C(playerEcho).age).to.equal(16);
+            expect(C(player).age).to.equal(13);
+        });
+
+        it("should fail privates for decorators", () => {
+            const player     = new Player("Craig"),
+                  playerEcho = echo(player);
+            C(player).age = 13;
+            expect(_(playerEcho).age).to.be.undefined;          
+        });   
+    });    
 });
 
 describe("Enum", () => {
@@ -329,7 +451,7 @@ describe("Flags", () => {
 });
 
 describe("ArrayManager", () => {
-     it.only("should manage new array", () => {
+     it("should manage new array", () => {
         const mgr = new ArrayManager();
     });
 });
@@ -836,15 +958,10 @@ describe("Protocol", () => {
         it("should delegate property gets to array", () => {
             let count = 0;
             const Dog2  = Dog.extend({
-                      constructor(name) {
-                          this.base(name);
-                          this.extend({
-                              get name() {
-                                  ++count;
-                                  return this.base();
-                              }
-                          });
-                      }
+                     get name() {
+                         ++count;
+                         return this.base();
+                      } 
                   }),            
                   dogs = [new Dog2("Franky"), new Dog2("Spot")];
             expect(Animal(dogs).name).to.equal("Spot");
@@ -862,14 +979,9 @@ describe("Protocol", () => {
         it("should delegate property sets to array", () => {
             let count = 0;
             const Dog2  = Dog.extend({
-                      constructor(name) {
-                          this.base(name);
-                          this.extend({
-                              get name() {
-                                  ++count;
-                                  return this.base();
-                              }
-                          });
+                     get name() {
+                         ++count;
+                         return this.base();
                       }
                   }),
                   dogs = [new Dog2("Franky"), new Dog2("Pebbles")];

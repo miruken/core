@@ -1,4 +1,4 @@
-import { Base  } from "./base2";
+import { Base } from "./base2";
 
 /**
  * Delegates properties and methods to another object.<br/>

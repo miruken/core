@@ -12,7 +12,7 @@ var jsName = paths.packageName + '.js';
 gulp.task("rollup", function(done) {
     rollup({
         input:   paths.source,
-        external: ["reflect-metadata", "private-parts"],        
+        external: "reflect-metadata",
         plugins: [
             rollupMultiEntry(),
             rollupBabel(),

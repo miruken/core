@@ -1,5 +1,5 @@
 import { Abstract, getPropertyDescriptors } from "./base2";
-import { $isFunction } from "./util";
+import { $isFunction } from "./core";
 import { decorate } from "./decorate";
 import "reflect-metadata";
 

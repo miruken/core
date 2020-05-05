@@ -1,8 +1,11 @@
-import { Base, getPropertyDescriptors } from "./base2";
-import { $isProtocol,$protocols } from "./protocol";
-import { MethodType, $isClass } from "./core";
-import { $isFunction } from "./util";
-import { Enum } from "./enum";
+import {
+    Base, getPropertyDescriptors
+} from "./base2";
+
+import { 
+    Enum, MethodType, $isFunction, $isClass,
+    $isProtocol, $protocols 
+} from "./core";
 
 /**
  * Facet choices for proxies.

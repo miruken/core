@@ -2,8 +2,7 @@ import {
     Base, getPropertyDescriptors
 } from "./base2";
 
-import { $isNothing, $isFunction } from "./util";
-import { emptyArray } from "./core";
+import { emptyArray, $isNothing, $isFunction } from "./core";
 
 export const Options = Base.extend({
     /**

@@ -1,5 +1,5 @@
-import {isDescriptor } from "./decorate";
-import { $isFunction } from "./util";
+import { $isFunction } from "./core";
+import { isDescriptor } from "./decorate";
 import { Metadata } from "./metadata";
 
 const designMetadataKey = Symbol(),

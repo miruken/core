@@ -8,7 +8,6 @@ System.config({
 
   map: {
     "chai": "npm:chai@3.5.0",
-    "private-parts": "npm:private-parts@0.4.1",
     "reflect-metadata": "npm:reflect-metadata@0.1.12",
     "github:jspm/nodelibs-assert@0.1.0": {
       "assert": "npm:assert@1.4.1"

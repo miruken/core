@@ -1,4 +1,4 @@
-import { $isFunction } from "./util";
+import { $isFunction } from "./core";
 import { decorate } from "./decorate";
 
 /**

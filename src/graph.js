@@ -1,7 +1,10 @@
-import { Base, Abstract, Module } from "./base2";
-import { $isFunction, $equals } from "./util";
-import { Protocol } from "./protocol";
-import { Enum } from "./enum";
+import { 
+    Base, Abstract, Module
+} from "./base2";
+
+import { 
+    Enum, Protocol, $isFunction, $equals
+} from "./core";
 
 /**
  * TraversingAxis enum
