@@ -12,7 +12,10 @@ const _ = createKeyChain();
  */
 export const ArrayManager = Base.extend({
     constructor(items) {
-        _(this).items = items ? [...items] : [];
+        _(this).items = [];
+        if (items) {
+            this.append(items);
+        }
     },
     /** 
      * Gets the array.
@@ -27,8 +30,9 @@ export const ArrayManager = Base.extend({
      * @returns  {Any} item at index.
      */
     getIndex(index) {
-        if (_(this).items.length > index) {
-            return _(this).items[index];
+        const { items } = _(this);
+        if (items.length > index) {
+            return items[index];
         }
     },
     /** 
@@ -40,8 +44,9 @@ export const ArrayManager = Base.extend({
      * @chainable
      */
     setIndex(index, item) {
-        if (_(this).items[index] === undefined) {
-            _(this).items[index] = this.mapItem(item);
+        const { items } = _(this);
+        if (items[index] === undefined) {
+            items[index] = this.mapItem(item);
         }
         return this;
     },
@@ -77,8 +82,9 @@ export const ArrayManager = Base.extend({
      * @chainable
      */
     removeIndex(index) {
-        if (_(this).items.length > index) {
-            _(this).items.splice(index, 1);
+        const { items } = _(this);
+        if (items.length > index) {
+            items.splice(index, 1);
         }
         return this;
     },
@@ -137,8 +143,9 @@ export const ArrayManager = Base.extend({
  */
 export const IndexedList = Base.extend({
     constructor(order = defaultOrder) {
-        _(this).index = {};
-        _(this).order = order;
+        const _this = _(this);
+        _this.index = {};
+        _this.order = order;
     },
     /** 
      * Determines if list is empty.
