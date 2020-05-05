@@ -29,9 +29,10 @@ import { debounce } from "../src/debounce";
 import "reflect-metadata";
 import "../src/promise";
 
+import { createKey as } from "private-parts";
 import { expect } from "chai";
 
-const _ = require("private-parts").createKey();
+const _ = createKey();
 
 const Code  = Symbol(),
       Breed = Symbol();
