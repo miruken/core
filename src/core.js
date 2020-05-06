@@ -36,85 +36,92 @@ export const emptyArray = Object.freeze([]),
 const Defining = Symbol();
 
 export const Enum = Base.extend({
-    constructor(value, name, ordinal) {
-        this.constructing(value, name);
-        Object.defineProperties(this, {
-            "value": {
-                value:        value,
-                writable:     false,
-                configurable: false
-            },
-            "name": {
-                value:        name,
-                writable:     false,
-                configurable: false
-            },
-            "ordinal": {
-                value:        ordinal,
-                writable:     false,
-                configurable: false
-            },
-        });
-    },
-    toString() { return this.name; },
-    toJSON() {
-        const value = this.value;
-        return value != null && $isFunction(value.toJSON)
-            ? value.toJSON()
-            : value;
-    },    
     get description() {
         const name = this.name;
         return name == null ? "undefined"
             : this.name.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
-    },    
-    constructing(value, name) {
-        if (!this.constructor[Defining]) {
-            throw new TypeError("Enums cannot be instantiated.");
-        }            
-    }
+    },
+
+    toJSON() {
+        const value = this.value;
+        return value != null && $isFunction(value.toJSON)
+             ? value.toJSON()
+             : value;
+    },   
+    toString() { return this.name; }
 }, {
     coerce(choices, behavior) {
-        if (this !== Enum && this !== Flags) {
+        let baseEnum;
+        if (this === Enum) {
+            baseEnum = SimpleEnum;
+        } else if (this === Flags) {
+            baseEnum = Flags;
+        } else {
             return;
         }
-        let en = this.extend(behavior, {
+        
+        let en = baseEnum.extend(behavior, {
             coerce(value) {
                 return this.fromValue(value);
-            }
+            }    
         });
-        en[Defining] = true;
-        const names  = Object.keys(choices);
-        let   items  = Object.keys(choices).map(
-            (name, ordinal) => en[name] = new en(choices[name], name, ordinal));
-        Object.defineProperties(en, {
-            "names": {
-                value:        Object.freeze(names),
-                writable:     false,
-                configurable: false
-            },
-            "items": {
-                value:        Object.freeze(items),
-                writable:     false,
-                configurable: false
-            }           
-        });
-        en.fromValue = this.fromValue;
+
+        const isCustom = $isFunction(choices);
+
+        if (isCustom) {
+            en = en.extend({
+                constructor() {
+                    if (!this.constructor[Defining]) {
+                        throw new TypeError("Enums cannot be instantiated.");
+                    }
+                    this.base(...arguments); 
+                }
+            });
+            en[Defining] = true;
+            choices = choices((...args) => Reflect.construct(en, args));
+        } else {
+            en[Defining] = true;
+        }
+
+        const names = Object.keys(choices);
+        let   items = names.map(
+            (name, ordinal) => {
+                const item   = choices[name],
+                      choice = isCustom ? item : new en(item, name);
+                if (isCustom) {
+                    createReadonlyProperty(choice, "name", name);    
+                }
+                createReadonlyProperty(choice, "ordinal", ordinal);
+                createReadonlyProperty(en, name, choice);
+                return choice;
+            });
+        createReadonlyProperty(en, "names", Object.freeze(names));
+        createReadonlyProperty(en, "items", Object.freeze(items));
         delete en[Defining]
         return en;
-    },
+    }
+});
+Enum.prototype.valueOf = function () {
+    return "value" in this ? this.value : this;
+}
+
+const SimpleEnum = Enum.extend({
+    constructor(value, name) {
+        if (!this.constructor[Defining]) {
+            throw new TypeError("Enums cannot be instantiated.");
+        }
+        createReadonlyProperty(this, "value", value);
+        createReadonlyProperty(this, "name", name);         
+    }
+}, {
     fromValue(value) {
         const match = this.items.find(item => item.value == value);
         if (!match) {
             throw new TypeError(`${value} is not a valid value for this Enum.`);
         }
         return match;
-    }
+    }    
 });
-Enum.prototype.valueOf = function () {
-    const value = +this.value;
-    return isNaN(value) ? this.ordinal : value;
-}
 
 /**
  * Defines a flags enumeration.
@@ -131,10 +138,18 @@ Enum.prototype.valueOf = function () {
  * </pre>
  * @class Enum
  * @constructor
- * @param  {Any} value     -  flag value
- * @param  {string} value  -  flag name
+ * @param  {Any}    value   -  flag value
+ * @param  {string} [name]  -  flag name
  */    
 export const Flags = Enum.extend({
+    constructor(value, name) {
+        if (!$isNumber(value) || !Number.isInteger(value)) {
+            throw new TypeError(`Flag named '${name}' has value '${value}' which is not an integer`);
+        }
+        createReadonlyProperty(this, "value", value);
+        createReadonlyProperty(this, "name", name);  
+    },
+
     hasFlag(flag) {
         flag = +flag;
         return (this & flag) === flag;
@@ -166,6 +181,14 @@ export const Flags = Enum.extend({
         return new this(value, name);
     }
 });
+
+function createReadonlyProperty(object, name, value) {
+    Object.defineProperty(object, name, {
+        value:        value,
+        writable:     false,
+        configurable: false
+    });
+}
 
 /**
  * Type of property method.
@@ -635,6 +658,31 @@ export function $isString(str) {
  */
 export function $isSymbol(str) {
     return Object(str) instanceof Symbol;
+}
+
+/**
+ * Determines if `obj` is a number.
+ * @method $isNumber
+ * @param    {Any}      value          -  number to test
+ * @param    {boolean}  allowInfinity  -  true if allow infinity
+ * @returns  {boolean} true if a number.
+ */
+export function $isNumber(value, allowInfinity) {
+    if (typeOf(value) !== "number") {
+        return false;
+    }
+
+    // NaN is the only JavaScript value that never equals itself.
+    if (value !== Number(value)) {
+        return false
+    }
+
+    if (allowInfinity !== true &&
+        (value === Infinity || value === !Infinity)) {
+        return false
+    }
+
+    return true;
 }
 
 /**

@@ -269,11 +269,21 @@ describe("Enum", () => {
 
     describe("#valueOf", () => {
         it("should obtain value", () => {
+            expect(Color.red.valueOf()).to.equal(1);
+            expect(Color.blue.valueOf()).to.equal(2);
+            expect(Color.green.valueOf()).to.equal(3);
+            expect(Message.run.valueOf()).to.equal("run");
+            expect(Message.cancel.valueOf()).to.equal("cancel");            
+        });
+    });
+
+    describe("#unaryPlus", () => {
+        it("should obtain number", () => {
             expect(+Color.red).to.equal(1);
             expect(+Color.blue).to.equal(2);
             expect(+Color.green).to.equal(3);
-            expect(+Message.run).to.equal(0);
-            expect(+Message.cancel).to.equal(1);            
+            expect(+Message.run).to.eql(NaN);
+            expect(+Message.cancel).to.eql(NaN);            
         });
     });
 
@@ -307,6 +317,12 @@ describe("Enum", () => {
                 const color = Color(10);
             }).to.throw(Error, /10 is not a valid value for this Enum./);            
         });
+
+        it("should throw exception if instantiated", () => {
+            expect(() => {
+                new Color(29);
+            }).to.throw(TypeError, "Enums cannot be instantiated.");
+        }); 
     });
     
     it("should support logical operations", () => {
@@ -333,7 +349,98 @@ describe("Enum", () => {
         });
         expect(Color.red.rgb).to.equal("#FFFFFF");
         expect(Color.green.displayName).to.equal("green");        
-    });    
+    });
+
+    describe("Custom", () => {
+        const Store = Enum(Store => ({
+            amazon:  Store(13, "www.amazon.com"),
+            target:  Store(24, "www.target.com"),
+            walmart: Store(9,  "www.walmart.com")
+        }), {
+            constructor(code, website) {
+                this.extend({
+                    get code()    { return code; },
+                    get website() { return website; }
+                });
+            },
+
+            placeOrder(plu, quantity) {
+                console.log(`Placing order for ${quantity} of '${plu}' from ${this.name} (${this.website})`);
+            },
+            toString() {
+                return `Store ${this.name} (${this.code}) @ ${this.website}`;
+            }
+        });
+
+        describe("#name", () => {
+            it("should obtain name", () => {
+                expect(Store.amazon.name).to.equal("amazon");
+                expect(Store.target.name).to.equal("target");
+                expect(Store.walmart.name).to.equal("walmart");
+            });
+        });
+        
+        describe("#ordinal", () => {
+            it("should obtain ordinal", () => {
+                expect(Store.amazon.ordinal).to.equal(0);
+                expect(Store.target.ordinal).to.equal(1);
+                expect(Store.walmart.ordinal).to.equal(2);
+            });
+        });
+
+        describe("#state", () => {
+            it("should obtain state", () => {
+                expect(Store.amazon.code).to.equal(13);
+                expect(Store.target.code).to.equal(24);
+                expect(Store.walmart.code).to.equal(9);         
+            });
+        });
+
+        describe("#valueOf", () => {
+            it("should obtain value", () => {
+                expect(Store.amazon.valueOf()).to.equal(Store.amazon);
+                expect(Store.target.valueOf()).to.equal(Store.target);
+                expect(Store.walmart.valueOf()).to.equal(Store.walmart);          
+            });
+        });
+
+        describe("#unaryPlus", () => {
+            it("should obtain number", () => {
+                expect(+Store.amazon).to.eql(NaN);
+                expect(+Store.target).to.eql(NaN);
+                expect(+Store.walmart).to.eql(NaN);            
+            });
+        });
+        
+        describe("#toString", () => {
+            it("should convert to string", () => {
+                expect(Store.amazon.toString()).to.equal(
+                    "Store amazon (13) @ www.amazon.com");
+                expect(Store.target.toString()).to.equal(
+                    "Store target (24) @ www.target.com");
+                expect(Store.walmart.toString()).to.equal(
+                    "Store walmart (9) @ www.walmart.com");                    
+            });
+        });
+
+        describe("#names", () => {
+            it("should obtain all names", () => {
+                expect(Store.names).to.include("amazon", "target", "walmart");
+            });
+        });
+
+        it("should throw exception if instantiated", () => {
+            expect(() => {
+                new Store("Sears", 91);
+            }).to.throw(TypeError, "Enums cannot be instantiated.");
+        });
+
+        describe("#methods", () => {
+            it("should call methods", () => {
+                Store.target.placeOrder("Q8714", 3);
+            });
+        });              
+    });
 });
 
 describe("Flags", () => {
@@ -352,7 +459,15 @@ describe("Flags", () => {
     describe("#value", () => {
         it("should obtain value", () => {
             expect(DayOfWeek.Monday.value).to.equal(1);
-            expect(DayOfWeek.Tuesday.value).to.equal(2);            
+            expect(DayOfWeek.Tuesday.value).to.equal(2);
+        });
+
+        it("should reject flag if not an integer", () => {
+            expect(() => { 
+                const BadFlags = Flags({
+                    level: "DEBUG"
+                });
+            }).to.throw(TypeError, "Flag named 'level' has value 'DEBUG' which is not an integer");
         });
     });
 
@@ -367,6 +482,13 @@ describe("Flags", () => {
 
     describe("#valueOf", () => {
         it("should obtain value", () => {
+            expect(DayOfWeek.Friday.valueOf()).to.equal(16);
+            expect(DayOfWeek.Weekend.valueOf()).to.equal(96);            
+        });
+    });
+
+    describe("#unaryPlus", () => {
+        it("should obtain number", () => {
             expect(+DayOfWeek.Friday).to.equal(16);
             expect(+DayOfWeek.Weekend).to.equal(96);            
         });
