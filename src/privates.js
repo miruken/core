@@ -61,4 +61,15 @@ function createBound(obj) {
   };
 }
 
+export function createKeyChain(key, storeGet) {
+  return createKey(buildKeyChain);
+}
+
+function buildKeyChain(key, storeGet) {
+  const obj = Object.getPrototypeOf(key);
+  return obj === Object.prototype || obj == null
+       ? Object.create(null)
+       : Object.create(storeGet(obj));
+}
+
 export default createKey;

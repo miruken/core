@@ -1,5 +1,5 @@
 import { Base } from "./base2";
-import { createKeyChain } from "./core";
+import { createKeyChain } from "./privates";
 
 const _ = createKeyChain();
 

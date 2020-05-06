@@ -823,66 +823,6 @@ export function $decorated(decorator, deepest) {
     return decorator;
 }
 
-/**
- * Factory to create a values provider for a key
- * that uses the full decorator chain, or self,
- * as the effective key.
- * @param {Function} findDecorator  function to
- * retrieve a decorated instance.  It must conform
- * to the {{#crossLink "$decorated "}}{{/crossLink}}
- * function.
- */
-function createKeyChainProvider(findDecorator) {
-    return function (key, storeGet) {
-        const decoratee = findDecorator(key);
-        return decoratee === key
-             ? Object.create(null)
-             : Object.create(storeGet(decoratee));
-    }
-}
-
-const $decoratedKeyChain = createKey(createKeyChainProvider($decorated));
-
-export function createKeyChain(findDecorator) {
-    if ($isNothing(findDecorator)) {
-        return $decoratedKeyChain;
-    }
-    if (!$isFunction(findDecorator)) {
-        throw TypeError("findDecorator must be a function that accepts an object and optional boolean");
-    }
-    createKey(createKeyChainProvider(findDecorator));
-}
-
-/**
- * Factory to create a values provider for a key
- * that uses the deepest decoratee, or self, as
- * the effective key.
- * @param {Function} findDecorator  function to
- * retrieve a decorated instance.  It must conform
- * to the {{#crossLink "$decorated "}}{{/crossLink}}
- * function.
- */
-function createKeyInstanceProvider(findDecorator) {
-    return function (key, storeGet) {
-        const decoratee = findDecorator(key, true);
-        return decoratee === key
-             ? Object.create(null)
-             : storeGet(decoratee);
-    }
-}
-
-const $decoratedKeyInstance = createKey(createKeyInstanceProvider($decorated));
-
-export function createKeyInstance(findDecorator) {
-    if ($isNothing(findDecorator)) {
-        return $decoratedKeyInstance;
-    }
-    if (!$isFunction(findDecorator)) {
-        throw TypeError("findDecorator must be a function that accepts an object and optional boolean");
-    }    
-    return createKey(createKeyInstanceProvider(findDecorator));
-}
-
 function isUpperCase(char) {
     return char.toUpperCase() === char;
 }

@@ -1,13 +1,15 @@
 import { Base, assignID } from "../src/base2";
-import createKey from "../src/privates";
 
 import {
     Enum, Flags, Protocol, MethodType,
-    createKeyInstance, createKeyChain,
     $isClass, $isFunction, $isString,
     $flatten, $protocols, $decorator,
     $decorate, $decorated
 } from "../src/core";
+
+import {
+    createKey, createKeyChain
+} from "../src/privates";
 
 import {
     Modifier, $createModifier, $every
@@ -34,7 +36,6 @@ import "../src/promise";
 import { expect } from "chai";
 
 const _ = createKey(),
-      D = createKeyInstance(),
       C = createKeyChain();
 
 const Code  = Symbol(),
@@ -184,46 +185,6 @@ describe("privates", () => {
             expect(player.name).to.equal("undefined undefined");
             player.name = "Matthew";
             expect(player.name).to.equal("Matthew Matthew");
-        });   
-    });
-
-    describe("buildKeyInstance", () => {
-       const Player = Base.extend({
-           constructor(name) {
-              D(this).name = name;
-           },
-
-           get name() { return D(this).name; },
-           set name(name) { D(this).name = name; }
-        });
-
-        it("should use decoratee store", () => {
-            const player     = new Player("Craig"),
-                  playerEcho = echo(player);
-            expect(D(player)).to.equal(D(playerEcho));
-        })
-
-        it("should create privates", () => {
-            const player     = new Player("Craig"),
-                  playerEcho = echo(player);
-            expect(player.name).to.equal("Craig");
-            expect(playerEcho.name).to.equal("Craig Craig");
-            player.name  = "Matthew";
-            expect(player.name).to.equal("Matthew");
-            expect(playerEcho.name).to.equal("Matthew Matthew");
-            playerEcho.name = "Lauren";
-            expect(player.name).to.equal("Lauren");
-            expect(playerEcho.name).to.equal("Lauren Lauren");
-            D(player).age = 13;
-            expect(D(player).age).to.equal(13);
-            expect(D(playerEcho).age).to.equal(13);            
-        });
-
-        it("should fail privates for decorators", () => {
-            const player     = new Player("Craig"),
-                  playerEcho = echo(player);
-            D(player).age = 13;
-            expect(_(playerEcho).age).to.be.undefined;
         });   
     });
 

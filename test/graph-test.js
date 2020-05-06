@@ -1,5 +1,5 @@
 import { Base } from "../src/base2";
-import { createKeyChain } from "../src/core";
+import { createKeyChain } from "../src/privates";
 
 import {
     Traversal, Traversing, TraversingAxis,
