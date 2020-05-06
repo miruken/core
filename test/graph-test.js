@@ -1,28 +1,31 @@
 import { Base } from "../src/base2";
+import { createKeyChain } from "../src/core";
+
 import {
-    Traversal, Traversing, TraversingAxis, TraversingMixin
+    Traversal, Traversing, TraversingAxis,
+    TraversingMixin
 } from "../src/graph";
-import "../src/core";
 
 import { expect } from "chai";
 
+const _ = createKeyChain();
+
 export const TreeNode = Base.extend(Traversing, TraversingMixin, {
-    constructor(data) { 
-        let _children = [];
-        this.extend({
-            get parent() { return null; },
-            get children() { return _children; },                
-            get data() { return data; },
-            addChild(...nodes) {
-                const parent = this;
-                nodes.forEach(node => {
-                    node.extend({get parent() { return parent; }});
-                    _children.push(node);
-                });
-                return this;
-            }
+    constructor(data) {
+        _(this).children = [];
+    },
+
+    get parent()   { return null; },
+    get children() { return _(this).children; },                
+    get data()     { return data; },
+    addChild(...nodes) {
+        const parent = this;
+        nodes.forEach(node => {
+            node.extend({get parent() { return parent; }});
+            this.children.push(node);
         });
-    }
+        return this;
+    }   
 });
 
 describe("Traversing", () => {
