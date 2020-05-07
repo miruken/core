@@ -89,10 +89,13 @@ export const design = DesignMetadata.decorator(designMetadataKey,
 export const designWithReturn = DesignWithReturnMetadata.decorator(designMetadataKey,
     (target, key, descriptor, [returnType, ...types]) => {
         if (!isDescriptor(descriptor)) {
-            throw new SyntaxError(`@designWithReturn cannot be applied to constructors.`);
+            throw new SyntaxError(`@designWithReturn cannot be applied to classes.`);
         }            
         const { value } = descriptor;
         if ($isFunction(value)) {
+            if (key === "constructor") {
+                throw new SyntaxError(`@designWithReturn cannot be applied to constructors.`);
+            }
             if (!$isFunction(returnType)) {
                 throw new SyntaxError(
                     `@designWithReturn for method '${key}' requires a valid return type.`);

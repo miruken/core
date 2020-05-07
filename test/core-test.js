@@ -1394,6 +1394,15 @@ describe("@design", () => {
         }).to.throw(Error, "@design for property 'farmer' should only be specified on getter or setter");        
     });
 
+    it("should reject constructor designWithReturn", () => {
+        expect(() => {
+            Base.extend({
+                @designWithReturn
+                constructor() {}
+            });  
+        }).to.throw(Error, "@designWithReturn cannot be applied to constructors.");
+    });
+
     it("should reject invalid array specifications", () => {
         expect(() => {
             Base.extend({
