@@ -1,6 +1,6 @@
-import { Metadata } from "./metadata";
+import { $isFunction, $flatten } from "./base2";
+import Metadata from "./metadata";
 import { isDescriptor } from "./decorate";
-import { $isFunction, $flatten } from "./core";
 
 const injectMetadataKey = Symbol();
 

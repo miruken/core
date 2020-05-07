@@ -1,6 +1,6 @@
-import { $isFunction } from "./core";
+import { $isFunction } from "./base2";
 import { isDescriptor } from "./decorate";
-import { Metadata } from "./metadata";
+import Metadata from "./metadata";
 
 const designMetadataKey = Symbol(),
       paramTypesKey     = "design:paramtypes",

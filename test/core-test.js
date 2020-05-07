@@ -1,9 +1,16 @@
-import { Base, assignID } from "../src/base2";
+import { 
+    Base, assignID, $isString,
+    $isFunction, $flatten
+} from "../src/base2";
+
+import { Enum, Flags } from "../src/enum";
+
+import { 
+    Protocol, $protocols
+} from "../src/protocol";
 
 import {
-    Enum, Flags, Protocol, MethodType,
-    $isClass, $isFunction, $isString,
-    $flatten, $protocols, $decorator,
+    MethodType, $isClass, $decorator,
     $decorate, $decorated
 } from "../src/core";
 
@@ -297,6 +304,16 @@ describe("Enum", () => {
         });
     });
 
+    describe("#toJSON", () => {
+        it("should obtain JSON value", () => {
+            expect(Color.red.toJSON()).to.equal(1);
+            expect(Color.blue.toJSON()).to.equal(2);
+            expect(Color.green.toJSON()).to.equal(3);
+            expect(Message.run.toJSON()).to.equal("run");
+            expect(Message.cancel.toJSON()).to.equal("cancel");            
+        });
+    });
+
     describe("#names", () => {
         it("should obtain all names", () => {
             expect(Color.names).to.include("red", "blue", "green");
@@ -423,6 +440,14 @@ describe("Enum", () => {
             });
         });
 
+        describe("#toJSON", () => {
+            it("should obtain JSON value", () => {
+                expect(Store.amazon.toJSON()).to.equal(Store.amazon);
+                expect(Store.target.toJSON()).to.equal(Store.target);
+                expect(Store.walmart.toJSON()).to.equal(Store.walmart);   
+            });
+        });
+
         describe("#names", () => {
             it("should obtain all names", () => {
                 expect(Store.names).to.include("amazon", "target", "walmart");
@@ -502,6 +527,13 @@ describe("Flags", () => {
         });
     });
     
+    describe("#toJSON", () => {
+        it("should obtain JSON value", () => {
+            expect(DayOfWeek.Friday.toJSON()).to.equal(16);
+            expect(DayOfWeek.Weekend.toJSON()).to.equal(96);           
+        });
+    });
+
     describe("#names", () => {
         it("should obtain all names", () => {
             expect(DayOfWeek.names).to.include(
