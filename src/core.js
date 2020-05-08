@@ -94,8 +94,8 @@ Base.extend = function (...args) {
     let members      = args.shift() || {},
         classMembers = args.shift() || {},
         derived      = baseExtend.call(this, members, classMembers);
-    Metadata.transferOwn(derived, classMembers);
-    Metadata.transferOwn(derived.prototype, members);
+    Metadata.copyOwn(derived, classMembers);
+    Metadata.copyOwn(derived.prototype, members);
     if (decorators.length > 0) {
         derived = Reflect.decorate(decorators, derived);
     }
@@ -107,7 +107,7 @@ Base.implement = function (source) {
         source = protocol(source) || source;
     }
     var type = baseImplement.call(this, source);
-    Metadata.mergeOwn(type.prototype, source, true);
+    Metadata.mergeOwn(type.prototype, source);
     return type;
 }
 
@@ -119,7 +119,7 @@ Base.prototype.extend = function (key, value) {
             key = protocol(key) || key;
         }
         const instance = baseProtoExtend.call(this, key);
-        Metadata.mergeOwn(instance, key, true);            
+        Metadata.mergeOwn(instance, key);            
         return instance;
     }
     return baseProtoExtend.call(this, key, value);

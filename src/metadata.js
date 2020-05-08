@@ -161,55 +161,26 @@ export const Metadata = Abstract.extend(null, {
         });
     },
     /**
-     * Transfers all metadata from `source` onto `target`.
-     * @static
-     * @method copyOwn
-     * @param   {Any}  target  -  recieves metadata
-     * @param   {Any}  source  -  provides metadata
-     */
-    transferOwn(target, source) {
-        this.transferOwnKey(target, source);
-        Reflect.ownKeys(source).forEach(sourceKey => this.transferOwnKey(target, source, sourceKey));
-    },    
-    /**
-     * Transfers all `sourceKey` metadata from `source` onto `target`.
-     * @static
-     * @method copyOwnKey
-     * @param   {Any}  target     -  recieves metadata
-     * @param   {Any}  source     -  provides metadata
-     * @param   {Any}  sourceKey  -  source property to copy from
-     */
-    transferOwnKey(target, source, sourceKey) {
-        const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
-        metadataKeys.forEach(metadataKey => {
-            const metadata = this.getOwn(metadataKey, source, sourceKey);
-            this.define(metadataKey, metadata, target, sourceKey);
-            this.remove(metadataKey, source, sourceKey);
-        });
-    },    
-    /**
      * Merges all metadata from `source` onto `target`.
      * @static
      * @method mergeOwn
-     * @param   {Any}      target            -  recieves metadata
-     * @param   {Any}      source            -  provides metadata
-     * @param   {boolean}  removeFromSource  -  true to remove source metadata
+     * @param   {Any}   target  -  recieves metadata
+     * @param   {Any}   source  -  provides metadata
      */    
-    mergeOwn(target, source, removeFromSource) {
-        this.mergeOwnKey(target, source, undefined, removeFromSource);
+    mergeOwn(target, source) {
+        this.mergeOwnKey(target, source, undefined);
         Reflect.ownKeys(source).forEach(sourceKey => 
-            this.mergeOwnKey(target, source, sourceKey, removeFromSource));
+            this.mergeOwnKey(target, source, sourceKey));
     },
     /**
      * Merges all `sourceKey` metadata from `source` onto `target`.
      * @static
      * @method mergeOwnKey
-     * @param   {Any}      target            -  recieves metadata
-     * @param   {Any}      source            -  provides metadata
-     * @param   {Any}      sourceKey         -  source property to copy from
-     * @param   {boolean}  removeFromSource  -  true to remove source metadata
+     * @param   {Any}      target     -  recieves metadata
+     * @param   {Any}      source     -  provides metadata
+     * @param   {Any}      sourceKey  -  source property to copy from
      */    
-    mergeOwnKey(target, source, sourceKey, removeFromSource) {
+    mergeOwnKey(target, source, sourceKey) {
         const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(metadataKey => {
             const targetMetadata = this.getOwn(metadataKey, target, sourceKey),
@@ -218,9 +189,6 @@ export const Metadata = Abstract.extend(null, {
                 targetMetadata.merge(sourceMetadata);
             } else {
                 this.define(metadataKey, sourceMetadata, target, sourceKey);                
-            }
-            if (removeFromSource) {
-                this.remove(metadataKey, source, sourceKey);
             }
         });
     },
