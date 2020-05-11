@@ -1,6 +1,5 @@
 import {
-    Base, $isSomething, $isFunction,
-    $isNumber
+    Base, $isSomething, $isFunction, $isNumber
 } from "./base2";
 
 /**

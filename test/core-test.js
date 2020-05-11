@@ -14,9 +14,7 @@ import {
     $decorate, $decorated
 } from "../src/core";
 
-import {
-    createKey, createKeyChain
-} from "../src/privates";
+import { createKeyChain } from "../src/privates";
 
 import {
     Modifier, $createModifier, $every
@@ -42,8 +40,7 @@ import "../src/promise";
 
 import { expect } from "chai";
 
-const _ = createKey(),
-      C = createKeyChain();
+const _ = createKeyChain();
 
 const Code  = Symbol(),
       Breed = Symbol();
@@ -87,14 +84,14 @@ const CircusAnimal = Animal.extend(Tricks, {
 
 const Dog = Base.extend(Animal, Tricks, {
     constructor(name, color) {
-        C(this).name  = name;
-        C(this).color = color;
+        _(this).name  = name;
+        _(this).color = color;
     },
 
-    get name() { return  C(this).name; },
-    set name(value) {  C(this).name = value; },
-    get color() { return C(this).color; },
-    set color(value) { C(this).color = value; },    
+    get name()       { return  _(this).name; },
+    set name(value)  {  _(this).name = value; },
+    get color()      { return _(this).color; },
+    set color(value) { _(this).color = value; },    
 
     talk() { return "Ruff Ruff"; },
     fetch(item) { return "Fetched " + item; },
@@ -163,82 +160,6 @@ describe("miruken", () => {
     });
 });
 
-describe("privates", () => {
-    const echo = $decorator({
-        get name() {
-            return `${this.base()} ${this.base()}`;
-        }
-    });
-
-    describe("createKey", () => {
-       const Player = Base.extend({
-           constructor(name) {
-              _(this).name = name;
-           },
-
-           get name() { return _(this).name; },
-           set name(name) { _(this).name = name; }
-        });
-
-        it("should create privates", () => {
-            const player = new Player("Craig");
-            expect(player.name).to.equal("Craig");
-            player.name  = "Matthew";
-            expect(player.name).to.equal("Matthew");
-        });
-
-        it("should fail privates for decorators", () => {
-            const player = echo(new Player("Craig"));
-            expect(player.name).to.equal("undefined undefined");
-            player.name = "Matthew";
-            expect(player.name).to.equal("Matthew Matthew");
-        });   
-    });
-
-    describe("createKeyChain", () => {
-       const Player = Base.extend({
-           constructor(name) {
-              C(this).name = name;
-           },
-
-           get name() { return C(this).name; },
-           set name(name) { C(this).name = name; }
-        });
-
-        it("should build decoratee chain", () => {
-            const player     = new Player("Craig"),
-                  playerEcho = echo(player);
-            expect(C(player)).to.not.equal(C(playerEcho));
-            expect(C(player)).to.equal(C(Object.getPrototypeOf(playerEcho)));
-        })
-
-        it("should create privates", () => {
-            const player     = new Player("Craig"),
-                  playerEcho = echo(player);
-            expect(player.name).to.equal("Craig");
-            expect(playerEcho.name).to.equal("Craig Craig");
-            player.name  = "Matthew";
-            expect(player.name).to.equal("Matthew");
-            expect(playerEcho.name).to.equal("Matthew Matthew");
-            playerEcho.name = "Lauren";
-            expect(player.name).to.equal("Matthew");
-            expect(playerEcho.name).to.equal("Lauren Lauren");
-            C(player).age = 13;
-            expect(C(player).age).to.equal(13);
-            expect(C(playerEcho).age).to.equal(13);
-            C(playerEcho).age = 16;
-            expect(C(playerEcho).age).to.equal(16);
-            expect(C(player).age).to.equal(13);
-        });
-
-        it("should fail privates for decorators", () => {
-            const player     = new Player("Craig"),
-                  playerEcho = echo(player);
-            C(player).age = 13;
-            expect(_(playerEcho).age).to.be.undefined;          
-        });   
-    });    
-});
 
 describe("Enum", () => {
     const Color = Enum({red: 1, blue: 2, green: 3}),

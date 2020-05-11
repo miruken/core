@@ -61,7 +61,11 @@ function createBound(obj) {
   };
 }
 
-export function createKeyChain(key, storeGet) {
+/**
+* Private key chain 
+*/
+
+export function createKeyChain() {
   return createKey(buildKeyChain);
 }
 
