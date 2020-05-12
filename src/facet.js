@@ -6,35 +6,30 @@ import {
 /**
  * Annotates invariance.
  * @attribute $eq
- * @for Modifier
  */
 export const $eq = $createFacet();
 
 /**
  * Annotates use value as is.
  * @attribute $use
- * @for Modifier
  */    
 export const $use = $createFacet();
 
 /**
  * Annotates lazy semantics.
  * @attribute $lazy
- * @for Modifier
  */            
 export const $lazy = $createFacet();
 
 /**
  * Annotates function to be evaluated.
  * @attribute $eval
- * @for Modifier
  */                
 export const $eval = $createFacet();
 
 /**
  * Annotates zero or more semantics.
  * @attribute $every
- * @for Modifier
  */                    
 export const $every = $createFacet();
 
@@ -42,28 +37,24 @@ export const $every = $createFacet();
  * Annotates 
  * @attribute use {{#crossLink "Parenting"}}{{/crossLink}} protocol.
  * @attribute $child
- * @for Modifier
  */                        
 export const $child = $createFacet();
 
 /**
  * Annotates optional semantics.
  * @attribute $optional
- * @for Modifier
  */                        
 export const $optional = $createFacet();
 
 /**
  * Annotates Promise expectation.
  * @attribute $promise
- * @for Modifier
  */                            
 export const $promise = $createFacet();
 
 /**
  * Annotates synchronous.
  * @attribute $instant
- * @for Modifier
  */                                
 export const $instant = $createFacet();
 
@@ -102,10 +93,12 @@ export function $createFacet() {
         return decorator;
     }
     facet.getArgs = function (content) {
-        return content[key];
+        if ($isSomething(content)) {
+            return content[key];
+        }
     };
     facet.test = function (content) {
-        return !!content[key];
+        return $isSomething(content) && !!content[key];
     };
 
     return facet;
