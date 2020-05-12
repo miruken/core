@@ -15,7 +15,7 @@ import {
 } from "../src/core";
 
 import { 
-    $createFacet, $content, $every
+    $createFacet, $contents, $every
 } from "../src/facet";
 
 import {
@@ -753,7 +753,7 @@ describe("Facet", () => {
             const wrap    = $createFacet("wrap"),
                   wrapped = wrap(22);
             expect(wrap.test(wrapped)).to.be.true;
-            expect(wrapped.getContent()).to.equal(22);
+            expect(wrapped.$getContents()).to.equal(22);
         });
         
         it("should not add a facet using new operator", () => {
@@ -767,7 +767,7 @@ describe("Facet", () => {
             const wrap    = $createFacet("wrap"),
                   wrapped = wrap(wrap("soccer")),
                   content = Object.getPrototypeOf(wrapped);
-            expect(content).to.be.instanceOf($content);
+            expect(content).to.be.instanceOf($contents);
         });
     })
 
@@ -783,13 +783,17 @@ describe("Facet", () => {
         });
     });
 
-    describe("$content", () => {
+    describe("$contents", () => {
+         it("should return input if no facets", () => {
+            expect($contents("Hello")).to.equal("Hello");
+        });
+
         it("should obtain facet contents", () => {
             const shape = $createFacet("shape"),
                   wrap  = $createFacet("wrap"),
                   roll  = $createFacet("roll"),
                   chain = shape(wrap(roll(19)));
-            expect($content(chain)).to.equal(19);
+            expect($contents(chain)).to.equal(19);
         });
     });
 });
@@ -1370,13 +1374,13 @@ describe("inject", () => {
     it("should get dependencies with facets", () => {
         const dep = inject.get(Circus.prototype, "elpehantParade");
         expect($every.test(dep[0])).to.be.true;
-        expect($content(dep[0])).to.equal(Elephant);
+        expect($contents(dep[0])).to.equal(Elephant);
     });
 
     it("should get constructor dependencies", () => {
         const dep = inject.get(Circus.prototype, "constructor");
         expect($every.test(dep[0])).to.be.true;
-        expect($content(dep[0])).to.equal(Animal);
+        expect($contents(dep[0])).to.equal(Animal);
     });
 
     it("should apply class dependencies to constructor", () => {
@@ -1394,7 +1398,7 @@ describe("inject", () => {
         inject.getKeys(RingBrothers.prototype, (d, k) => deps.set(k, d));
         expect(deps.get("dancingDog")).to.eql([Dog]);
         expect($every.test(deps.get("elpehantParade")[0])).to.be.true;
-        expect($content(deps.get("elpehantParade")[0])).to.equal(Elephant);
+        expect($contents(deps.get("elpehantParade")[0])).to.equal(Elephant);
         expect(deps.get("constructor")).to.eql([undefined, Person]);        
     });
 

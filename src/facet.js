@@ -58,15 +58,17 @@ export const $promise = $createFacet();
  */                                
 export const $instant = $createFacet();
 
-export function $content(content) {
+export function $contents(content) {
     if (new.target) {
         if ($isNothing(content)) {
             throw new Error("The content argument is required.")
         }
-        this.getContent = function () { return content; }
+        this.$getContents = function () { return content; }
     } else {
-        if ($isSomething(content) && $isFunction(content.getContent)) {
-            return content.getContent();
+        if ($isSomething(content)) {
+            return $isFunction(content.$getContents) 
+                 ? content.$getContents()
+                 : content;
         }
     }
 }
@@ -80,8 +82,8 @@ export function $createFacet() {
         if (facet.test(content)) {
             return content;
         }
-        if (!(content instanceof $content)) {
-            content = new $content(content);
+        if (!(content instanceof $contents)) {
+            content = new $contents(content);
         }
         const decorator = Object.create(content, {
             [key]: {
