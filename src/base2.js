@@ -8,10 +8,12 @@
     Doeke Zanstra
 */
 
-export const Undefined = K(),
-             Null      = K(null),
-             True      = K(true),
-             False     = K(false);
+export const Undefined  = K(),
+             Null       = K(null),
+             True       = K(true),
+             False      = K(false),
+             emptyArray = Object.freeze([]),
+             nothing    = K();
 
 var __prototyping, _counter = 1;
 

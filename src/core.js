@@ -16,9 +16,6 @@ const baseExtend      = Base.extend,
       baseImplement   = Base.implement,
       baseProtoExtend = Base.prototype.extend;
 
-export const emptyArray = Object.freeze([]),
-             nothing    = undefined;
-
 /**
  * Type of property method.
  * @class PropertyType

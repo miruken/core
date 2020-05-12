@@ -14,11 +14,9 @@ import {
     $decorate, $decorated
 } from "../src/core";
 
-import { createKeyChain } from "../src/privates";
-
-import {
-    Modifier, $createModifier, $every
-} from "../src/modifier";
+import { 
+    $createFacet, $content, $every
+} from "../src/facet";
 
 import {
     Disposing, DisposingMixin, $using
@@ -34,6 +32,7 @@ import { inject } from "../src/inject";
 
 import { ArrayManager, IndexedList } from "../src/util";
 import { debounce } from "../src/debounce";
+import { createKeyChain } from "../src/privates";
 
 import "reflect-metadata";
 import "../src/promise";
@@ -730,39 +729,53 @@ describe("$flatten", () => {
     });    
 });
 
-describe("Modifier", () => {
-    describe("$createModifier", () => {
-        it("should create a new modifier", () => {
-            const wrap    = $createModifier("wrap");
-            expect(wrap.prototype).to.be.instanceOf(Modifier);
+function required(key) {
+  return function (target, propertyKey, parameterIndex) {
+    const metadata = `meta_${propertyKey}`;
+    target[metadata] = [
+      ...(target[metadata] || []),
+      {
+        index: parameterIndex,
+        key
+      }
+    ]
+  };
+}
+
+describe("Facet", () => {
+    describe("$createFacet", () => {
+        it("should create a new facet", () => {
+            const wrap = $createFacet("wrap");
+            expect(wrap.getArgs).to.be.a("function");
         });
 
-        it("should apply a  modifier using function call", () => {
-            const wrap    = $createModifier("wrap"),
+        it("should add a facet using function call", () => {
+            const wrap    = $createFacet("wrap"),
                   wrapped = wrap(22);
             expect(wrap.test(wrapped)).to.be.true;
-            expect(wrapped.getSource()).to.equal(22);
+            expect(wrapped.getContent()).to.equal(22);
         });
         
-        it("should not apply a modifier the using new operator", () => {
-            const wrap    = $createModifier("wrap");
+        it("should not add a facet using new operator", () => {
+            const wrap = $createFacet("wrap");
             expect(() => { 
                 new wrap(22);
-            }).to.throw(Error, /Modifiers should not be called with the new operator./);
+            }).to.throw(Error, /Facets should not be called with the new operator./);
         });
         
-        it("should ignore modifier if already present", () => {
-            const wrap    = $createModifier("wrap"),
-                wrapped = wrap(wrap("soccer"));
-            expect(wrapped.getSource()).to.equal("soccer");
+        it("should ignore facet if already present", () => {
+            const wrap    = $createFacet("wrap"),
+                  wrapped = wrap(wrap("soccer")),
+                  content = Object.getPrototypeOf(wrapped);
+            expect(content).to.be.instanceOf($content);
         });
     })
 
     describe("#test", () => {
-        it("should test chained modifiers", () => {
-            const shape = $createModifier("shape"),
-                  wrap  = $createModifier("wrap"),
-                  roll  = $createModifier("roll"),
+        it("should test chained facets", () => {
+            const shape = $createFacet("shape"),
+                  wrap  = $createFacet("wrap"),
+                  roll  = $createFacet("roll"),
                   chain = shape(wrap(roll(19)));
             expect(shape.test(chain)).to.be.true;
             expect(wrap.test(chain)).to.be.true;
@@ -770,13 +783,13 @@ describe("Modifier", () => {
         });
     });
 
-    describe("#unwrap", () => {
-        it("should unwrap source when modifiers chained", () => {
-            const shape = $createModifier("shape"),
-                  wrap  = $createModifier("wrap"),
-                  roll  = $createModifier("roll"),
+    describe("$content", () => {
+        it("should obtain facet contents", () => {
+            const shape = $createFacet("shape"),
+                  wrap  = $createFacet("wrap"),
+                  roll  = $createFacet("roll"),
                   chain = shape(wrap(roll(19)));
-            expect(Modifier.unwrap(chain)).to.equal(19);
+            expect($content(chain)).to.equal(19);
         });
     });
 });
@@ -1354,16 +1367,16 @@ describe("inject", () => {
         expect(dep).to.eql([Dog]);
     });
 
-    it("should get dependencies with modifiers", () => {
+    it("should get dependencies with facets", () => {
         const dep = inject.get(Circus.prototype, "elpehantParade");
         expect($every.test(dep[0])).to.be.true;
-        expect(Modifier.unwrap(dep[0])).to.equal(Elephant);
+        expect($content(dep[0])).to.equal(Elephant);
     });
 
     it("should get constructor dependencies", () => {
         const dep = inject.get(Circus.prototype, "constructor");
         expect($every.test(dep[0])).to.be.true;
-        expect(Modifier.unwrap(dep[0])).to.equal(Animal);
+        expect($content(dep[0])).to.equal(Animal);
     });
 
     it("should apply class dependencies to constructor", () => {
@@ -1381,7 +1394,7 @@ describe("inject", () => {
         inject.getKeys(RingBrothers.prototype, (d, k) => deps.set(k, d));
         expect(deps.get("dancingDog")).to.eql([Dog]);
         expect($every.test(deps.get("elpehantParade")[0])).to.be.true;
-        expect(Modifier.unwrap(deps.get("elpehantParade")[0])).to.equal(Elephant);
+        expect($content(deps.get("elpehantParade")[0])).to.equal(Elephant);
         expect(deps.get("constructor")).to.eql([undefined, Person]);        
     });
 
