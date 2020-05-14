@@ -55,21 +55,13 @@ const DesignWithReturnMetadata = DesignMetadata.extend(null, {
  */
 export const design = DesignMetadata.decorator(designMetadataKey,
     (target, key, descriptor, types) => {
-        if (!isDescriptor(descriptor)) {
-            if (target.length > key.length) {
-                throw new SyntaxError(
-                    `@design for constructor expects at least ${target.length} parameters but only ${key.length} specified.`);
-            }            
+        if (!isDescriptor(descriptor)) {          
             _validateTypes(key, 'design');
             DesignMetadata.define(paramTypesKey, key, target.prototype, "constructor");
             return;
         }
         const { value } = descriptor;
         if ($isFunction(value)) {
-            if (value.length > types.length) {
-                throw new SyntaxError(
-                    `@design for method '${key}' expects at least ${value.length} parameters but only ${types.length} specified.`);
-            }
             _validateTypes(types, 'design');
             DesignMetadata.define(paramTypesKey, types, target, key);        
         } else if (types.length !== 1) {
@@ -99,10 +91,6 @@ export const designWithReturn = DesignWithReturnMetadata.decorator(designMetadat
             if (!$isFunction(returnType)) {
                 throw new SyntaxError(
                     `@designWithReturn for method '${key}' requires a valid return type.`);
-            }
-            if (value.length > types.length) {
-                throw new SyntaxError(
-                    `@designWithReturn for method '${key}' expects at least ${value.length} parameters but only ${types.length} specified.`);
             }
             _validateTypes(types, 'designWithReturn');
             DesignMetadata.define(returnTypeKey, returnType, target, key);                    

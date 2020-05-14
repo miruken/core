@@ -90,7 +90,7 @@ export function $createFacet() {
                 writable:     false,
                 configurable: false,
                 value:        args.length == 0 ? emptyArray : args
-            }, 
+            }
         });
         return decorator;
     }

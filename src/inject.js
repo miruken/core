@@ -2,7 +2,7 @@ import { $isFunction, $flatten } from "./base2";
 import Metadata from "./metadata";
 import { isDescriptor } from "./decorate";
 
-const injectMetadataKey = Symbol();
+const injectMetadataKey = Symbol("inject-metadata");
 
 /**
  * Specifies dependencies on properties and methods.

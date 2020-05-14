@@ -1302,16 +1302,7 @@ describe("@design", () => {
         expect(types[1]).to.equal(Person);        
         expect(types[2]).to.eql([Animal]);
     });
-
-    it("should reject design if too few method types", () => {
-        expect(() => {
-            Base.extend({
-                @design(Person)
-                constructor(partner, canine) {}
-            });
-        }).to.throw(Error, "@design for method 'constructor' expects at least 2 parameters but only 1 specified");
-    });
-    
+ 
     it("should reject design if missing property type", () => {
         expect(() => {
             Base.extend({
