@@ -66,7 +66,7 @@ Base.extend = function (...args) {
     let constraints = args, decorators = [];
     if (this === Protocol) {
         decorators.push(protocol);
-    } if ($isProtocol(this)) {
+    } else if ($isProtocol(this)) {
         decorators.push(protocol, conformsTo(this));
     }
     if (args.length > 0 && Array.isArray(args[0])) {

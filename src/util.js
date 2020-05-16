@@ -144,7 +144,7 @@ export const ArrayManager = Base.extend({
 export const IndexedList = Base.extend({
     constructor(order = defaultOrder) {
         const _this = _(this);
-        _this.index = {};
+        _this.index = Object.create(null);
         _this.order = order;
     },
     /** 

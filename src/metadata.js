@@ -156,8 +156,18 @@ export const Metadata = Abstract.extend(null, {
     copyOwnKey(target, source, sourceKey) {
         const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(metadataKey => {
-            const metadata = this.getOwn(metadataKey, source, sourceKey);
-            this.define(metadataKey, metadata, target, sourceKey);
+            const sourceMetadata = this.getOwn(metadataKey, source, sourceKey);
+            if (sourceMetadata) {
+                if ($isFunction(sourceMetadata.copyMetadata)) {
+                    const targetMetadata = sourceMetadata.copyMetadata(
+                        sourceMetadata, target, source, sourceKey, metadataKey);
+                    if (targetMetadata) {
+                        this.define(metadataKey, targetMetadata, target, sourceKey);
+                    }
+                } else {
+                    this.define(metadataKey, sourceMetadata, target, sourceKey);
+                }
+            }
         });
     },
     /**
@@ -185,8 +195,19 @@ export const Metadata = Abstract.extend(null, {
         metadataKeys.forEach(metadataKey => {
             const targetMetadata = this.getOwn(metadataKey, target, sourceKey),
                   sourceMetadata = this.getOwn(metadataKey, source, sourceKey);
-            if (targetMetadata && targetMetadata.merge) {
-                targetMetadata.merge(sourceMetadata);
+            if (targetMetadata) {
+                if ($isFunction(targetMetadata.mergeMetadata)) {
+                    targetMetadata.mergeMetadata(
+                        sourceMetadata, target, source, sourceKey, metadataKey);
+                } else if ($isFunction(targetMetadata.merge)) {
+                    targetMetadata.merge(sourceMetadata);
+                }
+            } else if ($isFunction(sourceMetadata.copyMetadata)) {
+                const targetMetadata = sourceMetadata.copyMetadata(
+                    sourceMetadata, target, source, sourceKey, metadataKey);
+                if (targetMetadata) {
+                    this.define(metadataKey, targetMetadata, target, sourceKey);
+                }
             } else {
                 this.define(metadataKey, sourceMetadata, target, sourceKey);                
             }

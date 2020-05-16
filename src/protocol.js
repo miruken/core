@@ -204,8 +204,8 @@ export function $protocols(target, own) {
  */
 export function protocol(...args) {
     if (args.length === 0) {
-        return function () {
-            return _protocol.apply(null, arguments);
+        return function (...args) {
+            return _protocol.apply(null, args);
         };
     }
     return _protocol(...args);
