@@ -1,4 +1,4 @@
-import { Base } from "./base2";
+import { Base, $equals } from "./base2";
 import { createKeyChain } from "./privates";
 
 const _ = createKeyChain();
@@ -130,9 +130,19 @@ export const ArrayManager = Base.extend({
      * @param    {Any}  item  -  item to map
      * @returns  {Any}  mapped item.
      */
-    mapItem(item) { return item; }
+    mapItem(item) { return item; },
+    /** 
+     * Returns an Iterable over the managed array.
+     * @returns  {Iterable}  the array iterator.
+     */    
+    [Symbol.iterator]() {
+        return this.getItems()[Symbol.iterator]();
+    }    
 });
 
+const prevSymbol  = Symbol(),
+      nextSymbol  = Symbol(),
+      indexSymbol = Symbol();
 /**
  * Maintains a simple doublely-linked list with indexing.
  * Indexes are partially ordered according to the order comparator.
@@ -147,14 +157,16 @@ export const IndexedList = Base.extend({
         _this.index = Object.create(null);
         _this.order = order;
     },
+
     /** 
      * Determines if list is empty.
-     * @method isEmpty
+     * @property isEmpty
      * @returns  {boolean}  true if list is empty, false otherwise.
      */
-    isEmpty() {
-        return !this.head;
+    get isEmpty() {
+        return !_(this).head;
     },
+
     /** 
      * Determines if `node` is present in list using `$equals`.
      * @method has
@@ -162,11 +174,11 @@ export const IndexedList = Base.extend({
      * @returns  {boolean}  true if `node` exists.
      */            
     has(node) {
-        const index = node.index;
+        const index = node[indexSymbol];
         let   indexedNode = this.getFirst(index);
-        while (indexedNode && indexedNode.index === index) {
-            if ($equals(indxedNode, node)) { return true; }
-            indexedNode = indexedNode.next;
+        while (indexedNode && indexedNode[indexSymbol] === index) {
+            if ($equals(indexedNode, node)) return true;
+            indexedNode = indexedNode[nextSymbol];
         }
         return false;
     },
@@ -191,36 +203,36 @@ export const IndexedList = Base.extend({
         const indexedNode = this.getFirst(index);
         let insert = indexedNode;
         if (index) {
-            insert = insert || this.head;
+            insert = insert || _(this).head;
             while (insert && _(this).order(node, insert) >= 0) {
-                insert = insert.next;
+                insert = insert[nextSymbol];
             }
         }
         if (insert) {
-            const prev  = insert.prev;
-            node.next   = insert;
-            node.prev   = prev;
-            insert.prev = node;
+            const prev = insert[prevSymbol];
+            node[nextSymbol]   = insert;
+            node[prevSymbol]   = prev;
+            insert[prevSymbol] = node;
             if (prev) {
-                prev.next = node;
+                prev[nextSymbol] = node;
             }
-            if (this.head === insert) {
-                this.head = node;
+            if (_(this).head === insert) {
+                _(this).head = node;
             }
         } else {
-            delete node.next;
-            const tail = this.tail;
+            delete node[nextSymbol];
+            const tail = _(this).tail;
             if (tail) {
-                node.prev = tail;
-                tail.next = node;
+                node[prevSymbol] = tail;
+                tail[nextSymbol] = node;
             } else {
-                this.head = node;
-                delete node.prev;
+                _(this).head = node;
+                delete node[prevSymbol];
             }
-            this.tail = node;
+            _(this).tail = node;
         }
         if (index) {
-            node.index = index;
+            node[indexSymbol] = index;
             if (!indexedNode) {
                 _(this).index[index] = node;
             }
@@ -235,26 +247,26 @@ export const IndexedList = Base.extend({
      * @chainable
      */
     remove(node) {
-        const prev = node.prev,
-                next = node.next;
+        const prev = node[prevSymbol],
+              next = node[nextSymbol];
         if (prev) {
             if (next) {
-                prev.next = next;
-                next.prev = prev;
+                prev[nextSymbol] = next;
+                next[prevSymbol] = prev;
             } else {
-                this.tail = prev;
-                delete prev.next;
+                _(this).tail = prev;
+                delete prev[nextSymbol];
             }
         } else if (next) {
-            this.head = next;
-            delete next.prev;
+            _(this).head = next;
+            delete next[prevSymbol];
         } else {
-            delete this.head;
-            delete this.tail;
+            delete _(this).head;
+            delete _(this).tail;
         }
-        const index = node.index;
+        const index = node[indexSymbol];
         if (this.getFirst(index) === node) {
-            if (next && next.index === index) {
+            if (next && next[indexSymbol] === index) {
                 _(this).index[index] = next;
             } else {
                 delete _(this).index[index];
@@ -274,16 +286,27 @@ export const IndexedList = Base.extend({
         if (list.constructor !== this.constructor) {
             throw new TypeError("merge expects lists of equal type.");
         }
-        let node = list.head;
+        let node = _(list).head;
         while (node) {
-            const next = node.next;
+            const next = node[nextSymbol];
             if (!this.has(node)) {
-                this.insert(node, node.index);
+                this.insert(node, node[indexSymbol]);
             }
             node = next;
         }
         return this;
-    }    
+    },
+    /** 
+     * Returns an Iterable over the indexed list.
+     * @returns  {Iterable}  the list iterator.
+     */    
+    *[Symbol.iterator]() {
+        let node = _(this).head;
+        while (node) {
+            yield node;
+            node = node[nextSymbol];
+        }
+    }
 });
 
 function defaultOrder(a, b) {

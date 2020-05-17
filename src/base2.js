@@ -799,6 +799,29 @@ export function $flatten(arr, prune) {
     return [].concat(...items);
 }
 
+/**
+ * Determines whether `obj1` and `obj2` are considered equal.
+ * <p>
+ * Objects are considered equal if the objects are strictly equal (===) or
+ * either object has an equals method accepting other object that returns true.
+ * </p>
+ * @method $equals
+ * @param    {Any}     obj1  -  first object
+ * @param    {Any}     obj2  -  second object
+ * @returns  {boolean} true if the obejcts are considered equal, false otherwise.
+ */
+export function $equals(obj1, obj2) {
+    if (obj1 === obj2) {
+        return true;
+    }
+    if (obj1 && $isFunction(obj1.equals)) {
+        return obj1.equals(obj2);
+    } else if (obj2 && $isFunction(obj2.equals)) {
+        return obj2.equals(obj1);
+    }
+    return false;
+}
+
 function K(k) {
     return function() {
         return k;

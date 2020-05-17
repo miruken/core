@@ -159,7 +159,6 @@ describe("miruken", () => {
     });
 });
 
-
 describe("Enum", () => {
     const Color = Enum({red: 1, blue: 2, green: 3}),
         Message = Enum({run: "run", cancel: "cancel" });
@@ -484,10 +483,67 @@ describe("Flags", () => {
     });    
 });
 
-describe("ArrayManager", () => {
-     it("should manage new array", () => {
-        const mgr = new ArrayManager();
+describe("IndexedList", () => {
+    let list;
+    beforeEach(() => {
+        list = new IndexedList();
     });
+
+    const Item = Base.extend({
+        constructor(value) {
+            this.value = value;
+        }
+    });
+
+    it("should determine if empty", () => {
+        expect(list.isEmpty).to.be.true;
+        list.insert(new Item(19), 19);
+        expect(list.isEmpty).to.be.false;
+    });
+
+    it("should insert new item", () => {
+        const item = new Item(19);
+        list.insert(item, 19);
+        expect(list.getFirst(19)).to.equal(item);
+    });
+
+    it("should check for node", () => {
+        const item = new Item(19);
+        list.insert(item, 19);
+        expect(list.has(item)).to.be.true;
+        expect(list.has(new Item("ABC"))).to.be.false;
+    });
+ 
+    it("should remove node", () => {
+        const item = new Item("123");
+        list.insert(item, 123);
+        expect(list.getFirst(123)).to.equal(item);
+        list.remove(item);
+        expect(list.getFirst(123)).to.be.undefined;
+    });
+
+    it("should iterate list", () => {
+        const item = new Item(19);
+        list.insert(item, 19);
+        expect([...list]).to.eql([item]);
+    });
+});
+
+describe("ArrayManager", () => {
+    let arrayMgr;
+    beforeEach(() => {
+        arrayMgr = new ArrayManager();
+    });
+
+    it("should append new item", () => {
+        arrayMgr.append(28);
+        expect(arrayMgr.getIndex(0)).to.equal(28);
+    });
+
+    it("should iterate array", () => {
+        arrayMgr.append("xyz", "789");
+        expect([...arrayMgr]).to.eql(["xyz", "789"]);
+    });   
 });
 
 describe("$isClass", () => {
