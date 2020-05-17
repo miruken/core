@@ -527,6 +527,23 @@ describe("IndexedList", () => {
         list.insert(item, 19);
         expect([...list]).to.eql([item]);
     });
+
+    it("should iterate list from an index", () => {
+        const item1 = new Item(50),
+              item2 = new Item("50"),
+              item3 = new Item(49);
+        list.insert(item3, 49);
+        list.insert(item1, 50);
+        list.insert(item2, 50);
+        let [x,y,z] = [...list];
+        expect(x).to.equal(item3);
+        expect(y).to.equal(item1);
+        expect(z).to.equal(item2);  
+        [x,y,z] = [...list.fromIndex(50)];
+        expect(x).to.equal(item1);
+        expect(y).to.equal(item2);
+        expect(z).to.be.undefined;
+    });    
 });
 
 describe("ArrayManager", () => {

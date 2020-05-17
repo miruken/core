@@ -185,7 +185,7 @@ export const IndexedList = Base.extend({
     /** 
      * Gets the first node at `index`.
      * @method getFirst
-     * @param    {number} index  -  index of node
+     * @param    {Any} index  -  index of node
      * @returns  {Any}  the first node at index.
      */
     getFirst(index) {
@@ -194,8 +194,8 @@ export const IndexedList = Base.extend({
     /** 
      * Inserts `node` at `index`.
      * @method insert
-     * @param  {Any}     node   -  node to insert
-     * @param  {number}  index  -  index to insert at
+     * @param  {Any}  node   -  node to insert
+     * @param  {Any}  index  -  index to insert at
      * @returns  {IndexedList}  the updated list.
      * @chainable
      */
@@ -297,6 +297,20 @@ export const IndexedList = Base.extend({
         return this;
     },
     /** 
+     * Returns an Iterator from the first index node.
+     * If no index is present, it starts from the head.
+     * @method indexed
+     * @param  {Any}  index  -  index to iterate from.
+     * @returns  {Iterator}  the indexed iterator.
+     */   
+    *fromIndex(index) {
+        const node = this.getFirst(index) || _(this).head;
+         while (node) {
+            yield node;
+            node = node[nextSymbol];
+        }
+    },
+    /** 
      * Returns an Iterable over the indexed list.
      * @returns  {Iterable}  the list iterator.
      */    
@@ -310,6 +324,21 @@ export const IndexedList = Base.extend({
 });
 
 function defaultOrder(a, b) {
-    return a < b;
+    if (a === undefined && b === undefined) {
+        return 0;
+    }
+    if (a === undefined) {
+        return 1;
+    }
+    if (b === undefined) {
+        return -1;
+    }
+    if (a < b) {
+        return -1;
+    }
+    if (a > b) {
+        return 1;
+    }
+    return 0;
 }
 
