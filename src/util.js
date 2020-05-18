@@ -305,7 +305,7 @@ export const IndexedList = Base.extend({
      */   
     *fromIndex(index) {
         const node = this.getFirst(index) || _(this).head;
-         while (node) {
+        while (node) {
             yield node;
             node = node[nextSymbol];
         }
