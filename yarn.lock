@@ -4795,7 +4795,7 @@ jspm-registry@^0.4.0:
     rsvp "^3.0.18"
     semver "^4.3.3"
 
-jspm@^0.16.52:
+jspm@^0.16.55:
   version "0.16.55"
   resolved "https://registry.yarnpkg.com/jspm/-/jspm-0.16.55.tgz#62620d5388fb706da67247eb5b8442c994a11303"
   integrity sha512-4cTQPizH5RqsagNv5356Y9552OjOZDQ9oF85AMJYzE8sT/+cQSJzNZC0vLR3oMuuYK2MFNcAiEaeq0+XWc4rrQ==
