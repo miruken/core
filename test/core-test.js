@@ -985,7 +985,6 @@ describe("Protocol", () => {
         it("should conform to protocols by object", () => {
             const dog = new Dog();
             expect(Animal.isAdoptedBy(dog)).to.be.true;
-            expect(Animal.isAdoptedBy(dog)).to.be.true;
         });
 
         it("should only list protocol once", () => {

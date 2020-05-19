@@ -78,7 +78,7 @@ export const Protocol = Base.extend({
      * Determines if `target` conforms to this protocol.
      * @static
      * @method isAdoptedBy
-     * @param   {Any}      target    -  target to test
+     * @param   {Any}      target  -  target to test
      * @returns {boolean}  true if the target conforms to this protocol.
      */
     isAdoptedBy(target) {
