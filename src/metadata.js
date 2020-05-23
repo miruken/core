@@ -1,5 +1,5 @@
 import { 
-    Abstract, getPropertyDescriptors,
+    Abstract, Base, getPropertyDescriptors,
     $isFunction 
 } from "./base2";
 
@@ -199,8 +199,6 @@ export const Metadata = Abstract.extend(null, {
                 if ($isFunction(targetMetadata.mergeMetadata)) {
                     targetMetadata.mergeMetadata(
                         sourceMetadata, target, source, sourceKey, metadataKey);
-                } else if ($isFunction(targetMetadata.merge)) {
-                    targetMetadata.merge(sourceMetadata);
                 }
             } else if ($isFunction(sourceMetadata.copyMetadata)) {
                 const targetMetadata = sourceMetadata.copyMetadata(
@@ -232,7 +230,8 @@ export const Metadata = Abstract.extend(null, {
         if (!$isFunction(collector)) {
             throw new TypeError("collector must be a function.");
         }
-        while (target) {
+        while (target && target != Base.prototype &&
+               target != Object.prototype && target != Abstract.prototype) {
             const metadata = this.getOwn(metadataKey, target, targetKey);
             if (metadata && collector(metadata, metadataKey, target, targetKey)) {
                 return true;
