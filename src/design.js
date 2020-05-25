@@ -1,8 +1,9 @@
 import { $isFunction } from "./base2";
 import { isDescriptor } from "./decorate";
 import Metadata from "./metadata";
+import Argument from "./argument";
 
-const designMetadataKey = Symbol(),
+const designMetadataKey = Symbol("design-metadata"),
       paramTypesKey     = "design:paramtypes",
       propertyTypeKey   = "design:type",
       returnTypeKey     = "design:returnType";
@@ -55,22 +56,22 @@ const DesignWithReturnMetadata = DesignMetadata.extend(null, {
  */
 export const design = DesignMetadata.decorator(designMetadataKey,
     (target, key, descriptor, types) => {
-        if (!isDescriptor(descriptor)) {          
-            _validateTypes(key, 'design');
-            DesignMetadata.define(paramTypesKey, key, target.prototype, "constructor");
+        if (!isDescriptor(descriptor)) {     
+            const args = buildArguments(key);
+            DesignMetadata.define(paramTypesKey, args, target.prototype, "constructor");
             return;
         }
         const { value } = descriptor;
         if ($isFunction(value)) {
-            _validateTypes(types, 'design');
-            DesignMetadata.define(paramTypesKey, types, target, key);        
+            const args = buildArguments(types);
+            DesignMetadata.define(paramTypesKey, args, target, key);       
         } else if (types.length !== 1) {
             throw new SyntaxError(`@design for property '${key}' requires a single type to be specified.`);
         } else if (DesignMetadata.has(propertyTypeKey, target, key)) {
             throw new SyntaxError(`@design for property '${key}' should only be specified on getter or setter.`);
         } else {
-            _validateTypes(types, 'design');
-            DesignMetadata.define(propertyTypeKey, types[0], target, key);
+            const args = buildArguments(types);
+            DesignMetadata.define(propertyTypeKey, args[0], target, key);
         }
     });
 
@@ -92,26 +93,14 @@ export const designWithReturn = DesignWithReturnMetadata.decorator(designMetadat
                 throw new SyntaxError(
                     `@designWithReturn for method '${key}' requires a valid return type.`);
             }
-            _validateTypes(types, 'designWithReturn');
-            DesignMetadata.define(returnTypeKey, returnType, target, key);                    
-            DesignMetadata.define(paramTypesKey, types, target, key);
+            const args = buildArguments(types);
+            DesignMetadata.define(returnTypeKey, returnType, target, key); 
+            DesignMetadata.define(paramTypesKey, args, target, key);
         } else {
             throw new SyntaxError(`@designWithReturn ('${key}') cannot be applied to properties.`);
         }
     });
 
-function _validateTypes(types, decorator) {
-    for (let i = 0; i < types.length; ++i) {
-        let type = types[i];
-        if (type == null) { return };
-        if (Array.isArray(type)) {
-            if (type.length !== 1) {
-                throw new SyntaxError(`@${decorator} array specification at index ${i} expects a single type.`);
-            }
-            type = type[0];
-        }
-        if (!$isFunction(type)) {
-            throw new SyntaxError(`@${decorator} expects basic types, classes or protocols.`);
-        }
-    }
+function buildArguments(args) {
+    return args.map(arg => arg == null ? arg : new Argument(arg));   
 }

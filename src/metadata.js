@@ -230,8 +230,8 @@ export const Metadata = Abstract.extend(null, {
         if (!$isFunction(collector)) {
             throw new TypeError("collector must be a function.");
         }
-        while (target && target != Base.prototype &&
-               target != Object.prototype && target != Abstract.prototype) {
+        while (target && target !== Base.prototype &&
+               target !== Object.prototype && target !== Abstract.prototype) {
             const metadata = this.getOwn(metadataKey, target, targetKey);
             if (metadata && collector(metadata, metadataKey, target, targetKey)) {
                 return true;

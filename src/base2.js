@@ -12,8 +12,7 @@ export const Undefined  = K(),
              Null       = K(null),
              True       = K(true),
              False      = K(false),
-             emptyArray = Object.freeze([]),
-             nothing    = K();
+             emptyArray = Object.freeze([]);
 
 var __prototyping, _counter = 1;
 

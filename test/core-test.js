@@ -15,7 +15,9 @@ import {
 } from "../src/core";
 
 import { 
-    $createFacet, $contents, $every
+    $createFacet, $eq, $use, $lazy,
+    $eval, $every, $child, $optional,
+    $promise, $instant, $contents
 } from "../src/facet";
 
 import {
@@ -30,6 +32,7 @@ import {
 import { design, designWithReturn } from "../src/design";
 import { inject } from "../src/inject";
 
+import { Argument, ArgumentFlags } from "../src/argument";
 import { ArrayManager, IndexedList } from "../src/util";
 import { debounce } from "../src/debounce";
 import { createKeyChain } from "../src/privates";
@@ -556,7 +559,7 @@ describe("IndexedList", () => {
         expect([...otherList]).to.eql([]);
     });
 
-    it.only("should merge lists with copy", () => {
+    it("should merge lists with copy", () => {
         const item = new Item(19);
         list.insert(item, 19);
         const otherList = new IndexedList(),
@@ -1349,7 +1352,7 @@ describe("@design", () => {
               @design(Dog, Elephant, AsianElephant)
               safari(dog, elephant, asianElephant) {},
 
-              @designWithReturn(Animal, Dog, Elephant, AsianElephant)
+              @designWithReturn(Animal, Dog, Elephant, $optional(AsianElephant))
               race(dog, elephant, asianElephant) {
                   return dog;
               }
@@ -1361,40 +1364,48 @@ describe("@design", () => {
           });
     
     it("should get constructor design", () => {
-        const types = design.get(Zoo.prototype, "constructor");
-        expect(types[0]).to.equal(Person);
-        expect(types[1]).to.eql([Animal]);        
+        const args = design.get(Zoo.prototype, "constructor");
+        expect(args[0].type).to.equal(Person);
+        expect(args[1].type).to.eql(Animal);
+        expect(args[1].flags.hasFlag(ArgumentFlags.Array)).to.be.true;  
     });
 
     it("should get method design", () => {
-        const types = design.get(Zoo.prototype, "safari");
-        expect(types).to.eql([Dog, Elephant, AsianElephant]);
+        const args = design.get(Zoo.prototype, "safari");
+        expect(args[0].type).to.equal(Dog);
+        expect(args[1].type).to.eql(Elephant);
+        expect(args[2].type).to.eql(AsianElephant);
     });
 
     it("should get method design with return", () => {
-        const types = designWithReturn.get(Zoo.prototype, "race");
-        expect(types).to.eql([Animal, Dog, Elephant, AsianElephant]);
+        const args = designWithReturn.get(Zoo.prototype, "race");
+        expect(args[0]).to.equal(Animal);
+        expect(args[1].type).to.eql(Dog);
+        expect(args[2].type).to.eql(Elephant);
+        expect(args[3].type).to.eql(AsianElephant);
+        expect(args[3].flags.hasFlag(ArgumentFlags.Optional)).to.be.true;
     });
     
     it("should get field design", () => {
-        const type = design.get(Zoo.prototype, "trainer");
-        expect(type).to.equal(Person);
+        const field = design.get(Zoo.prototype, "trainer");
+        expect(field.type).to.equal(Person);
         const returnType = designWithReturn.get(Zoo.prototype, "trainer");
-        expect(returnType).to.equal(Person);         
+        expect(returnType.type).to.equal(Person);         
     });
 
     it("should get property design", () => {
-        const type = design.get(Zoo.prototype, "doctor");
-        expect(type).to.equal(Person);
+        const property = design.get(Zoo.prototype, "doctor");
+        expect(property.type).to.equal(Person);
         const returnType = designWithReturn.get(Zoo.prototype, "doctor");
-        expect(returnType).to.equal(Person);        
+        expect(returnType.type).to.equal(Person);        
     });
         
     it("should apply class design to constructor", () => {
-        const types = design.get(PettingZoo.prototype, "constructor");
-        expect(types[0]).to.equal(Person);
-        expect(types[1]).to.equal(Person);        
-        expect(types[2]).to.eql([Animal]);
+        const args = design.get(PettingZoo.prototype, "constructor");
+        expect(args[0].type).to.equal(Person);
+        expect(args[1].type).to.equal(Person);        
+        expect(args[2].type).to.eql(Animal);
+        expect(args[2].flags.hasFlag(ArgumentFlags.Array)).to.be.true;  
     });
  
     it("should reject design if missing property type", () => {
@@ -1432,11 +1443,11 @@ describe("@design", () => {
                 @design(Person, [Person, Person])
                 sing(conductor, chorus) {} 
             });
-        }).to.throw(Error, "@design array specification at index 1 expects a single type");
+        }).to.throw(Error, "Argument array specification expects a single type.");
     });    
 });
 
-describe("inject", () => {
+describe("@inject", () => {
     const Circus = Base.extend({
               @inject($every(Animal))        
               constructor(animals) {},
@@ -1498,7 +1509,7 @@ describe("inject", () => {
     });            
 });
 
-describe("debounce", () => {
+describe("@debounce", () => {
     const System = Base.extend({
               constructor() {
                   this.calls = 0;
@@ -1535,4 +1546,55 @@ describe("debounce", () => {
         }
         expect(system.calls).to.eql(1);
     });    
+});
+
+describe("Argument", () => {
+    it("should parse without facets", () => {
+       const argument = new Argument(Animal);
+       expect(argument.type).to.equal(Animal);
+    });
+
+    it("should parse with facets", () => {
+        const argument = new Argument($eq($lazy($child(Animal))));
+        expect(argument.type).to.equal(Animal);
+        expect(argument.flags.hasFlag(ArgumentFlags.Invariant)).to.be.true;
+        expect(argument.flags.hasFlag(ArgumentFlags.Lazy)).to.be.true;
+        expect(argument.flags.hasFlag(ArgumentFlags.Child)).to.be.true;
+    });
+
+    it("should parse with $optional facet", () => {
+        const argument = new Argument($optional(Animal));
+        expect(argument.type).to.equal(Animal);
+        expect(argument.flags.hasFlag(ArgumentFlags.Optional)).to.be.true;
+    });
+
+    it("should parse with $promise facet", () => {
+        const argument = new Argument($promise(Animal));
+        expect(argument.type).to.equal(Animal);
+        expect(argument.flags.hasFlag(ArgumentFlags.Promise)).to.be.true;
+    });
+ 
+    it("should parse with $instant facet", () => {
+        const argument = new Argument($instant(Animal));
+        expect(argument.type).to.equal(Animal);
+        expect(argument.flags.hasFlag(ArgumentFlags.Instant)).to.be.true;
+    }); 
+
+    it("should parse with $every facet", () => {
+        const argument = new Argument($every(Animal));
+        expect(argument.type).to.equal(Animal);
+        expect(argument.flags.hasFlag(ArgumentFlags.Array)).to.be.true;
+    }); 
+
+    it("should parse with array construct", () => {
+        const argument = new Argument([Animal]);
+        expect(argument.type).to.equal(Animal);
+        expect(argument.flags.hasFlag(ArgumentFlags.Array)).to.be.true;
+    });
+
+    it("should fail invalid array construct", () => {
+        expect(() => {
+            new Argument([Animal, 1]);
+        }).to.throw(SyntaxError, "Argument array specification expects a single type."); 
+    });                   
 });
