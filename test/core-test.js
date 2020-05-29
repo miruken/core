@@ -29,7 +29,7 @@ import {
     ProxyBuilder
 } from "../src/proxy";
 
-import { design, designWithReturn } from "../src/design";
+import { design, returns } from "../src/design";
 import { inject } from "../src/inject";
 
 import { Argument, ArgumentFlags } from "../src/argument";
@@ -1352,8 +1352,8 @@ describe("@design", () => {
               @design(Dog, Elephant, AsianElephant)
               safari(dog, elephant, asianElephant) {},
 
-              @designWithReturn(Animal, Dog, Elephant, $optional(AsianElephant))
-              race(dog, elephant, asianElephant) {
+              @design(Dog, Elephant, $optional(AsianElephant))
+              @returns(Animal) race(dog, elephant, asianElephant) {
                   return dog;
               }
           }),
@@ -1364,47 +1364,50 @@ describe("@design", () => {
           });
     
     it("should get constructor design", () => {
-        const args = design.get(Zoo.prototype, "constructor");
+        const { args } = design.get(Zoo.prototype, "constructor");
         expect(args[0].type).to.equal(Person);
-        expect(args[1].type).to.eql(Animal);
+        expect(args[1].type).to.equal(Animal);
+        expect(args[1].flags.hasFlag(ArgumentFlags.Array)).to.be.true;  
+    });
+
+    it("should get constructor function design", () => {
+        const { args } = design.get(Zoo);
+        expect(args[0].type).to.equal(Person);
+        expect(args[1].type).to.equal(Animal);
         expect(args[1].flags.hasFlag(ArgumentFlags.Array)).to.be.true;  
     });
 
     it("should get method design", () => {
-        const args = design.get(Zoo.prototype, "safari");
+        const { args } = design.get(Zoo.prototype, "safari");
         expect(args[0].type).to.equal(Dog);
-        expect(args[1].type).to.eql(Elephant);
-        expect(args[2].type).to.eql(AsianElephant);
+        expect(args[1].type).to.equal(Elephant);
+        expect(args[2].type).to.equal(AsianElephant);
     });
 
     it("should get method design with return", () => {
-        const args = designWithReturn.get(Zoo.prototype, "race");
-        expect(args[0]).to.equal(Animal);
-        expect(args[1].type).to.eql(Dog);
-        expect(args[2].type).to.eql(Elephant);
-        expect(args[3].type).to.eql(AsianElephant);
-        expect(args[3].flags.hasFlag(ArgumentFlags.Optional)).to.be.true;
+        const { args, returnType } = design.get(Zoo.prototype, "race");
+        expect(returnType).to.equal(Animal);
+        expect(args[0].type).to.equal(Dog);
+        expect(args[1].type).to.equal(Elephant);
+        expect(args[2].type).to.equal(AsianElephant);
+        expect(args[2].flags.hasFlag(ArgumentFlags.Optional)).to.be.true;
     });
     
     it("should get field design", () => {
-        const field = design.get(Zoo.prototype, "trainer");
-        expect(field.type).to.equal(Person);
-        const returnType = designWithReturn.get(Zoo.prototype, "trainer");
-        expect(returnType.type).to.equal(Person);         
+        const { propertyType } = design.get(Zoo.prototype, "trainer");
+        expect(propertyType).to.equal(Person);
     });
 
     it("should get property design", () => {
-        const property = design.get(Zoo.prototype, "doctor");
-        expect(property.type).to.equal(Person);
-        const returnType = designWithReturn.get(Zoo.prototype, "doctor");
-        expect(returnType.type).to.equal(Person);        
+        const { propertyType } = design.get(Zoo.prototype, "doctor");
+        expect(propertyType).to.equal(Person);     
     });
         
     it("should apply class design to constructor", () => {
-        const args = design.get(PettingZoo.prototype, "constructor");
+        const { args } = design.get(PettingZoo);
         expect(args[0].type).to.equal(Person);
         expect(args[1].type).to.equal(Person);        
-        expect(args[2].type).to.eql(Animal);
+        expect(args[2].type).to.equal(Animal);
         expect(args[2].flags.hasFlag(ArgumentFlags.Array)).to.be.true;  
     });
  
@@ -1414,7 +1417,7 @@ describe("@design", () => {
                 @design
                 friend: undefined
             });
-        }).to.throw(Error, "@design for property 'friend' requires a single type to be specified");
+        }).to.throw(Error, "@design for property 'friend' requires a single type to be specified.");
     });
 
     it("should reject property design on both getter and setter", () => {
@@ -1425,16 +1428,48 @@ describe("@design", () => {
                 @design(Person)            
                 set farmer(value) {}
             });
-        }).to.throw(Error, "@design for property 'farmer' should only be specified on getter or setter");        
+        }).to.throw(Error, "@design for property 'farmer' should only be specified on getter or setter.");        
     });
 
-    it("should reject constructor designWithReturn", () => {
+    it("should reject design if qualified property type", () => {
         expect(() => {
             Base.extend({
-                @designWithReturn
-                constructor() {}
+                @design($promise(Person))
+                friend: undefined
+            });
+        }).to.throw(Error, "@design for property 'friend' expects no qualifiers.");
+    });
+
+    it("should reject constructor @returns", () => {
+        expect(() => {
+            Base.extend({
+                @returns constructor() {}
             });  
-        }).to.throw(Error, "@designWithReturn cannot be applied to constructors.");
+        }).to.throw(SyntaxError, "@returns cannot be applied to constructors.");
+    });
+
+    it("should reject properties @returns", () => {
+        expect(() => {
+            Base.extend({
+                @returns(Number) get age() {}
+            });  
+        }).to.throw(SyntaxError, "@returns ('age') cannot be applied to properties.");
+    });
+
+    it("should reject missing @returns type", () => {
+        expect(() => {
+            Base.extend({
+                @returns foo() {}
+            });  
+        }).to.throw(SyntaxError, "@returns for method 'foo' requires a single return type.");
+    });
+
+    it("should reject invalid @returns type", () => {
+        expect(() => {
+            Base.extend({
+                @returns(22) foo() {}
+            });  
+        }).to.throw(SyntaxError, "@returns for method 'foo' requires a valid return type.");
     });
 
     it("should reject invalid array specifications", () => {
