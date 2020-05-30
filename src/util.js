@@ -322,7 +322,7 @@ export const IndexedList = Base.extend({
      * @returns  {Iterator}  the indexed iterator.
      */   
     *fromIndex(index) {
-        const node = this.getFirst(index) || _(this).head;
+        let node = this.getFirst(index) || _(this).head;
         while (node) {
             yield node;
             node = node[nextSymbol];

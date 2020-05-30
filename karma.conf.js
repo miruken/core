@@ -1,9 +1,14 @@
-var isparta         = require('isparta');
-var paths           = require('./build/paths');
+var paths = require('./build/paths');
 
 module.exports = function(config) {
 
     config.set({
+
+        xplugins: [
+            'karma-babel-preprocessor', 
+            'karma-mocha',
+            'karma-chrome-launcher',
+        ],
         
         frameworks: ['jspm', 'mocha', 'chai'],
 
@@ -22,7 +27,7 @@ module.exports = function(config) {
         babelPreprocessor: {
             options: {
                 "presets": [
-                    ["env", {
+                    ["@babel/preset-env", {
                         "targets": {
                             "browsers": [ "last 2 Chrome versions" ]
                         }
@@ -31,31 +36,8 @@ module.exports = function(config) {
             }
         },
 
-        reporters: ['coverage', 'progress'],
+        reporters: ['progress'],
  
-        coverageReporter: {
-            instrumenters: {
-                isparta: isparta
-            },
-            
-            instrumenter: {
-                [paths.source]: 'isparta'
-            },
-            
-            dir: 'build/reports/coverage/',
-            
-            reporters: [{
-                type: 'text-summary'
-            }, {
-                type: 'html',
-                subdir: 'html'
-            }, {
-                type: 'lcovonly',
-                subdir: 'lcov',
-                file: 'report-lcovonly.txt'
-            }]
-        },
-
         port: 9876,
         
         colors: true,
