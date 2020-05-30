@@ -7,56 +7,56 @@ import {
  * Annotates invariance.
  * @attribute $eq
  */
-export const $eq = $createFacet();
+export const $eq = $createQualifier();
 
 /**
  * Annotates use value as is.
  * @attribute $use
  */    
-export const $use = $createFacet();
+export const $use = $createQualifier();
 
 /**
  * Annotates lazy semantics.
  * @attribute $lazy
  */            
-export const $lazy = $createFacet();
+export const $lazy = $createQualifier();
 
 /**
  * Annotates function to be evaluated.
  * @attribute $eval
  */                
-export const $eval = $createFacet();
+export const $eval = $createQualifier();
 
 /**
  * Annotates zero or more semantics.
- * @attribute $every
+ * @attribute $all
  */                    
-export const $every = $createFacet();
+export const $all = $createQualifier();
 
 /**
  * Annotates 
  * @attribute use {{#crossLink "Parenting"}}{{/crossLink}} protocol.
  * @attribute $child
  */                        
-export const $child = $createFacet();
+export const $child = $createQualifier();
 
 /**
  * Annotates optional semantics.
  * @attribute $optional
  */                        
-export const $optional = $createFacet();
+export const $optional = $createQualifier();
 
 /**
  * Annotates Promise expectation.
  * @attribute $promise
  */                            
-export const $promise = $createFacet();
+export const $promise = $createQualifier();
 
 /**
  * Annotates synchronous.
  * @attribute $instant
  */                                
-export const $instant = $createFacet();
+export const $instant = $createQualifier();
 
 export function $contents(content) {
     if (new.target) {
@@ -73,13 +73,13 @@ export function $contents(content) {
     }
 }
 
-export function $createFacet() {
+export function $createQualifier() {
     const key = Symbol();
-    function facet(content, ...args) {
+    function qualifier(content, ...args) {
         if (new.target) {
-             throw new Error("Facets should not be called with the new operator.");
+             throw new Error("Qualifiers should not be called with the new operator.");
         }
-        if (facet.test(content)) {
+        if (qualifier.test(content)) {
             return content;
         }
         if (!(content instanceof $contents)) {
@@ -94,14 +94,14 @@ export function $createFacet() {
         });
         return decorator;
     }
-    facet.getArgs = function (content) {
+    qualifier.getArgs = function (content) {
         if ($isSomething(content)) {
             return content[key];
         }
     };
-    facet.test = function (content) {
+    qualifier.test = function (content) {
         return $isSomething(content) && !!content[key];
     };
 
-    return facet;
+    return qualifier;
 }

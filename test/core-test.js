@@ -15,10 +15,10 @@ import {
 } from "../src/core";
 
 import { 
-    $createFacet, $eq, $use, $lazy,
-    $eval, $every, $child, $optional,
-    $promise, $instant, $contents
-} from "../src/facet";
+    $createQualifier, $eq, $lazy,
+    $eval, $all, $optional, $promise,
+    $contents
+} from "../src/qualifier";
 
 import {
     Disposing, DisposingMixin, $using
@@ -32,7 +32,7 @@ import {
 import { design, returns } from "../src/design";
 import { inject } from "../src/inject";
 
-import { Argument, ArgumentFlags } from "../src/argument";
+import { TypeInfo, TypeFlags } from "../src/type-info";
 import { ArrayManager, IndexedList } from "../src/util";
 import { debounce } from "../src/debounce";
 import { createKeyChain } from "../src/privates";
@@ -841,28 +841,28 @@ function required(key) {
 }
 
 describe("Facet", () => {
-    describe("$createFacet", () => {
-        it("should create a new facet", () => {
-            const wrap = $createFacet("wrap");
+    describe("$createQualifier", () => {
+        it("should create a new qualifier", () => {
+            const wrap = $createQualifier("wrap");
             expect(wrap.getArgs).to.be.a("function");
         });
 
-        it("should add a facet using function call", () => {
-            const wrap    = $createFacet("wrap"),
+        it("should add a qualifier using function call", () => {
+            const wrap    = $createQualifier("wrap"),
                   wrapped = wrap(22);
             expect(wrap.test(wrapped)).to.be.true;
             expect(wrapped.$getContents()).to.equal(22);
         });
         
-        it("should not add a facet using new operator", () => {
-            const wrap = $createFacet("wrap");
+        it("should not add a qualifier using new operator", () => {
+            const wrap = $createQualifier("wrap");
             expect(() => { 
                 new wrap(22);
-            }).to.throw(Error, /Facets should not be called with the new operator./);
+            }).to.throw(Error, /Qualifiers should not be called with the new operator./);
         });
         
-        it("should ignore facet if already present", () => {
-            const wrap    = $createFacet("wrap"),
+        it("should ignore qualifier if already present", () => {
+            const wrap    = $createQualifier("wrap"),
                   wrapped = wrap(wrap("soccer")),
                   content = Object.getPrototypeOf(wrapped);
             expect(content).to.be.instanceOf($contents);
@@ -870,10 +870,10 @@ describe("Facet", () => {
     })
 
     describe("#test", () => {
-        it("should test chained facets", () => {
-            const shape = $createFacet("shape"),
-                  wrap  = $createFacet("wrap"),
-                  roll  = $createFacet("roll"),
+        it("should test chained qualifiers", () => {
+            const shape = $createQualifier("shape"),
+                  wrap  = $createQualifier("wrap"),
+                  roll  = $createQualifier("roll"),
                   chain = shape(wrap(roll(19)));
             expect(shape.test(chain)).to.be.true;
             expect(wrap.test(chain)).to.be.true;
@@ -882,14 +882,14 @@ describe("Facet", () => {
     });
 
     describe("$contents", () => {
-         it("should return input if no facets", () => {
+         it("should return input if no qualifiers", () => {
             expect($contents("Hello")).to.equal("Hello");
         });
 
-        it("should obtain facet contents", () => {
-            const shape = $createFacet("shape"),
-                  wrap  = $createFacet("wrap"),
-                  roll  = $createFacet("roll"),
+        it("should obtain qualifier contents", () => {
+            const shape = $createQualifier("shape"),
+                  wrap  = $createQualifier("wrap"),
+                  roll  = $createQualifier("roll"),
                   chain = shape(wrap(roll(19)));
             expect($contents(chain)).to.equal(19);
         });
@@ -1367,14 +1367,14 @@ describe("@design", () => {
         const { args } = design.get(Zoo.prototype, "constructor");
         expect(args[0].type).to.equal(Person);
         expect(args[1].type).to.equal(Animal);
-        expect(args[1].flags.hasFlag(ArgumentFlags.Array)).to.be.true;  
+        expect(args[1].flags.hasFlag(TypeFlags.Array)).to.be.true;  
     });
 
     it("should get constructor function design", () => {
         const { args } = design.get(Zoo);
         expect(args[0].type).to.equal(Person);
         expect(args[1].type).to.equal(Animal);
-        expect(args[1].flags.hasFlag(ArgumentFlags.Array)).to.be.true;  
+        expect(args[1].flags.hasFlag(TypeFlags.Array)).to.be.true;  
     });
 
     it("should get method design", () => {
@@ -1390,7 +1390,7 @@ describe("@design", () => {
         expect(args[0].type).to.equal(Dog);
         expect(args[1].type).to.equal(Elephant);
         expect(args[2].type).to.equal(AsianElephant);
-        expect(args[2].flags.hasFlag(ArgumentFlags.Optional)).to.be.true;
+        expect(args[2].flags.hasFlag(TypeFlags.Optional)).to.be.true;
     });
     
     it("should get field design", () => {
@@ -1408,7 +1408,7 @@ describe("@design", () => {
         expect(args[0].type).to.equal(Person);
         expect(args[1].type).to.equal(Person);        
         expect(args[2].type).to.equal(Animal);
-        expect(args[2].flags.hasFlag(ArgumentFlags.Array)).to.be.true;  
+        expect(args[2].flags.hasFlag(TypeFlags.Array)).to.be.true;  
     });
  
     it("should reject design if missing property type", () => {
@@ -1478,19 +1478,19 @@ describe("@design", () => {
                 @design(Person, [Person, Person])
                 sing(conductor, chorus) {} 
             });
-        }).to.throw(Error, "Argument array specification expects a single type.");
+        }).to.throw(Error, "Array specification expects a single type.");
     });    
 });
 
 describe("@inject", () => {
     const Circus = Base.extend({
-              @inject($every(Animal))        
+              @inject($all(Animal))        
               constructor(animals) {},
         
               @inject(Dog)
               dancingDog(Dance) {},
         
-              @inject($every(Elephant))
+              @inject($all(Elephant))
               elpehantParade(elephant) {}
           }),
           RingBrothers = Circus.extend(inject(undefined, Person), {
@@ -1502,15 +1502,15 @@ describe("@inject", () => {
         expect(dep).to.eql([Dog]);
     });
 
-    it("should get dependencies with facets", () => {
+    it("should get dependencies with qualifiers", () => {
         const dep = inject.get(Circus.prototype, "elpehantParade");
-        expect($every.test(dep[0])).to.be.true;
+        expect($all.test(dep[0])).to.be.true;
         expect($contents(dep[0])).to.equal(Elephant);
     });
 
     it("should get constructor dependencies", () => {
         const dep = inject.get(Circus.prototype, "constructor");
-        expect($every.test(dep[0])).to.be.true;
+        expect($all.test(dep[0])).to.be.true;
         expect($contents(dep[0])).to.equal(Animal);
     });
 
@@ -1528,7 +1528,7 @@ describe("@inject", () => {
         const deps = new Map();
         inject.getKeys(RingBrothers.prototype, (d, k) => deps.set(k, d));
         expect(deps.get("dancingDog")).to.eql([Dog]);
-        expect($every.test(deps.get("elpehantParade")[0])).to.be.true;
+        expect($all.test(deps.get("elpehantParade")[0])).to.be.true;
         expect($contents(deps.get("elpehantParade")[0])).to.equal(Elephant);
         expect(deps.get("constructor")).to.eql([undefined, Person]);        
     });
@@ -1583,53 +1583,46 @@ describe("@debounce", () => {
     });    
 });
 
-describe("Argument", () => {
-    it("should parse without facets", () => {
-       const argument = new Argument(Animal);
+describe("TypeInfo", () => {
+    it("should parse without qualifiers", () => {
+       const argument = new TypeInfo(Animal);
        expect(argument.type).to.equal(Animal);
     });
 
-    it("should parse with facets", () => {
-        const argument = new Argument($eq($lazy($child(Animal))));
+    it("should parse with qualifiers", () => {
+        const argument = new TypeInfo($eq($lazy(Animal)));
         expect(argument.type).to.equal(Animal);
-        expect(argument.flags.hasFlag(ArgumentFlags.Invariant)).to.be.true;
-        expect(argument.flags.hasFlag(ArgumentFlags.Lazy)).to.be.true;
-        expect(argument.flags.hasFlag(ArgumentFlags.Child)).to.be.true;
+        expect(argument.flags.hasFlag(TypeFlags.Invariant)).to.be.true;
+        expect(argument.flags.hasFlag(TypeFlags.Lazy)).to.be.true;
     });
 
-    it("should parse with $optional facet", () => {
-        const argument = new Argument($optional(Animal));
+    it("should parse with $optional qualifier", () => {
+        const argument = new TypeInfo($optional(Animal));
         expect(argument.type).to.equal(Animal);
-        expect(argument.flags.hasFlag(ArgumentFlags.Optional)).to.be.true;
+        expect(argument.flags.hasFlag(TypeFlags.Optional)).to.be.true;
     });
 
-    it("should parse with $promise facet", () => {
-        const argument = new Argument($promise(Animal));
+    it("should parse with $promise qualifier", () => {
+        const argument = new TypeInfo($promise(Animal));
         expect(argument.type).to.equal(Animal);
-        expect(argument.flags.hasFlag(ArgumentFlags.Promise)).to.be.true;
+        expect(argument.flags.hasFlag(TypeFlags.Promise)).to.be.true;
     });
- 
-    it("should parse with $instant facet", () => {
-        const argument = new Argument($instant(Animal));
-        expect(argument.type).to.equal(Animal);
-        expect(argument.flags.hasFlag(ArgumentFlags.Instant)).to.be.true;
-    }); 
 
-    it("should parse with $every facet", () => {
-        const argument = new Argument($every(Animal));
+    it("should parse with $all qualifier", () => {
+        const argument = new TypeInfo($all(Animal));
         expect(argument.type).to.equal(Animal);
-        expect(argument.flags.hasFlag(ArgumentFlags.Array)).to.be.true;
+        expect(argument.flags.hasFlag(TypeFlags.Array)).to.be.true;
     }); 
 
     it("should parse with array construct", () => {
-        const argument = new Argument([Animal]);
+        const argument = new TypeInfo([Animal]);
         expect(argument.type).to.equal(Animal);
-        expect(argument.flags.hasFlag(ArgumentFlags.Array)).to.be.true;
+        expect(argument.flags.hasFlag(TypeFlags.Array)).to.be.true;
     });
 
     it("should fail invalid array construct", () => {
         expect(() => {
-            new Argument([Animal, 1]);
-        }).to.throw(SyntaxError, "Argument array specification expects a single type."); 
+            new TypeInfo([Animal, 1]);
+        }).to.throw(SyntaxError, "Array specification expects a single type."); 
     });                   
 });

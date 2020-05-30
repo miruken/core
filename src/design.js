@@ -1,7 +1,7 @@
 import { $isFunction } from "./base2";
 import { isDescriptor } from "./decorate";
+import { TypeInfo, TypeFlags } from "./type-info";
 import Metadata from "./metadata";
-import Argument, { ArgumentFlags } from "./argument";
 
 const designMetadataKey = Symbol("design-metadata"),
       paramTypesKey     = "design:paramtypes",
@@ -70,7 +70,7 @@ export const design = DesignMetadata.decorator(designMetadataKey,
             throw new SyntaxError(`@design for property '${key}' should only be specified on getter or setter.`);
         } else {
             const args = buildArguments(types);
-            if (args[0].flags != ArgumentFlags.None) {
+            if (args[0].flags != TypeFlags.None) {
                 throw new SyntaxError(`@design for property '${key}' expects no qualifiers.`);
             }
             DesignMetadata.define(propertyTypeKey, args[0].type, target, key);
@@ -107,5 +107,5 @@ export const returns = DesignMetadata.decorator(designMetadataKey,
     });
 
 function buildArguments(args) {
-    return args.map(arg => arg == null ? arg : new Argument(arg));   
+    return args.map(arg => arg == null ? arg : new TypeInfo(arg));   
 }
