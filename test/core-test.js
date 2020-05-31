@@ -16,8 +16,7 @@ import {
 
 import { 
     $createQualifier, $eq, $lazy,
-    $eval, $all, $optional, $promise,
-    $contents
+    $eval, $all, $optional, $contents
 } from "../src/qualifier";
 
 import {
@@ -1386,7 +1385,7 @@ describe("@design", () => {
 
     it("should get method design with return", () => {
         const { args, returnType } = design.get(Zoo.prototype, "race");
-        expect(returnType).to.equal(Animal);
+        expect(returnType.type).to.equal(Animal);
         expect(args[0].type).to.equal(Dog);
         expect(args[1].type).to.equal(Elephant);
         expect(args[2].type).to.equal(AsianElephant);
@@ -1394,16 +1393,18 @@ describe("@design", () => {
     });
     
     it("should get field design", () => {
+        const u = 1;
         const { propertyType } = design.get(Zoo.prototype, "trainer");
-        expect(propertyType).to.equal(Person);
+        expect(propertyType.type).to.equal(Person);
     });
 
     it("should get property design", () => {
         const { propertyType } = design.get(Zoo.prototype, "doctor");
-        expect(propertyType).to.equal(Person);     
+        expect(propertyType.type).to.equal(Person);     
     });
         
     it("should apply class design to constructor", () => {
+        const u = 1;
         const { args } = design.get(PettingZoo);
         expect(args[0].type).to.equal(Person);
         expect(args[1].type).to.equal(Person);        
@@ -1417,7 +1418,7 @@ describe("@design", () => {
                 @design
                 friend: undefined
             });
-        }).to.throw(Error, "@design for property 'friend' requires a single type to be specified.");
+        }).to.throw(Error, "@design for property 'friend' expects a single property type.");
     });
 
     it("should reject property design on both getter and setter", () => {
@@ -1429,15 +1430,6 @@ describe("@design", () => {
                 set farmer(value) {}
             });
         }).to.throw(Error, "@design for property 'farmer' should only be specified on getter or setter.");        
-    });
-
-    it("should reject design if qualified property type", () => {
-        expect(() => {
-            Base.extend({
-                @design($promise(Person))
-                friend: undefined
-            });
-        }).to.throw(Error, "@design for property 'friend' expects no qualifiers.");
     });
 
     it("should reject constructor @returns", () => {
@@ -1461,7 +1453,7 @@ describe("@design", () => {
             Base.extend({
                 @returns foo() {}
             });  
-        }).to.throw(SyntaxError, "@returns for method 'foo' requires a single return type.");
+        }).to.throw(SyntaxError, "@returns for method 'foo' expects a single return type.");
     });
 
     it("should reject invalid @returns type", () => {
@@ -1469,7 +1461,7 @@ describe("@design", () => {
             Base.extend({
                 @returns(22) foo() {}
             });  
-        }).to.throw(SyntaxError, "@returns for method 'foo' requires a valid return type.");
+        }).to.throw(TypeError, "The type is not a constructor function.");
     });
 
     it("should reject invalid array specifications", () => {
@@ -1600,12 +1592,6 @@ describe("TypeInfo", () => {
         const argument = new TypeInfo($optional(Animal));
         expect(argument.type).to.equal(Animal);
         expect(argument.flags.hasFlag(TypeFlags.Optional)).to.be.true;
-    });
-
-    it("should parse with $promise qualifier", () => {
-        const argument = new TypeInfo($promise(Animal));
-        expect(argument.type).to.equal(Animal);
-        expect(argument.flags.hasFlag(TypeFlags.Promise)).to.be.true;
     });
 
     it("should parse with $all qualifier", () => {

@@ -14,40 +14,55 @@ const designMetadataKey = Symbol("design-metadata"),
  */
 const DesignMetadata = Metadata.extend(null, {
     get(metadataKey, target, targetKey) {
-        if (metadataKey === designMetadataKey) {
-            const args = this.base(paramTypesKey, target, targetKey);
-            if (args) {
-                const returnType = Metadata.get(returnTypeKey, target, targetKey);
-                return { args, returnType };
+        let meta = this.base(metadataKey, target, targetKey);
+        if (!meta && metadataKey === designMetadataKey &&
+            !this.hasOwn(metadataKey, target, targetKey)) {
+            if ($isFunction(target) && !targetKey) {
+                meta = this.getOwn(metadataKey, target.prototype, "constructor")
             }
-            const propertyType = this.base(propertyTypeKey, target, targetKey);
-            if (propertyType) return { propertyType };
-            const returnType = this.base(returnTypeKey, target, targetKey);
-            if (returnType) return { returnType };
-            return $isFunction(target) && !targetKey
-                 ? this.get(metadataKey, target.prototype, "constructor")
-                 : null;
+            if (!meta) {
+                meta = buildFromTypescriptDesign(target, targetKey);
+            }  
         }
-        return this.base(metadataKey, target, targetKey);
+        return meta;
     },
     getOwn(metadataKey, target, targetKey) {
-        if (metadataKey === designMetadataKey) {
-            const args = this.base(paramTypesKey, target, targetKey);
-            if (args) {
-                const returnType = Metadata.get(returnTypeKey, target, targetKey);
-                return { args, returnType };
+        let meta = this.base(metadataKey, target, targetKey);
+        if (!meta && metadataKey === designMetadataKey) {
+            if ($isFunction(target) && !targetKey) {
+                meta = this.getOwn(metadataKey, target.prototype, "constructor")
             }
-            const propertyType = this.base(propertyTypeKey, target, targetKey);
-            if (propertyType) return { propertyType };
-            const returnType = this.base(returnTypeKey, target, targetKey);
-            if (returnType) return { returnType };
-            return $isFunction(target) && !targetKey
-                 ? this.getOwn(metadataKey, target.prototype, "constructor")
-                 : null;
+            if (!meta) {
+                meta = buildFromTypescriptDesign(target, targetKey);
+            } 
         }
-        return this.base(metadataKey, target, targetKey);       
+        return meta;   
     }
 });
+
+function buildFromTypescriptDesign(target, targetKey) {
+    let meta;
+    const args = Metadata.getOwn(paramTypesKey, target, targetKey);
+    if (args) {
+        meta = { args: buildTypeInfo(args) };
+        const returnType = Metadata.getOwn(returnTypeKey, target, targetKey);
+        if (returnType) {
+            meta.returnType = new TypeInfo(returnType); 
+        }
+    } else {
+        const propertyType = Metadata.getOwn(propertyTypeKey, target, targetKey);
+        if (propertyType) {
+            meta = { propertyType: new TypeInfo(propertyType) };
+        } else {
+            const returnType = Metadata.getOwn(returnTypeKey, target, targetKey);
+            if (returnType) {
+                meta = { returnType: new TypeInfo(returnType) };
+            }
+        }
+    }
+    Metadata.define(designMetadataKey, meta, target, targetKey);
+    return meta;
+}
 
 /**
  * Attaches argument/property metadata compatible with Typescript.
@@ -56,23 +71,31 @@ const DesignMetadata = Metadata.extend(null, {
 export const design = DesignMetadata.decorator(designMetadataKey,
     (target, key, descriptor, types) => {
         if (!isDescriptor(descriptor)) {     
-            const args = buildArguments(key);
-            DesignMetadata.define(paramTypesKey, args, target);
+            const args     = buildTypeInfo(key),
+                  rawTypes = args.map(t => t.type),
+                  meta     = Metadata.getOrCreateOwn(
+                    designMetadataKey, target, () => ({}));
+            meta.args = args;
+            DesignMetadata.define(paramTypesKey, rawTypes, target);
             return;
         }
         const { value } = descriptor;
         if ($isFunction(value)) {
-            const args = buildArguments(types);
-            DesignMetadata.define(paramTypesKey, args, target, key); 
+            const args     = buildTypeInfo(types),
+                  rawTypes = args.map(t => t.type),
+                  meta     = Metadata.getOrCreateOwn(
+                    designMetadataKey, target, key, () => ({}));
+            meta.args = args;            
+            DesignMetadata.define(paramTypesKey, rawTypes, target, key); 
         } else if (types.length !== 1) {
-            throw new SyntaxError(`@design for property '${key}' requires a single type to be specified.`);
+            throw new SyntaxError(`@design for property '${key}' expects a single property type.`);
         } else if (DesignMetadata.has(propertyTypeKey, target, key)) {
             throw new SyntaxError(`@design for property '${key}' should only be specified on getter or setter.`);
         } else {
-            const args = buildArguments(types);
-            if (args[0].flags != TypeFlags.None) {
-                throw new SyntaxError(`@design for property '${key}' expects no qualifiers.`);
-            }
+            const args = buildTypeInfo(types),
+                  meta = Metadata.getOrCreateOwn(
+                    designMetadataKey, target, key, () => ({}));
+            meta.propertyType = args[0];
             DesignMetadata.define(propertyTypeKey, args[0].type, target, key);
         }
     });
@@ -91,21 +114,20 @@ export const returns = DesignMetadata.decorator(designMetadataKey,
             if (key === "constructor") {
                 throw new SyntaxError(`@returns cannot be applied to constructors.`);
             }
-            if (args.length != 1) {
+            if (args.length != 1 || args[0] == null) {
                 throw new SyntaxError(
-                    `@returns for method '${key}' requires a single return type.`);
+                    `@returns for method '${key}' expects a single return type.`);
             }
-            const returnType = args[0];
-            if (!$isFunction(returnType)) {
-                throw new SyntaxError(
-                    `@returns for method '${key}' requires a valid return type.`);
-            }
-            DesignMetadata.define(returnTypeKey, returnType, target, key); 
+            const returnType = new TypeInfo(args[0]),
+                  meta       = DesignMetadata.getOrCreateOwn(
+                    designMetadataKey, target, key, () => ({}));
+            meta.returnType = returnType;
+            DesignMetadata.define(returnTypeKey, returnType.type, target, key); 
         } else {
             throw new SyntaxError(`@returns ('${key}') cannot be applied to properties.`);
         }
-    });
+    }); 
 
-function buildArguments(args) {
-    return args.map(arg => arg == null ? arg : new TypeInfo(arg));   
+function buildTypeInfo(types) {
+    return types.map(t => t == null ? t : new TypeInfo(t));   
 }

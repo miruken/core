@@ -10,13 +10,14 @@ export const TypeFlags = Flags({
     Lazy:      1 << 1,
     Array:     1 << 2,
     Optional:  1 << 3,
-    Promise:   1 << 4,
-    Invariant: 1 << 5
+    Invariant: 1 << 4
 });
 
 export const TypeInfo = Base.extend({
-    constructor(type, flags) {
-        const details = parseType(type);
+    constructor(specification, flags) {
+        if (specification == null)
+            throw new Error("The type specification is required.")
+        const details = parseType(specification);
         _(this).type  = details.type;
         _(this).flags = details.flags.addFlag(flags);
     },
@@ -38,12 +39,7 @@ function parseType(specification) {
         }
         if (Qualifier.$optional.test(specification)) {
             flags = flags.addFlag(TypeFlags.Optional);
-        }
-        if (Qualifier.$promise.test(specification)) {
-            flags = flags.addFlag(TypeFlags.Promise);
-        } else if (Qualifier.$instant.test(type)) {
-            flags = flags.addFlag(TypeFlags.Instant);
-        }            
+        }      
         if (Qualifier.$all.test(type)) {
             flags = flags.addFlag(TypeFlags.Array);
         }
