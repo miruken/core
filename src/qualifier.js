@@ -60,9 +60,6 @@ export const $instant = $createQualifier();
 
 export function $contents(content) {
     if (new.target) {
-        if ($isNothing(content)) {
-            throw new Error("The content argument is required.")
-        }
         this.$getContents = function () { return content; }
     } else {
         if ($isSomething(content)) {

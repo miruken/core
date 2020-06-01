@@ -3,6 +3,8 @@ import { isDescriptor } from "./decorate";
 import { TypeInfo, TypeFlags } from "./type-info";
 import Metadata from "./metadata";
 
+import "reflect-metadata";
+
 const designMetadataKey = Symbol("design-metadata"),
       paramTypesKey     = "design:paramtypes",
       propertyTypeKey   = "design:type",
@@ -42,19 +44,19 @@ const DesignMetadata = Metadata.extend(null, {
 
 function buildFromTypescriptDesign(target, targetKey) {
     let meta;
-    const args = Metadata.getOwn(paramTypesKey, target, targetKey);
+    const args = Reflect.getOwnMetadata(paramTypesKey, target, targetKey)
     if (args) {
         meta = { args: buildTypeInfo(args) };
-        const returnType = Metadata.getOwn(returnTypeKey, target, targetKey);
+        const returnType = Reflect.getOwnMetadata(returnTypeKey, target, targetKey);
         if (returnType) {
             meta.returnType = new TypeInfo(returnType); 
         }
     } else {
-        const propertyType = Metadata.getOwn(propertyTypeKey, target, targetKey);
+        const propertyType = Reflect.getOwnMetadata(propertyTypeKey, target, targetKey);
         if (propertyType) {
             meta = { propertyType: new TypeInfo(propertyType) };
         } else {
-            const returnType = Metadata.getOwn(returnTypeKey, target, targetKey);
+            const returnType = Reflect.getOwnMetadata(returnTypeKey, target, targetKey);
             if (returnType) {
                 meta = { returnType: new TypeInfo(returnType) };
             }

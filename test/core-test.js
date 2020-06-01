@@ -1471,7 +1471,32 @@ describe("@design", () => {
                 sing(conductor, chorus) {} 
             });
         }).to.throw(Error, "Array specification expects a single type.");
-    });    
+    });
+
+    describe("typescript", () => {
+        const Park = Base.extend({
+            get hasSlide() { return true; },
+
+            swing(child) {
+                return child.firstName;
+            }
+        });
+
+        Reflect.defineMetadata("design:type", Boolean, Park.prototype, "hasSlide");
+        Reflect.defineMetadata("design:paramtypes", [Person], Park.prototype, "swing");
+        Reflect.defineMetadata("design:returnType", String, Park.prototype, "swing");
+
+        it("should infer typescript method metadata", () => {
+            const { args, returnType } = design.get(Park.prototype, "swing");
+            expect(args[0].type).to.equal(Person);
+            expect(returnType.type).to.equal(String);
+        });
+ 
+        it("should infer typescript property metadata", () => {
+            const { propertyType } = design.get(Park.prototype, "hasSlide");
+            expect(propertyType.type).to.equal(Boolean);
+        });
+    }); 
 });
 
 describe("@inject", () => {

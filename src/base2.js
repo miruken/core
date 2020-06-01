@@ -670,6 +670,26 @@ export function delegate(fn, context) {
 };
 
 /**
+ * Determines if `value` is null or undefined.
+ * @method $isNothing
+ * @param    {Any}     value  -  value to test
+ * @returns  {boolean} true if value null or undefined.
+ */
+export function $isNothing(value) {
+    return value == null;
+}
+
+/**
+ * Determines if `value` is not null or undefined.
+ * @method $isSomething
+ * @param    {Any}     value  -  value to test
+ * @returns  {boolean} true if value not null or undefined.
+ */
+export function $isSomething(value) {
+    return value != null;
+}
+
+/**
  * Determines if `str` is a string.
  * @method $isString
  * @param    {Any}     str  -  string to test
@@ -755,23 +775,13 @@ export function $isPromise(promise) {
 }
 
 /**
- * Determines if `value` is null or undefined.
- * @method $isNothing
- * @param    {Any}     value  -  value to test
- * @returns  {boolean} true if value null or undefined.
+ * Determines if `value` implements the interable protocol.
+ * @method $isIterable
+ * @param    {Any}     value  -  any value
+ * @returns  {boolean} true if iterable. 
  */
-export function $isNothing(value) {
-    return value == null;
-}
-
-/**
- * Determines if `value` is not null or undefined.
- * @method $isSomething
- * @param    {Any}     value  -  value to test
- * @returns  {boolean} true if value not null or undefined.
- */
-export function $isSomething(value) {
-    return value != null;
+export function $isIterable(value) {
+    return Symbol.iterator in Object(value);
 }
 
 /**
