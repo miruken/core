@@ -106,8 +106,9 @@ export const Protocol = Base.extend({
         }
         const protocols = Metadata.getOrCreateOwn(protocolMetadataKey, metaTarget, () => new Set());
         protocols.add(this);
-        if ($isFunction(target.protocolAdopted)) {
-            target.protocolAdopted(this);
+        const protocolAdopted = target.protocolAdopted;
+        if ($isFunction(protocolAdopted)) {
+            protocolAdopted.call(target, this);
         }
         return true;
     },

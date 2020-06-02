@@ -1602,38 +1602,38 @@ describe("@debounce", () => {
 
 describe("TypeInfo", () => {
     it("should parse without qualifiers", () => {
-       const argument = new TypeInfo(Animal);
+       const argument = TypeInfo.parse(Animal);
        expect(argument.type).to.equal(Animal);
     });
 
     it("should parse with qualifiers", () => {
-        const argument = new TypeInfo($eq($lazy(Animal)));
+        const argument = TypeInfo.parse($eq($lazy(Animal)));
         expect(argument.type).to.equal(Animal);
         expect(argument.flags.hasFlag(TypeFlags.Invariant)).to.be.true;
         expect(argument.flags.hasFlag(TypeFlags.Lazy)).to.be.true;
     });
 
     it("should parse with $optional qualifier", () => {
-        const argument = new TypeInfo($optional(Animal));
+        const argument = TypeInfo.parse($optional(Animal));
         expect(argument.type).to.equal(Animal);
         expect(argument.flags.hasFlag(TypeFlags.Optional)).to.be.true;
     });
 
     it("should parse with $all qualifier", () => {
-        const argument = new TypeInfo($all(Animal));
+        const argument = TypeInfo.parse($all(Animal));
         expect(argument.type).to.equal(Animal);
         expect(argument.flags.hasFlag(TypeFlags.Array)).to.be.true;
     }); 
 
     it("should parse with array construct", () => {
-        const argument = new TypeInfo([Animal]);
+        const argument = TypeInfo.parse([Animal]);
         expect(argument.type).to.equal(Animal);
         expect(argument.flags.hasFlag(TypeFlags.Array)).to.be.true;
     });
 
     it("should fail invalid array construct", () => {
         expect(() => {
-            new TypeInfo([Animal, 1]);
+            TypeInfo.parse([Animal, 1]);
         }).to.throw(SyntaxError, "Array specification expects a single type."); 
     });                   
 });

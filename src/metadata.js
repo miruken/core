@@ -158,9 +158,10 @@ export const Metadata = Abstract.extend(null, {
         metadataKeys.forEach(metadataKey => {
             const sourceMetadata = this.getOwn(metadataKey, source, sourceKey);
             if (sourceMetadata) {
-                if ($isFunction(sourceMetadata.copyMetadata)) {
-                    const targetMetadata = sourceMetadata.copyMetadata(
-                        sourceMetadata, target, source, sourceKey, metadataKey);
+                const copyMetadata = sourceMetadata.copyMetadata;
+                if ($isFunction(copyMetadata)) {
+                    const targetMetadata = copyMetadata.call(sourceMetadata,
+                        target, source, sourceKey, metadataKey);
                     if (targetMetadata) {
                         this.define(metadataKey, targetMetadata, target, sourceKey);
                     }
@@ -196,18 +197,22 @@ export const Metadata = Abstract.extend(null, {
             const targetMetadata = this.getOwn(metadataKey, target, sourceKey),
                   sourceMetadata = this.getOwn(metadataKey, source, sourceKey);
             if (targetMetadata) {
-                if ($isFunction(targetMetadata.mergeMetadata)) {
-                    targetMetadata.mergeMetadata(
+                const mergeMetadata = targetMetadata.mergeMetadata;
+                if ($isFunction(mergeMetadata)) {
+                    mergeMetadata.call(targetMetadata,
                         sourceMetadata, target, source, sourceKey, metadataKey);
                 }
-            } else if ($isFunction(sourceMetadata.copyMetadata)) {
-                const targetMetadata = sourceMetadata.copyMetadata(
-                    sourceMetadata, target, source, sourceKey, metadataKey);
-                if (targetMetadata) {
-                    this.define(metadataKey, targetMetadata, target, sourceKey);
-                }
             } else {
-                this.define(metadataKey, sourceMetadata, target, sourceKey);                
+                const copyMetadata = sourceMetadata.copyMetadata;
+                if ($isFunction(copyMetadata)) {
+                    const targetMetadata = copyMetadata.call(sourceMetadata,
+                        target, source, sourceKey, metadataKey);
+                    if (targetMetadata) {
+                        this.define(metadataKey, targetMetadata, target, sourceKey);
+                    }
+                } else {
+                    this.define(metadataKey, sourceMetadata, target, sourceKey);                
+                }
             }
         });
     },

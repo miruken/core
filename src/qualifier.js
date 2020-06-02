@@ -63,8 +63,9 @@ export function $contents(content) {
         this.$getContents = function () { return content; }
     } else {
         if ($isSomething(content)) {
-            return $isFunction(content.$getContents) 
-                 ? content.$getContents()
+            const getContents = content.$getContents;
+            return $isFunction(getContents) 
+                 ? getContents.call(content)
                  : content;
         }
     }

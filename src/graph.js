@@ -305,8 +305,9 @@ function preOrder(node, visitor, context, visited = []) {
     if (!node || !$isFunction(visitor) || visitor.call(context, node)) {
         return true;
     }
-    if ($isFunction(node.traverse))
-        node.traverse(child => preOrder(child, visitor, context, visited));
+    const traverse = node.traverse; 
+    if ($isFunction(traverse))
+        traverse.call(node, child => preOrder(child, visitor, context, visited));
     return false;
 }
 
@@ -315,8 +316,9 @@ function postOrder(node, visitor, context, visited = []) {
     if (!node || !$isFunction(visitor)) {
         return true;
     }
-    if ($isFunction(node.traverse))
-        node.traverse(child => postOrder(child, visitor, context, visited));
+    const traverse = node.traverse; 
+    if ($isFunction(traverse))
+        traverse.call(node, child => postOrder(child, visitor, context, visited));
     return visitor.call(context, node);
 }
 
@@ -331,8 +333,9 @@ function levelOrder(node, visitor, context, visited = []) {
         if (visitor.call(context, next)) {
             return;
         }
-        if ($isFunction(next.traverse))
-            next.traverse(child => {
+        const traverse = next.traverse; 
+        if ($isFunction(traverse))
+            traverse.call(next, child => {
                 if (child) queue.push(child);
             });
     }
@@ -348,9 +351,10 @@ function reverseLevelOrder(node, visitor, context, visited = []) {
         const next = queue.shift();
         checkCircularity(visited, next);
         stack.push(next);
-        const level = [];
-        if ($isFunction(next.traverse))
-            next.traverse(child => {
+        const level    = [],
+              traverse = next.traverse; 
+        if ($isFunction(traverse))
+            traverse.call(next, child => {
                 if (child) level.unshift(child);
             });
         queue.push.apply(queue, level);

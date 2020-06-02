@@ -49,16 +49,16 @@ function buildFromTypescriptDesign(target, targetKey) {
         meta = { args: buildTypeInfo(args) };
         const returnType = Reflect.getOwnMetadata(returnTypeKey, target, targetKey);
         if (returnType) {
-            meta.returnType = new TypeInfo(returnType); 
+            meta.returnType = TypeInfo.parse(returnType); 
         }
     } else {
         const propertyType = Reflect.getOwnMetadata(propertyTypeKey, target, targetKey);
         if (propertyType) {
-            meta = { propertyType: new TypeInfo(propertyType) };
+            meta = { propertyType: TypeInfo.parse(propertyType) };
         } else {
             const returnType = Reflect.getOwnMetadata(returnTypeKey, target, targetKey);
             if (returnType) {
-                meta = { returnType: new TypeInfo(returnType) };
+                meta = { returnType: TypeInfo.parse(returnType) };
             }
         }
     }
@@ -120,7 +120,7 @@ export const returns = DesignMetadata.decorator(designMetadataKey,
                 throw new SyntaxError(
                     `@returns for method '${key}' expects a single return type.`);
             }
-            const returnType = new TypeInfo(args[0]),
+            const returnType = TypeInfo.parse(args[0]),
                   meta       = DesignMetadata.getOrCreateOwn(
                     designMetadataKey, target, key, () => ({}));
             meta.returnType = returnType;
@@ -131,5 +131,5 @@ export const returns = DesignMetadata.decorator(designMetadataKey,
     }); 
 
 function buildTypeInfo(types) {
-    return types.map(t => t == null ? t : new TypeInfo(t));   
+    return types.map(t => t == null ? t : TypeInfo.parse(t));   
 }
