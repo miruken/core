@@ -58,48 +58,73 @@ export const $promise = $createQualifier();
  */                                
 export const $instant = $createQualifier();
 
-export function $contents(content) {
+const nextKey = Symbol();
+
+function visit(visitor) {
+    const next = this[nextKey];
+    if ($isFunction(next)) {
+        return next.call(this, visitor);
+    }
+};
+
+export function $contents(input) {
     if (new.target) {
-        this.$getContents = function () { return content; }
+        this.$getContents = function () { return input; }
+        this[nextKey] = function (visitor) {
+            return visitor.call($contents, input);
+        }
     } else {
-        if ($isSomething(content)) {
-            const getContents = content.$getContents;
+        if ($isSomething(input)) {
+            const getContents = input.$getContents;
             return $isFunction(getContents) 
-                 ? getContents.call(content)
-                 : content;
+                 ? getContents.call(input)
+                 : input;
         }
     }
 }
+$contents.prototype.visit = visit;
+$contents.key = Symbol();
 
 export function $createQualifier() {
     const key = Symbol();
-    function qualifier(content, ...args) {
+    function qualifier(input, ...args) {
         if (new.target) {
              throw new Error("Qualifiers should not be called with the new operator.");
         }
-        if (qualifier.test(content)) {
-            return content;
+        if (qualifier.test(input)) {
+            return input;
         }
-        if (!(content instanceof $contents)) {
-            content = new $contents(content);
+        if (!(input instanceof $contents)) {
+            input = new $contents(input);
         }
-        const decorator = Object.create(content, {
+        const next      = input[nextKey],
+              state     = args.length == 0 ? emptyArray : args,
+              decorator = Object.create(input, {
             [key]: {
                 writable:     false,
                 configurable: false,
-                value:        args.length == 0 ? emptyArray : args
-            }
+                value:        state
+            },
+            [nextKey]: {
+                writable:     false,
+                configurable: false,
+                value:        function (visitor) {
+                    const result = input[nextKey](visitor);
+                    return visitor.call(qualifier, result, state) || result;
+                }
+            },
         });
+        decorator.visit = visit;
         return decorator;
     }
-    qualifier.getArgs = function (content) {
-        if ($isSomething(content)) {
-            return content[key];
+    qualifier.getArgs = function (input) {
+        if ($isSomething(input)) {
+            return input[key];
         }
     };
-    qualifier.test = function (content) {
-        return $isSomething(content) && !!content[key];
+    qualifier.test = function (input) {
+        return $isSomething(input) && !!input[key];
     };
-
+    qualifier.key = key;
     return qualifier;
 }

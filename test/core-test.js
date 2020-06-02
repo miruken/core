@@ -16,7 +16,8 @@ import {
 
 import { 
     $createQualifier, $eq, $lazy,
-    $eval, $all, $optional, $contents
+    $eval, $all, $optional, $use,
+    $contents
 } from "../src/qualifier";
 
 import {
@@ -839,7 +840,7 @@ function required(key) {
   };
 }
 
-describe("Facet", () => {
+describe("Qualifier", () => {
     describe("$createQualifier", () => {
         it("should create a new qualifier", () => {
             const wrap = $createQualifier("wrap");
@@ -881,7 +882,7 @@ describe("Facet", () => {
     });
 
     describe("$contents", () => {
-         it("should return input if no qualifiers", () => {
+        it("should return input if no qualifiers", () => {
             expect($contents("Hello")).to.equal("Hello");
         });
 
@@ -893,6 +894,40 @@ describe("Facet", () => {
             expect($contents(chain)).to.equal(19);
         });
     });
+    
+    describe("visit", () => {
+        it("should visit $contents with input", () => {
+            const output = new $contents("Hello").visit(function (input) {
+                expect(this).to.equal($contents);
+                return input;
+            });
+            expect(output).to.equal("Hello");
+        });
+
+        it("should visit qualifier pipeline", () => {
+            const output = $eq("Hello").visit(function (input) {
+                if (this === $contents) {
+                    return input + " Craig";
+                } else if (this === $eq) {
+                    return `(${input})`;
+                }
+                return input;
+            });
+            expect(output).to.equal("(Hello Craig)");
+        });
+
+        it("should visit qualifier pipeline with state", () => {
+            const output = $use("Hello", 19).visit(function (input, state) {
+                if (this === $contents) {
+                    return input + " World";
+                } else if (this === $use) {
+                    return `${input} ${state[0]}`;
+                }
+                return input;
+            });
+            expect(output).to.equal("Hello World 19");
+        });        
+    });    
 });
 
 describe("Protocol", () => {

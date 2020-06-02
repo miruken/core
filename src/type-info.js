@@ -1,5 +1,6 @@
 import { 
-    Base, $isNothing, $isFunction
+    Base, $isNothing, $isFunction,
+    $isSymbol
 } from "./base2";
 
 import { Flags } from "./enum";
@@ -16,7 +17,29 @@ export const TypeFlags = Flags({
     Invariant: 1 << 4
 });
 
-const parsers = [];
+const parsers = {
+    [Qualifier.$eq.key](typeInfo) {
+        typeInfo.flags = typeInfo.flags.addFlag(TypeFlags.Invariant);
+    },
+    [Qualifier.$lazy.key](typeInfo) {
+        typeInfo.flags = typeInfo.flags.addFlag(TypeFlags.Lazy);
+    },
+    [Qualifier.$optional.key](typeInfo) {
+        typeInfo.flags = typeInfo.flags.addFlag(TypeFlags.Optional);
+    },
+    [Qualifier.$all.key](typeInfo) {
+        typeInfo.flags = typeInfo.flags.addFlag(TypeFlags.Array);
+    },
+    [Qualifier.$contents.key](input) {
+        if (Array.isArray(input)) {
+            if (input.length !== 1) {
+                throw new SyntaxError("Array specification expects a single type.");
+            }
+            return new TypeInfo(input[0], TypeFlags.Array );
+        }
+        return new TypeInfo(input, TypeFlags.None );
+    }        
+}
 
 export const TypeInfo = Base.extend({
     constructor(type, flags) {
@@ -28,49 +51,29 @@ export const TypeInfo = Base.extend({
     },
 
     get type()  { return _(this).type; },
-    get flags() { return _(this).flags; }
+    get flags() { return _(this).flags; },
+    set flags(value) { _(this).flags = value; }
 }, {
     parse(spec) {
         if (spec == null)
             throw new Error("The specification argument is required.")
-
-        let type  = spec,
-            flags = TypeFlags.None;
-
-        if ($isFunction(spec.$getContents)) {
-            if (Qualifier.$eq.test(spec)) {
-                flags = flags.addFlag(TypeFlags.Invariant);
-            }            
-            if (Qualifier.$lazy.test(spec)) {
-                flags = flags.addFlag(TypeFlags.Lazy);
-            }
-            if (Qualifier.$optional.test(spec)) {
-                flags = flags.addFlag(TypeFlags.Optional);
-            }      
-            if (Qualifier.$all.test(spec)) {
-                flags = flags.addFlag(TypeFlags.Array);
-            }
-
-            type = Qualifier.$contents(spec);
-        } 
-
-        if (Array.isArray(type)) {
-            if (type.length !== 1) {
-                throw new SyntaxError("Array specification expects a single type.");
-            }
-            type  = type[0];
-            flags = flags.addFlag(TypeFlags.Array);            
-        }                     
         
-        const typeInfo = new TypeInfo(type, flags);
-        parsers.forEach(parser => parser(spec, typeInfo));
-        return typeInfo;
+        return spec instanceof Qualifier.$contents
+             ? spec.visit(function (input, state) {
+                 return this.key in parsers
+                      ? parsers[this.key](input, state)
+                      : input;
+               })
+             : parsers[Qualifier.$contents.key](spec);
     },
-    addParser(parser) {
-        if (!$isFunction(parser)) {
-            throw new Error("The parser argument must be a function.");
+    addParser(qualifier, parser) {
+        if ($isNothing(qualifier) || !$isSymbol(qualifier.key)) {
+            throw new TypeError("The qualifier argument is not valid.");
         }
-        parsers.push(parser);
+        if (!$isFunction(parser)) {
+            throw new TypeError("The parser argument must be a function.");
+        }
+        parsers[qualifier.key] = parser;
     }
 });
 
