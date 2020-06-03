@@ -17,7 +17,7 @@ export const TypeFlags = Flags({
     Invariant: 1 << 4
 });
 
-const parsers = {
+const qualifiers = {
     [Qualifier.$eq.key](typeInfo) {
         typeInfo.flags = typeInfo.flags.addFlag(TypeFlags.Invariant);
     },
@@ -60,20 +60,20 @@ export const TypeInfo = Base.extend({
         
         return spec instanceof Qualifier.$contents
              ? spec.visit(function (input, state) {
-                 return this.key in parsers
-                      ? parsers[this.key](input, state)
+                 return this.key in qualifiers
+                      ? qualifiers[this.key](input, state)
                       : input;
                })
-             : parsers[Qualifier.$contents.key](spec);
+             : qualifiers[Qualifier.$contents.key](spec);
     },
-    addParser(qualifier, parser) {
+    registerQualifier(qualifier, visitor) {
         if ($isNothing(qualifier) || !$isSymbol(qualifier.key)) {
             throw new TypeError("The qualifier argument is not valid.");
         }
-        if (!$isFunction(parser)) {
-            throw new TypeError("The parser argument must be a function.");
+        if (!$isFunction(visitor)) {
+            throw new TypeError("The visitor argument must be a function.");
         }
-        parsers[qualifier.key] = parser;
+        qualifiers[qualifier.key] = visitor;
     }
 });
 
