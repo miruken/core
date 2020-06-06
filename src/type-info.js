@@ -1,11 +1,16 @@
 import { 
     Base, $isNothing, $isFunction,
+    $isBoolean, $isNumber, $isString,
     $isSymbol
 } from "./base2";
 
+import { $isProtocol } from "./protocol";
 import { Flags } from "./enum";
 import { createKey } from "./privates";
-import * as Qualifier from "./qualifier";
+import { 
+    $eq, $lazy, $optional, $all,
+    $contents 
+} from "./qualifier";
 
 const _ = createKey();
 
@@ -14,30 +19,40 @@ export const TypeFlags = Flags({
     Lazy:      1 << 1,
     Array:     1 << 2,
     Optional:  1 << 3,
-    Invariant: 1 << 4
+    Invariant: 1 << 4,
+    Protocol:  1 << 5,
 });
 
 const qualifiers = {
-    [Qualifier.$eq.key](typeInfo) {
+    [$eq.key](typeInfo) {
         typeInfo.flags = typeInfo.flags.addFlag(TypeFlags.Invariant);
     },
-    [Qualifier.$lazy.key](typeInfo) {
+    [$lazy.key](typeInfo) {
         typeInfo.flags = typeInfo.flags.addFlag(TypeFlags.Lazy);
     },
-    [Qualifier.$optional.key](typeInfo) {
+    [$optional.key](typeInfo) {
         typeInfo.flags = typeInfo.flags.addFlag(TypeFlags.Optional);
     },
-    [Qualifier.$all.key](typeInfo) {
+    [$all.key](typeInfo) {
         typeInfo.flags = typeInfo.flags.addFlag(TypeFlags.Array);
     },
-    [Qualifier.$contents.key](input) {
+    [$contents.key](input) {
+        let type  = input,
+            flags = TypeFlags.None;
+
         if (Array.isArray(input)) {
             if (input.length !== 1) {
-                throw new SyntaxError("Array specification expects a single type.");
+                throw new SyntaxError("Array type specification expects a single type.");
             }
-            return new TypeInfo(input[0], TypeFlags.Array );
+            type  = input[0];
+            flags = flags.addFlag(TypeFlags.Array);
         }
-        return new TypeInfo(input, TypeFlags.None );
+
+        if ($isProtocol(type)) {
+            flags = flags.addFlag(TypeFlags.Protocol);
+        }
+
+        return new TypeInfo(type, flags);
     }        
 }
 
@@ -50,21 +65,56 @@ export const TypeInfo = Base.extend({
         _(this).flags = flags || TypeFlags.None;
     },
 
-    get type()  { return _(this).type; },
-    get flags() { return _(this).flags; },
-    set flags(value) { _(this).flags = value; }
+    get type()       { return _(this).type; },
+    get flags()      { return _(this).flags; },
+    set flags(value) { _(this).flags = value; },
+
+    validate(value, require) {
+        const type  = this.type,
+              flags = this.flags
+        if ($isNothing(value)) {
+            if (flags.hasFlag(TypeFlags.Optional)) {
+                return true;
+            } else if (require) {
+                throw new TypeError("The value is nothing.");
+            }
+            return false;
+        }
+        if (flags.hasFlag(TypeFlags.Array)) {
+            if (!Array.isArray(value)) {
+                if (require) {
+                    throw new TypeError("The value is not an array.");
+                }
+                return false;
+            }
+            for (let i = 0; i < value.length; ++i) {
+                const item = value[i];
+                if ($isNothing(item)) {
+                    if (require) {
+                        throw new TypeError(`Array element at index ${i} is nothing.`);
+                    }
+                    return false;
+                }
+                if (!validateType(type, flags, item, i, require)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return validateType(type, flags, value, null, require);
+    }
 }, {
     parse(spec) {
         if (spec == null)
-            throw new Error("The specification argument is required.")
+            throw new Error("The type spec argument is required.")
         
-        return spec instanceof Qualifier.$contents
+        return spec instanceof $contents
              ? spec.visit(function (input, state) {
                  return this.key in qualifiers
                       ? qualifiers[this.key](input, state)
                       : input;
                })
-             : qualifiers[Qualifier.$contents.key](spec);
+             : qualifiers[$contents.key](spec);
     },
     registerQualifier(qualifier, visitor) {
         if ($isNothing(qualifier) || !$isSymbol(qualifier.key)) {
@@ -76,5 +126,63 @@ export const TypeInfo = Base.extend({
         qualifiers[qualifier.key] = visitor;
     }
 });
+
+function validateType(type, flags, value, index, require) {
+    if (type === Boolean) {
+        if (!$isBoolean(value)) {
+            if (require) {
+                if (index == null) {
+                    throw new TypeError("The value is not a boolean.");
+                } else {
+                     throw new TypeError(`The element at index ${index} is not a boolean.`);
+                }
+            }
+            return false;
+        }
+    } else if (type === Number) {
+        if (!$isNumber(value)) {
+            if (require) {
+                if (index == null) {
+                    throw new TypeError("The value is not a number.");
+                } else {
+                    throw new TypeError(`The element at index ${index} is not a number.`);
+                }
+            }
+            return false;
+        }
+    } else if (type === String) {
+        if (!$isString(value)) {
+            if (require) {
+                if (index == null) {
+                    throw new TypeError("The value is not a string.");
+                } else {
+                    throw new TypeError(`The element at index ${index} is not a string.`);
+                }
+            }
+            return false;
+        }
+    } else if (flags.hasFlag(TypeFlags.Protocol)) {
+        if (!type.isAdoptedBy(value)) {
+            if (require) {
+                if (index == null) {
+                    throw new TypeError(`The value does not conform to protocol ${type}.`);
+                } else {
+                    throw new TypeError(`The element at index ${index} does not conform to protocol ${type}.`);
+                }
+            }
+            return false;
+        }
+    } else if (!(value instanceof type)) {
+        if (require) {
+            if (index == null) {
+                throw new TypeError(`The value is not an instance of ${type}.`);
+            } else {
+                throw new TypeError(`The element at index ${index} is not an instance of ${type}.`);
+            }
+        }
+        return false;
+    }
+    return true;
+}
 
 export default TypeInfo;

@@ -1505,7 +1505,7 @@ describe("@design", () => {
                 @design(Person, [Person, Person])
                 sing(conductor, chorus) {} 
             });
-        }).to.throw(Error, "Array specification expects a single type.");
+        }).to.throw(Error, "Array type specification expects a single type.");
     });
 
     describe("typescript", () => {
@@ -1636,6 +1636,24 @@ describe("@debounce", () => {
 });
 
 describe("TypeInfo", () => {
+    it("should parse protocol", () => {
+        const argument = TypeInfo.parse(Animal);
+        expect(argument.type).to.equal(Animal);
+        expect(argument.flags.hasFlag(TypeFlags.Protocol)).to.be.true;
+    });
+
+    it("should parse array construct", () => {
+        const argument = TypeInfo.parse([Animal]);
+        expect(argument.type).to.equal(Animal);
+        expect(argument.flags.hasFlag(TypeFlags.Array)).to.be.true;
+    });
+
+    it("should parse with array construct", () => {
+        const argument = TypeInfo.parse([Animal]);
+        expect(argument.type).to.equal(Animal);
+        expect(argument.flags.hasFlag(TypeFlags.Array)).to.be.true;
+    });
+
     it("should parse without qualifiers", () => {
        const argument = TypeInfo.parse(Animal);
        expect(argument.type).to.equal(Animal);
@@ -1660,15 +1678,118 @@ describe("TypeInfo", () => {
         expect(argument.flags.hasFlag(TypeFlags.Array)).to.be.true;
     }); 
 
-    it("should parse with array construct", () => {
-        const argument = TypeInfo.parse([Animal]);
-        expect(argument.type).to.equal(Animal);
-        expect(argument.flags.hasFlag(TypeFlags.Array)).to.be.true;
-    });
-
     it("should fail invalid array construct", () => {
         expect(() => {
             TypeInfo.parse([Animal, 1]);
-        }).to.throw(SyntaxError, "Array specification expects a single type."); 
-    });                   
+        }).to.throw(SyntaxError, "Array type specification expects a single type."); 
+    });
+
+    describe("#validate", () => {
+        const TestValidator = Base.extend({
+            @design(Boolean, Number, String)
+            primitive(bool, number, string) {},
+
+            @design(Animal, Elephant, [String], [Person])
+            complex(animal, elephant, strings, people) {},
+
+            @design($optional(Number), $optional(Animal), $optional(Elephant))
+            optional(number, animal, elephant) {}
+        });
+
+        it("should validate boolean", () => {
+            const { args: [bool] } = design.get(TestValidator.prototype, "primitive");
+            expect(bool.validate(true)).to.be.true;
+            expect(bool.validate(false)).to.be.true;
+            expect(bool.validate(new Boolean(true))).to.be.true;
+            expect(bool.validate(22)).to.be.false;
+            expect(bool.validate("hello")).to.be.false;
+            expect(bool.validate(null)).to.be.false;
+            expect(bool.validate()).to.be.false;
+        });
+
+        it("should validate number", () => {
+            const { args: [b, number] } = design.get(TestValidator.prototype, "primitive");
+            expect(number.validate(19)).to.be.true;
+            expect(number.validate(100.3)).to.be.true;
+            expect(number.validate(new Number(255))).to.be.true;
+            expect(number.validate(true)).to.be.false;
+            expect(number.validate(false)).to.be.false;
+            expect(number.validate("hello")).to.be.false;
+            expect(number.validate(null)).to.be.false;
+            expect(number.validate()).to.be.false;
+        });
+
+        it("should validate string", () => {
+            const { args: [b, n, string] } = design.get(TestValidator.prototype, "primitive");
+            expect(string.validate("hello")).to.be.true;
+            expect(string.validate(new String("world"))).to.be.true;
+            expect(string.validate(19)).to.be.false;
+            expect(string.validate(100.3)).to.be.false;
+            expect(string.validate(new Number(255))).to.be.false;
+            expect(string.validate(true)).to.be.false;
+            expect(string.validate(false)).to.be.false;
+            expect(string.validate(null)).to.be.false;
+            expect(string.validate()).to.be.false;
+        });
+
+        it("should validate protocol", () => {
+            const { args: [animal] } = design.get(TestValidator.prototype, "complex");
+            expect(animal.validate(new Dog())).to.be.true;
+            expect(animal.validate(new Elephant())).to.be.true;
+            expect(animal.validate(false)).to.be.false;
+            expect(animal.validate(new Boolean(true))).to.be.false;
+            expect(animal.validate(22)).to.be.false;
+            expect(animal.validate("hello")).to.be.false;
+            expect(animal.validate(null)).to.be.false;
+            expect(animal.validate()).to.be.false;
+        });
+
+        it("should validate class instance", () => {
+            const { args: [a, elpehant] } = design.get(TestValidator.prototype, "complex");
+            expect(elpehant.validate(new Elephant())).to.be.true;
+            expect(elpehant.validate(new AsianElephant())).to.be.true;
+            expect(elpehant.validate(new Dog())).to.be.false;
+            expect(elpehant.validate(false)).to.be.false;
+            expect(elpehant.validate(new Boolean(true))).to.be.false;
+            expect(elpehant.validate(22)).to.be.false;
+            expect(elpehant.validate("hello")).to.be.false;
+            expect(elpehant.validate(null)).to.be.false;
+            expect(elpehant.validate()).to.be.false;
+        });
+
+        it("should validate primitive array", () => {
+            const { args: [a, e, strings] } = design.get(TestValidator.prototype, "complex");
+            expect(strings.validate(["abc", "123"])).to.be.true;
+            expect(strings.validate([new String("xyz"), new String("789")])).to.be.true;
+            expect(strings.validate(new Dog())).to.be.false;
+            expect(strings.validate([new Elephant()])).to.be.false;
+            expect(strings.validate([true, false])).to.be.false;
+            expect(strings.validate(new Boolean(true))).to.be.false;
+            expect(strings.validate(22)).to.be.false;
+            expect(strings.validate([19, 28])).to.be.false;
+            expect(strings.validate("hello")).to.be.false;
+            expect(strings.validate(null)).to.be.false;
+            expect(strings.validate()).to.be.false;
+        });
+
+        it("should validate complex array", () => {
+            const { args: [a, e, s, people] } = design.get(TestValidator.prototype, "complex");
+            expect(people.validate([new Person()])).to.be.true;
+            expect(people.validate([new Elephant()])).to.be.false;
+            expect(people.validate([true, false])).to.be.false;
+            expect(people.validate(new Boolean(true))).to.be.false;
+            expect(people.validate(22)).to.be.false;
+            expect(people.validate([19, 28])).to.be.false;
+            expect(people.validate("hello")).to.be.false;
+            expect(people.validate(null)).to.be.false;
+            expect(people.validate()).to.be.false;
+        });
+
+        it("should validate optionals", () => {
+            const { args: [number, animal, elpehant] } = design.get(TestValidator.prototype, "optional");
+            expect(number.validate()).to.be.true;
+            expect(animal.validate()).to.be.true;
+            expect(elpehant.validate()).to.be.true;
+        });                                               
+    });              
 });

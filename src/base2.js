@@ -696,17 +696,27 @@ export function $isSomething(value) {
  * @returns  {boolean} true if a string.
  */
 export function $isString(str) {
-    return typeOf(str) === "string";
+    return typeOf(str) === "string" || str instanceof String;
 }
 
 /**
  * Determines if `sym` is a symbol.
  * @method $isSymbol
- * @param    {Symbole} sym  -  symbol to test
+ * @param    {Any} sym  -  symbol to test
  * @returns  {boolean} true if a symbol.
  */
-export function $isSymbol(str) {
-    return Object(str) instanceof Symbol;
+export function $isSymbol(sym) {
+    return Object(sym) instanceof Symbol;
+}
+
+/**
+ * Determines if `bool` is a boolean.
+ * @method $isBoolean
+ * @param    {Any}     bool  -  boolean to test
+ * @returns  {boolean} true if a boolean.
+ */
+export function $isBoolean(bool) {
+    return typeOf(bool) === "boolean" || bool instanceof Boolean;
 }
 
 /**
@@ -717,21 +727,23 @@ export function $isSymbol(str) {
  * @returns  {boolean} true if a number.
  */
 export function $isNumber(value, allowInfinity) {
-    if (typeOf(value) !== "number") {
-        return false;
-    }
+  if (typeOf(value) !== "number" && !(value instanceof Number)) {
+      return false;
+  }
 
-    // NaN is the only JavaScript value that never equals itself.
-    if (value !== Number(value)) {
-        return false
-    }
+  const number = +value;
 
-    if (allowInfinity !== true &&
-        (value === Infinity || value === !Infinity)) {
-        return false
-    }
+  // NaN is the only JavaScript value that never equals itself.
+  if (number !== Number(value)) {
+      return false
+  }
 
-    return true;
+  if (allowInfinity !== true &&
+      (number === Infinity || number === !Infinity)) {
+      return false
+  }
+
+  return true;
 }
 
 /**

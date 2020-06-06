@@ -1,6 +1,6 @@
 import { 
     Base, $isNothing, $isFunction,
-    $flatten, getPropertyDescriptors
+    $isObject, $flatten, getPropertyDescriptors
 } from "./base2";
 
 import Metadata from "./metadata";
@@ -86,7 +86,8 @@ export const Protocol = Base.extend({
         if (this === target || (target && target.prototype instanceof this)) {
             return true;
         }
-        const metaTarget = $isFunction(target) ? target.prototype : target;        
+        const metaTarget = $isFunction(target) ? target.prototype : target;
+        if (!$isObject(metaTarget)) return false;      
         return Metadata.collect(protocolMetadataKey, metaTarget,
                                 protocols => protocols.has(this) ||
                                 [...protocols].some(p => this.isAdoptedBy(p)));
