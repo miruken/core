@@ -6,7 +6,7 @@ import { Base } from "./base2";
  * @class Delegate
  * @extends Base
  */
-export const Delegate = Base.extend({
+export class Delegate extends Base {
     /**
      * Delegates the property get on `protocol`.
      * @method get
@@ -14,7 +14,8 @@ export const Delegate = Base.extend({
      * @param   {string}   key       - key of the property
      * @returns {Any} result of the proxied get.
      */
-    get(protocol, key) {},
+    get(protocol, key) {}
+
     /**
      * Delegates the property set on `protocol`.
      * @method set
@@ -22,7 +23,8 @@ export const Delegate = Base.extend({
      * @param   {string}   key       - key of the property
      * @param   {Object}   value     - value of the property
      */
-    set(protocol, key, value) {},
+    set(protocol, key, value) {}
+
     /**
      * Delegates the method invocation on `protocol`.
      * @method invoke
@@ -32,7 +34,7 @@ export const Delegate = Base.extend({
      * @returns {Any} result of the proxied invocation.
      */
     invoke(protocol, methodName, args) {}
-});
+}
 
 /**
  * Delegates properties and methods to an object.
@@ -41,18 +43,22 @@ export const Delegate = Base.extend({
  * @param   {Object}  object  - receiving object
  * @extends Delegate
  */
-export const ObjectDelegate = Delegate.extend({
+export class ObjectDelegate extends Delegate {
     constructor(object) {
+        super();
         Object.defineProperty(this, "object", { value: object });
-    },
+    }
+
     get(protocol, key) {
         const object = this.object;
         if (object) { return object[key]; }
-    },
+    }
+
     set(protocol, key, value) {
         const object = this.object;
         if (object) { return object[key] = value; }
-    },
+    }
+
     invoke(protocol, methodName, args) {
         const object = this.object;
         if (object) {
@@ -60,7 +66,7 @@ export const ObjectDelegate = Delegate.extend({
             return method && method.apply(object, args);
         }
     }
-});
+}
 
 /**
  * Delegates properties and methods to an array.
@@ -69,22 +75,26 @@ export const ObjectDelegate = Delegate.extend({
  * @param   {Array}  array  - receiving array
  * @extends Delegate
  */
-export const ArrayDelegate = Delegate.extend({
+export class ArrayDelegate extends Delegate {
     constructor(array) {
+        super();
         Object.defineProperty(this, "array", { value: array });
-    },
+    }
+
     get(protocol, key) {
         const array = this.array;
         return array && array.reduce(
             (result, object) => object[key],
             undefined);  
-    },
+    }
+
     set(protocol, key, value) {
         const array = this.array;
         return array && array.reduce(
             (result, object) => object[key] = value,
             undefined);  
-    },
+    }
+
     invoke(protocol, methodName, args) {
         const array = this.array;
         return array && array.reduce((result, object) => {
@@ -92,4 +102,4 @@ export const ArrayDelegate = Delegate.extend({
             return method ? method.apply(object, args) : result;
         }, undefined);
     }
-});
+}

@@ -206,9 +206,10 @@ export const Starting = Protocol.extend({
  * @uses Starting
  * @extends Base
  */
-export const Startup = Base.extend(Starting, {
+@conformsTo(Starting)
+export class Startup extends Base {
     start() {}
-});
+}
 
 /**
  * Determines if `target` is a class.

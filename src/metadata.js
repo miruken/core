@@ -11,7 +11,7 @@ import "reflect-metadata";
  * http://blog.wolksoftware.com/decorators-metadata-reflection-in-typescript-from-novice-to-expert-part-4
  * @class Metadata
  */
-export const Metadata = Abstract.extend(null, {
+export class Metadata extends Abstract {
     /**
      * Checks metadata on the prototype chain of an object or property.
      * @static
@@ -21,14 +21,15 @@ export const Metadata = Abstract.extend(null, {
      * @param   {Any}     [targetKey]  -  property key
      * @returns {boolean} true if found metadata for `metadataKey`. 
      */
-    has(metadataKey, target, targetKey) {
+    static has(metadataKey, target, targetKey) {
         if (target) {
             return targetKey
                  ? Reflect.hasMetadata(metadataKey, target, targetKey)
                  : Reflect.hasMetadata(metadataKey, target);
         }
         return false;
-    },
+    }
+
     /**
      * Checks metadata on the object or property.
      * @static
@@ -38,14 +39,15 @@ export const Metadata = Abstract.extend(null, {
      * @param   {Any}     [targetKey]  -  property key
      * @returns {boolean} true if owns metadata for `metadataKey`. 
      */
-    hasOwn(metadataKey, target, targetKey) {
+    static hasOwn(metadataKey, target, targetKey) {
         if (target) {
             return targetKey
                  ? Reflect.hasOwnMetadata(metadataKey, target, targetKey)
                  : Reflect.hasOwnMetadata(metadataKey, target);
         }
         return false;
-    },
+    }
+
     /**
      * Gets metadata on the prototype chain of an object or property.
      * @static
@@ -55,13 +57,14 @@ export const Metadata = Abstract.extend(null, {
      * @param   {Any}  [targetKey]  -  property key
      * @returns {Any} the metadata for the `metadataKey`. 
      */
-    get(metadataKey, target, targetKey) {
+    static get(metadataKey, target, targetKey) {
         if (target) {
             return targetKey
                  ? Reflect.getMetadata(metadataKey, target, targetKey)
                  : Reflect.getMetadata(metadataKey, target);
         }
-    },
+    }
+
     /**
      * Gets owning metadata of an object or property.
      * @static
@@ -71,13 +74,14 @@ export const Metadata = Abstract.extend(null, {
      * @param   {Any}  [targetKey]  -  property key
      * @returns {Any} the metadata for the `metadataKey`. 
      */
-    getOwn(metadataKey, target, targetKey) {
+    static getOwn(metadataKey, target, targetKey) {
         if (target) {
             return targetKey
                  ? Reflect.getOwnMetadata(metadataKey, target, targetKey)
                  : Reflect.getOwnMetadata(metadataKey, target);
         }
-    },
+    }
+
     /**
      * Gets owning metadata of an object or property or lazily creates it.
      * @static
@@ -88,7 +92,7 @@ export const Metadata = Abstract.extend(null, {
      * @param   {Function}  creator      -  creates metadata if missing
      * @returns {Any} the metadata for the `metadataKey`. 
      */
-    getOrCreateOwn(metadataKey, target, targetKey, creator) {
+    static getOrCreateOwn(metadataKey, target, targetKey, creator) {
         if (arguments.length === 3) {
             creator   = targetKey;
             targetKey = undefined;
@@ -102,7 +106,8 @@ export const Metadata = Abstract.extend(null, {
             this.define(metadataKey, metadata, target, targetKey);
         }
         return metadata;
-    },
+    }
+
     /**
      * Defines metadata on an object or property.
      * @static
@@ -112,13 +117,14 @@ export const Metadata = Abstract.extend(null, {
      * @param   {Any}  target       -  owning target
      * @param   {Any}  [targetKey]  -  property key
      */
-    define(metadataKey, metadata, target, targetKey) {
+    static define(metadataKey, metadata, target, targetKey) {
         if (target) {
             return targetKey
                  ? Reflect.defineMetadata(metadataKey, metadata, target, targetKey)
                  : Reflect.defineMetadata(metadataKey, metadata, target);
         }
-    },
+    }
+
     /**
      * Removes metadata from an object or property.
      * @static
@@ -127,13 +133,14 @@ export const Metadata = Abstract.extend(null, {
      * @param   {Any}  target       -  owning target
      * @param   {Any}  [targetKey]  -  property key
      */
-    remove(metadataKey, target, targetKey) {
+    static remove(metadataKey, target, targetKey) {
         if (target) {
             return targetKey
                  ? Reflect.deleteMetadata(metadataKey, target, targetKey)
                  : Reflect.deleteMetadata(metadataKey, target);
         }
-    },
+    }
+
     /**
      * Copies or replaces all metadata from `source` onto `target`.
      * @static
@@ -141,10 +148,11 @@ export const Metadata = Abstract.extend(null, {
      * @param   {Any}  target  -  recieves metadata
      * @param   {Any}  source  -  provides metadata
      */
-    copyOwn(target, source) {
+    static copyOwn(target, source) {
         this.copyOwnKey(target, source);
         Reflect.ownKeys(source).forEach(sourceKey => this.copyOwnKey(target, source, sourceKey));
-    },
+    }
+
     /**
      * Copies or replaces all `sourceKey` metadata from `source` onto `target`.
      * @static
@@ -153,7 +161,7 @@ export const Metadata = Abstract.extend(null, {
      * @param   {Any}  source     -  provides metadata
      * @param   {Any}  sourceKey  -  source property to copy from
      */
-    copyOwnKey(target, source, sourceKey) {
+    static copyOwnKey(target, source, sourceKey) {
         const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(metadataKey => {
             const sourceMetadata = this.getOwn(metadataKey, source, sourceKey);
@@ -170,7 +178,8 @@ export const Metadata = Abstract.extend(null, {
                 }
             }
         });
-    },
+    }
+
     /**
      * Merges all metadata from `source` onto `target`.
      * @static
@@ -178,11 +187,12 @@ export const Metadata = Abstract.extend(null, {
      * @param   {Any}   target  -  recieves metadata
      * @param   {Any}   source  -  provides metadata
      */    
-    mergeOwn(target, source) {
+    static mergeOwn(target, source) {
         this.mergeOwnKey(target, source, undefined);
         Reflect.ownKeys(source).forEach(sourceKey => 
             this.mergeOwnKey(target, source, sourceKey));
-    },
+    }
+
     /**
      * Merges all `sourceKey` metadata from `source` onto `target`.
      * @static
@@ -191,7 +201,7 @@ export const Metadata = Abstract.extend(null, {
      * @param   {Any}      source     -  provides metadata
      * @param   {Any}      sourceKey  -  source property to copy from
      */    
-    mergeOwnKey(target, source, sourceKey) {
+    static mergeOwnKey(target, source, sourceKey) {
         const metadataKeys = Reflect.getOwnMetadataKeys(source, sourceKey);
         metadataKeys.forEach(metadataKey => {
             const targetMetadata = this.getOwn(metadataKey, target, sourceKey),
@@ -215,7 +225,8 @@ export const Metadata = Abstract.extend(null, {
                 }
             }
         });
-    },
+    }
+
     /**
      * Collects metadata on the prototype chain of an object or property.
      * @static
@@ -227,7 +238,7 @@ export const Metadata = Abstract.extend(null, {
      *                                      stops collecting if true is returned.
      * @returns {boolean} true if any `collector` returned true, false otherwise.
      */    
-    collect(metadataKey, target, targetKey, collector) {
+    static collect(metadataKey, target, targetKey, collector) {
         if (arguments.length === 3) {
             collector = targetKey;
             targetKey = undefined;
@@ -244,7 +255,8 @@ export const Metadata = Abstract.extend(null, {
             target = Object.getPrototypeOf(target);
         }
         return false;
-    },
+    }
+    
     /**
      * Builds a metadata decorator.
      * @static
@@ -252,7 +264,7 @@ export const Metadata = Abstract.extend(null, {
      * @param  {Any}       metadataKey  -  metadata key
      * @param  {Function}  handler      -  handler function
      */    
-    decorator(metadataKey, handler) {
+    static decorator(metadataKey, handler) {
         function decorator(...args) {
             return decorate(handler, args);
         }
@@ -264,7 +276,7 @@ export const Metadata = Abstract.extend(null, {
         decorator.collectKeys = _metadataKeyCollector.bind(this, metadataKey);
         return decorator;
     }
-});
+}
 
 function _metadataGetter(metadataKey, own, target, targetKey) {
     return own
@@ -278,6 +290,9 @@ function _metadataKeyGetter(metadataKey, own, target, callback) {
     const keys = Reflect.ownKeys(own ? target : getPropertyDescriptors(target))
           .concat("constructor");
     keys.forEach(key => {
+        if (key === "base" || key === "extend") {
+            return;
+        }
         const metadata = own
             ? this.getOwn(metadataKey, target, key)
             : this.get(metadataKey, target, key);

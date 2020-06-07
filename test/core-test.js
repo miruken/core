@@ -6,7 +6,7 @@ import {
 import { Enum, Flags } from "../src/enum";
 
 import { 
-    Protocol, $protocols
+    Protocol, conformsTo, $protocols
 } from "../src/protocol";
 
 import {
@@ -21,13 +21,9 @@ import {
 } from "../src/qualifier";
 
 import {
-    Disposing, DisposingMixin, $using
+    Disposing, DisposingMixin,
+    disposableMixin, $using
 } from "../src/dispose";
-
-import {
-    Facet, Interceptor, InterceptorSelector,
-    ProxyBuilder
-} from "../src/proxy";
 
 import { design, returns } from "../src/design";
 import { inject } from "../src/inject";
@@ -56,15 +52,15 @@ const Animal = Protocol.extend({
     [Breed]() {}
 });
 
-const Person = Base.extend({
-    firstName: "",
-    lastName:  "",
-    dob: undefined,
-    pet: undefined,
+class Person extends Base {
+    firstName = ""
+    lastName  = ""
+    dob       = undefined
+    pet       = undefined
     
     get fullName() {
         return this.firstName + " " + this.lastName;
-    },
+    }
     set fullname(value) {
         const parts = value.split(" ");
         if (parts.length > 0) {
@@ -73,9 +69,9 @@ const Person = Base.extend({
         if (parts.length > 1) {
             this.lastName = parts[1];
         }
-    },
+    }
     get age() { return ~~((Date.now() - +this.dob) / (31557600000)); }
-});
+}
 
 const Tricks = Protocol.extend({
     fetch (item) {}
@@ -84,76 +80,71 @@ const Tricks = Protocol.extend({
 const CircusAnimal = Animal.extend(Tricks, {
 });
 
-const Dog = Base.extend(Animal, Tricks, {
+@conformsTo(Animal, Tricks)
+class Dog extends Base {
     constructor(name, color) {
+        super();
         _(this).name  = name;
         _(this).color = color;
-    },
+    }
 
-    get name()       { return  _(this).name; },
-    set name(value)  {  _(this).name = value; },
-    get color()      { return _(this).color; },
-    set color(value) { _(this).color = value; },    
+    get name()       { return  _(this).name; }
+    set name(value)  { _(this).name = value; }
+    get color()      { return _(this).color; }
+    set color(value) { _(this).color = value; }    
 
-    talk() { return "Ruff Ruff"; },
-    fetch(item) { return "Fetched " + item; },
+    talk() { return "Ruff Ruff"; }
+    fetch(item) { return "Fetched " + item; }
     get [Code]() { return 1234; }    
-});
-    
-const Elephant = Base.extend(CircusAnimal, {
-});
+}
+
+@conformsTo(CircusAnimal) 
+class Elephant extends Base {
+}
 
 const Tracked = Protocol.extend({
 	getTag() {}
 });
 
-const AsianElephant = Elephant.extend(Tracked);
+@conformsTo(Tracked)
+class AsianElephant extends Elephant {}
 
-const ShoppingCart = Base.extend(Disposing, DisposingMixin, {
+class ShoppingCart extends disposableMixin(Base) {
     constructor() {
+        super();
         _(this).items = [];
-    },
-
-    getItems()    { return _(this).items; },
-    addItem(item) { _(this).items.push(item); }, 
-    _dispose()    { _(this).items = []; }    
-});
-
-const LogInterceptor = Interceptor.extend({
-    intercept (invocation) {
-        console.log(
-            `${invocation.methodType.name} ${invocation.method} (${invocation.args.join(", ")})`
-        );
-        const result = invocation.proceed();
-        console.log(`     Return ${result}`);
-        return result;
     }
-});
+
+    getItems()    { return _(this).items; }
+    addItem(item) { _(this).items.push(item); }
+    _dispose()    { _(this).items = []; }    
+}
 
 describe("miruken", () => {
     it("should late bind", () => {
-        const Pincher = Dog.extend({
-            get name() { return "YO " + this.base(); }
-        });
+        class Pincher extends Dog {
+            get name() { return "YO " + super.name; }
+            set name(value) { super.name = value; }
+        }
         const p = new Pincher("Poo");
         expect(p.name).to.equal("YO Poo");
         p.name = "Do";
         expect(p.name).to.equal("YO Do");        
     });
 
-    const Math = Base.extend(null, {
-            PI: 3.14159265359,
-            add(a, b) {
-                return a + b;
-            },
-            identity(v) { return v; }
-        }), 
-        Geometry = Math.extend(null, {
-            area(length, width) {
+    const Math = class extends Base {
+            static PI = 3.14159265359        
+            static add(a, b) { return a + b; }
+            static identity(v) { return v; }
+          }, 
+          Geometry = class extends Math {
+            static area(length, width) {
                 return length * width;
-            },
-            identity(v) { return this.base(v) * 2; }
-        });
+            }
+            static identity(v) { 
+                return super.identity(v) * 2;
+            }
+        };
     
     it("should inherit static members", () => {
         expect(Geometry.PI).to.equal(Math.PI);
@@ -492,11 +483,12 @@ describe("IndexedList", () => {
         list = new IndexedList();
     });
 
-    const Item = Base.extend({
+    class Item extends Base {
         constructor(value) {
+            super();
             this.value = value;
         }
-    });
+    }
 
     it("should determine if empty", () => {
         expect(list.isEmpty).to.be.true;
@@ -606,29 +598,31 @@ describe("$isFunction", () => {
     });
 });
 
-describe("DisposingMixin", () => {
-    describe("dispose", () => {
-        it("should provide dispose", () => {
-            const shoppingCart = new ShoppingCart();
-            shoppingCart.addItem("Sneakers");
-            shoppingCart.addItem("Milk");
-            expect(shoppingCart.getItems()).to.have.members(["Sneakers", "Milk"]);
-            shoppingCart.dispose();
-            expect(shoppingCart.getItems()).to.eql([]);
-        });
+describe("Disposing", () => {
+    it("should adopt Disposing protocol", () => {
+        expect(Disposing.isAdoptedBy(ShoppingCart)).to.be.true;
+    });
 
-        it("should only dispose once", () => {
-            let counter = 0;
-            const DisposeCounter = Base.extend(Disposing, DisposingMixin, {
-                _dispose() { ++counter; }
-            });
-            const disposeCounter = new DisposeCounter();
-            expect(counter).to.equal(0);
-            disposeCounter.dispose();
-            expect(counter).to.equal(1);
-            disposeCounter.dispose();
-            expect(counter).to.equal(1);
-        });
+    it("should provide dispose", () => {
+        const shoppingCart = new ShoppingCart();
+        shoppingCart.addItem("Sneakers");
+        shoppingCart.addItem("Milk");
+        expect(shoppingCart.getItems()).to.have.members(["Sneakers", "Milk"]);
+        shoppingCart.dispose();
+        expect(shoppingCart.getItems()).to.eql([]);
+    });
+
+    it("should only dispose once", () => {
+        let counter = 0;
+        class DisposeCounter extends disposableMixin(Base) {
+            _dispose() { ++counter; }
+        }
+        const disposeCounter = new DisposeCounter();
+        expect(counter).to.equal(0);
+        disposeCounter.dispose();
+        expect(counter).to.equal(1);
+        disposeCounter.dispose();
+        expect(counter).to.equal(1);
     });
 });
 
@@ -1047,7 +1041,8 @@ describe("Protocol", () => {
         });
 
         it("should only list protocol once", () => {
-            const Cat = Base.extend(Animal, Animal);
+            @conformsTo(Animal, Animal)
+            class Cat extends Base {}
             expect(Animal.isAdoptedBy(Cat)).to.be.true;
             expect($protocols(Cat, true)).to.eql([Animal]);
         });
@@ -1075,13 +1070,21 @@ describe("Protocol", () => {
             expect($protocols(EndangeredAnimal, true)).to.have.members([Animal, Tracked]);
         });
 
+        it("should conformsTo array of protocols", () => {
+            @conformsTo(Animal, Tracked)
+            class EndangeredAnimal extends Base {};
+            expect(Animal.isAdoptedBy(EndangeredAnimal)).to.be.true;
+            expect(Tracked.isAdoptedBy(EndangeredAnimal)).to.be.true;
+            expect($protocols(EndangeredAnimal, true)).to.have.members([Animal, Tracked]);
+        });
+
         it("should allow redefining method", () => {
             const SmartTricks = Tricks.extend({
                     fetch(item) {}
                 }),
-                SmartDog = Dog.extend({
+                SmartDog = class extends Dog {
                     fetch(item) { return "Buried " + item; }
-                }),
+                },
                 dog = new SmartDog();
             expect(SmartTricks(dog).fetch("bone")).to.equal("Buried bone");
         });
@@ -1089,9 +1092,9 @@ describe("Protocol", () => {
 
     describe("#adoptProtocol", () => {
         it("should add protocol to class", () => {
-            const Bird  = Base.extend(Animal),
+            const Bird  = @conformsTo(Animal) class extends Base {},
                   eagle = (new Bird()).extend({
-                   getTag() { return "Eagle"; }
+                     getTag() { return "Eagle"; }
 				  });
             Tracked.adoptBy(Bird);
             expect(Tracked.isAdoptedBy(Bird)).to.be.true;
@@ -1099,7 +1102,7 @@ describe("Protocol", () => {
         });
 
         it("should add protocol to protocol", () => {
-            const Bear      = Base.extend(Animal),
+            const Bear      = @conformsTo(Animal) class extends Base {},
                   polarBear = (new Bear()).extend({
                   getTag() { return "Polar Bear"; }
             });
@@ -1118,12 +1121,12 @@ describe("Protocol", () => {
 
         it("should delegate invocations to array", () => {
             let count  = 0;
-            const Dog2 = Dog.extend({
+            const Dog2 = class extends Dog {
                       talk() {
                           ++count;
-                          return this.base();
+                          return super.talk();
                       }
-                  }),
+                  },
                   dogs = [new Dog2("Fluffy"), new Dog2("Max")];
             expect(Animal(dogs).talk()).to.equal("Ruff Ruff");
             expect(count).to.equal(2);
@@ -1134,18 +1137,18 @@ describe("Protocol", () => {
         it("should delegate property gets to object", () => {
             const dog  = new Dog("Franky");
             expect(Animal(dog).name).to.equal("Franky");
-            // expect(Animal(dog)[Code]).to.equal(1234); Babel bug
+            expect(Animal(dog)[Code]).to.equal(1234);
             expect(CircusAnimal(dog).name).to.equal("Franky");
         });
         
         it("should delegate property gets to array", () => {
             let count = 0;
-            const Dog2  = Dog.extend({
+            const Dog2  = class extends Dog {
                      get name() {
                          ++count;
-                         return this.base();
+                         return super.name;
                       } 
-                  }),            
+                  },            
                   dogs = [new Dog2("Franky"), new Dog2("Spot")];
             expect(Animal(dogs).name).to.equal("Spot");
             expect(count).to.equal(2);
@@ -1160,13 +1163,14 @@ describe("Protocol", () => {
         });
 
         it("should delegate property sets to array", () => {
-            let count = 0;
-            const Dog2  = Dog.extend({
+            let count  = 0;
+            const Dog2 = class extends Dog {
                      get name() {
                          ++count;
-                         return this.base();
-                      }
-                  }),
+                         return super.name;
+                     }
+                     set name(value) { super.name = value; }
+                  },
                   dogs = [new Dog2("Franky"), new Dog2("Pebbles")];
             Animal(dogs).name = "Ralphy";
             expect(dogs[0].name).to.equal("Ralphy");
@@ -1188,215 +1192,36 @@ describe("Protocol", () => {
     });
 });
 
-describe("ProxyBuilder", () => {
-    const ToUpperInterceptor = Interceptor.extend({
-        intercept(invocation) {
-            const args = invocation.args;
-            for (let i = 0; i < args.length; ++i) {
-                if ($isString(args[i])) {
-                    args[i] = args[i].toUpperCase();
-                }
-            }
-            let result = invocation.proceed();
-            if ($isString(result)) {
-                result = result.toUpperCase();
-            }
-            return result;
-        }
-    });
-        
-    describe("#buildProxy", () => {
-        it("should proxy class", () => {
-            const proxyBuilder = new ProxyBuilder(),
-                  DogProxy     = proxyBuilder.buildProxy([Dog]),
-                  dog          = new DogProxy({
-                                     [Facet.Parameters]:   ["Patches", "red"],
-                                     [Facet.interceptors]: [new LogInterceptor()]
-                  });
-            expect(dog.name).to.equal("Patches");
-            expect(dog.color).to.equal("red");            
-            expect(dog.talk()).to.equal("Ruff Ruff");
-            expect(dog.fetch("bone")).to.equal("Fetched bone");
-        });
-
-        it("should proxy protocol", () => {
-            const proxyBuilder = new ProxyBuilder(),
-                  AnimalProxy  = proxyBuilder.buildProxy([Animal]),
-                  AnimalInterceptor = Interceptor.extend({
-                      name : "",
-                      intercept(invocation) {
-                          const method = invocation.method,
-                                type   = invocation.methodType,
-                                args   = invocation.args;
-                          if (method === "name") {
-                              if (type === MethodType.Get) {
-                                  return this.name;
-                              } else if (type === MethodType.Set) {
-                                  this.name = args[0];
-                                  return;
-                              }
-                          } else if (method === "talk") {
-                              return "I don't know what to say.";
-                          } else if (method === "eat") {
-                              return `I don\'t like ${args[0]}.`;
-                          }
-                        return invocation.proceed();
-                      }
-                  }),
-                  animal = new AnimalProxy({
-                      [Facet.Interceptors]: [new AnimalInterceptor()]
-                  });
-            animal.name = "Pluto";
-            expect(animal.name).to.equal("Pluto");
-            expect(animal.talk()).to.equal("I don't know what to say.");
-            expect(animal.eat("pizza")).to.equal("I don't like pizza.");
-        });
-
-        it("should proxy classes and protocols", () => {
-            const proxyBuilder   = new ProxyBuilder(),
-                  Flying         = Protocol.extend({ fly() {} }),
-                  FlyingInterceptor = Interceptor.extend({
-                      intercept(invocation) {
-                          if (invocation.method !== "fly") {
-                              return invocation.proceed();
-                          }
-                      }
-                  }),
-                  FlyingDogProxy = proxyBuilder.buildProxy([Dog, Flying, DisposingMixin]);
-            $using(new FlyingDogProxy({
-                       [Facet.Parameters]:   ["Wonder Dog"],
-                       [Facet.Interceptors]: [new FlyingInterceptor(), new LogInterceptor()]
-                   }), wonderDog => {
-                expect(wonderDog.name).to.equal("Wonder Dog");
-                expect(wonderDog.talk()).to.equal("Ruff Ruff");
-                expect(wonderDog.fetch("purse")).to.equal("Fetched purse");
-                wonderDog.fly();
-                }
-            );
-        });
-
-        it("should modify arguments and return value", () => {
-            const proxyBuilder = new ProxyBuilder(),
-                  DogProxy     = proxyBuilder.buildProxy([Dog]),
-                  dog          = new DogProxy({
-                                     [Facet.Parameters]:   ["Patches"],
-                                     [Facet.Interceptors]: [new ToUpperInterceptor()]
-                                 });
-            expect(dog.name).to.equal("PATCHES");
-            expect(dog.talk()).to.equal("RUFF RUFF");
-            expect(dog.fetch("bone")).to.equal("FETCHED BONE");
-        });
-
-        it("should restrict proxied method with interceptor selector options", () => {
-            const proxyBuilder = new ProxyBuilder(),
-                  selector     =  (new InterceptorSelector()).extend({
-                      selectInterceptors(type, method, interceptors) {
-                          return method === "name" ? interceptors : [];
-                  }}),
-                  DogProxy     = proxyBuilder.buildProxy([Dog]),
-                  dog          = new DogProxy({
-                                     [Facet.Parameters]:           ["Patches"],
-                                     [Facet.Interceptors]:         [new ToUpperInterceptor()],
-                                     [Facet.InterceptorSelectors]: [selector]
-                                 });
-            expect(dog.name).to.equal("PATCHES");
-            expect(dog.talk()).to.equal("Ruff Ruff");
-            expect(dog.fetch("bone")).to.equal("Fetched bone");
-        });
-
-        it("should fail if no types array provided", () => {
-            const proxyBuilder = new ProxyBuilder();
-            expect(() => {
-                proxyBuilder.buildProxy();
-            }).to.throw(Error, "ProxyBuilder requires an array of types to proxy.");
-        });
-
-        it("should fail if no method to proceed too", () => {
-            const proxyBuilder = new ProxyBuilder(),
-                  AnimalProxy  = proxyBuilder.buildProxy([Animal]),
-                  animal       = new AnimalProxy([]);
-            expect(() => {
-                animal.talk();
-            }).to.throw(Error, "Interceptor cannot proceed without a class or delegate method 'talk'.");
-        });
-    });
-
-    describe("#extend", () => {
-        it("should reject extending  proxy classes.", () => {
-            const proxyBuilder = new ProxyBuilder(),
-                  DogProxy     = proxyBuilder.buildProxy([Dog]);
-            expect(() => {
-                DogProxy.extend();
-            }).to.throw(TypeError, "Proxy classes are sealed and cannot be extended from.");
-        });
-
-        it("should proxy new method", () => {
-            const proxyBuilder = new ProxyBuilder(),
-                  DogProxy     = proxyBuilder.buildProxy([Dog]),
-                  dog          = new DogProxy({
-                                    [Facet.Parameters]:  ["Patches"],
-                                    [Facet.Interceptors]:[new ToUpperInterceptor()]
-                                 });
-            dog.extend("getColor", () => { return "white with brown spots"; });
-            dog.extend({
-                getBreed() { return "King James Cavalier"; }
-            });
-            expect(dog.getColor()).to.equal("WHITE WITH BROWN SPOTS");
-            expect(dog.getBreed()).to.equal("KING JAMES CAVALIER");
-        });
-
-        it("should proxy existing methods", () => {
-            const proxyBuilder = new ProxyBuilder(),
-                  DogProxy     = proxyBuilder.buildProxy([Dog]),
-                  dog          = new DogProxy({
-                                    [Facet.Parameters]:  ["Patches"],
-                                    [Facet.Interceptors]:[new ToUpperInterceptor()]
-                                 });
-            expect(dog.name).to.equal("PATCHES");
-            dog.extend({
-                get name() { return "Spike"; }
-            });
-            expect(dog.name).to.equal("SPIKE");
-        });
-    });
-
-    describe("#implement", () => {
-        it("should reject extending  proxy classes.", () => {
-            const proxyBuilder = new ProxyBuilder(),
-                  DogProxy     = proxyBuilder.buildProxy([Dog]);
-            expect(() => {
-                DogProxy.implement(DisposingMixin);
-            }).to.throw(TypeError, "Proxy classes are sealed and cannot be extended from.");
-        });
-    });
-});
-
 describe("@design", () => {
-    const Zoo = Base.extend({
-              @design(Person)
-              trainer: undefined,
-        
-              @design(Person, [Animal])
-              constructor(zooKeeper, animals) {},
-
-              @design(Person)
-              get doctor() { return _(this).doctor; },
-              set doctor(value) { _(this)._doctor = value; },
-        
-              @design(Dog, Elephant, AsianElephant)
-              safari(dog, elephant, asianElephant) {},
-
-              @design(Dog, Elephant, $optional(AsianElephant))
-              @returns(Animal) race(dog, elephant, asianElephant) {
-                  return dog;
-              }
-          }),
-          PettingZoo = Zoo.extend(design(Person, Person, [Animal]), {
-              constructor(zooKeeper, trainer, animals) {
-                  this.base(zooKeeper, animals);
-              }
-          });
+    const Zoo = @design(Person, [Animal])
+            class extends Base {
+                @design(Person)
+                trainer = undefined
     
+                constructor(zooKeeper, animals) {
+                    super();
+                }
+
+                @design(Person)
+                get doctor() { return _(this).doctor; }
+                set doctor(value) { _(this)._doctor = value; }
+         
+                @design(Dog, Elephant, AsianElephant)
+                safari(dog, elephant, asianElephant) {}
+
+                @design(Dog, Elephant, $optional(AsianElephant))
+                @returns(Animal) race(dog, elephant, asianElephant) {
+                    return dog;
+                }
+          },
+          PettingZoo =  
+            @design(Person, Person, [Animal])
+            class extends Zoo {
+                constructor(zooKeeper, trainer, animals) {
+                    super(zooKeeper, animals);
+                }
+            };
+
     it("should get constructor design", () => {
         const { args } = design.get(Zoo.prototype, "constructor");
         expect(args[0].type).to.equal(Person);
@@ -1449,21 +1274,21 @@ describe("@design", () => {
  
     it("should reject design if missing property type", () => {
         expect(() => {
-            Base.extend({
+            class _ extends Base {
                 @design
-                friend: undefined
-            });
+                friend = undefined
+            }
         }).to.throw(Error, "@design for property 'friend' expects a single property type.");
     });
 
     it("should reject property design on both getter and setter", () => {
         expect(() => {
-            const Farm = Base.extend({
+            class Farm extends Base {
                 @design(Person)
-                get farmer() {},
+                get farmer() {}
                 @design(Person)            
                 set farmer(value) {}
-            });
+            };
         }).to.throw(Error, "@design for property 'farmer' should only be specified on getter or setter.");        
     });
 
@@ -1509,13 +1334,13 @@ describe("@design", () => {
     });
 
     describe("typescript", () => {
-        const Park = Base.extend({
-            get hasSlide() { return true; },
+        class Park extends Base {
+            get hasSlide() { return true; }
 
             swing(child) {
                 return child.firstName;
             }
-        });
+        }
 
         Reflect.defineMetadata("design:type", Boolean, Park.prototype, "hasSlide");
         Reflect.defineMetadata("design:paramtypes", [Person], Park.prototype, "swing");
@@ -1597,19 +1422,18 @@ describe("@inject", () => {
 });
 
 describe("@debounce", () => {
-    const System = Base.extend({
+    class System extends Base {
               constructor() {
+                  super();
                   this.calls = 0;
-              },
-              @debounce(10)
-              lookup(word) {
-                  this.calls++;
-              },
-              @debounce(10, true)
-              api(command) {
-                  this.calls++;
               }
-          });
+
+              @debounce(10)
+              lookup(word) { this.calls++; }
+
+              @debounce(10, true)
+              api(command) { this.calls++; }
+          };
 
     let system;
     beforeEach(() => {
@@ -1685,16 +1509,16 @@ describe("TypeInfo", () => {
     });
 
     describe("#validate", () => {
-        const TestValidator = Base.extend({
+        class TestValidator extends Base {
             @design(Boolean, Number, String)
-            primitive(bool, number, string) {},
+            primitive(bool, number, string) {}
 
             @design(Animal, Elephant, [String], [Person])
-            complex(animal, elephant, strings, people) {},
+            complex(animal, elephant, strings, people) {}
 
             @design($optional(Number), $optional(Animal), $optional(Elephant))
             optional(number, animal, elephant) {}
-        });
+        };
 
         it("should validate boolean", () => {
             const { args: [bool] } = design.get(TestValidator.prototype, "primitive");

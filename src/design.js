@@ -14,9 +14,9 @@ const designMetadataKey = Symbol("design-metadata"),
  * Custom Metadata to bridge Typescript annotations.
  * @class DesignMetadata
  */
-const DesignMetadata = Metadata.extend(null, {
-    get(metadataKey, target, targetKey) {
-        let meta = this.base(metadataKey, target, targetKey);
+class DesignMetadata extends Metadata {
+    static get(metadataKey, target, targetKey) {
+        let meta = super.get(metadataKey, target, targetKey);
         if (!meta && metadataKey === designMetadataKey &&
             !this.hasOwn(metadataKey, target, targetKey)) {
             if ($isFunction(target) && !targetKey) {
@@ -27,9 +27,10 @@ const DesignMetadata = Metadata.extend(null, {
             }  
         }
         return meta;
-    },
-    getOwn(metadataKey, target, targetKey) {
-        let meta = this.base(metadataKey, target, targetKey);
+    }
+
+    static getOwn(metadataKey, target, targetKey) {
+        let meta = super.getOwn(metadataKey, target, targetKey);
         if (!meta && metadataKey === designMetadataKey) {
             if ($isFunction(target) && !targetKey) {
                 meta = this.getOwn(metadataKey, target.prototype, "constructor")
@@ -40,7 +41,7 @@ const DesignMetadata = Metadata.extend(null, {
         }
         return meta;   
     }
-});
+}
 
 function buildFromTypescriptDesign(target, targetKey) {
     let meta;
@@ -76,8 +77,10 @@ export const design = DesignMetadata.decorator(designMetadataKey,
             const args     = buildTypeInfo(key),
                   rawTypes = args.map(t => t.type),
                   meta     = Metadata.getOrCreateOwn(
-                    designMetadataKey, target, () => ({}));
-            meta.args = args;
+                    designMetadataKey, target, () => ({})),
+                  metap    = Metadata.getOrCreateOwn(
+                    designMetadataKey, target.prototype, "constructor", () => ({}));
+            meta.args = metap.args = args;
             DesignMetadata.define(paramTypesKey, rawTypes, target);
             return;
         }

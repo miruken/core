@@ -4,7 +4,7 @@ import {
 } from "./base2";
 
 import Enum from "./enum";
-import Protocol from "./protocol";
+import { Protocol, conformsTo } from "./protocol";
 
 /**
  * TraversingAxis enum
@@ -167,6 +167,76 @@ export const TraversingMixin = Module.extend({
         }
     }
 });
+
+export const traversingMixin = Base => 
+    @conformsTo(Traversing) class extends Base {
+        traverse(axis, visitor, context) {
+            if ($isFunction(axis)) {
+                context = visitor;
+                visitor = axis;
+                axis    = TraversingAxis.Child;
+            }
+            if (!$isFunction(visitor)) return;
+            switch (axis) {
+            case TraversingAxis.Self:
+                traverseSelf.call(this, visitor, context);
+                break;
+                
+            case TraversingAxis.Root:
+                traverseRoot.call(this, visitor, context);
+                break;
+                
+            case TraversingAxis.Child:
+                traverseChildren.call(this, visitor, false, context);
+                break;
+
+            case TraversingAxis.Sibling:
+                traverseSelfSiblingOrAncestor.call(
+                    this, visitor, false, false, context);
+                break;
+                
+            case TraversingAxis.SelfOrChild:
+                traverseChildren.call(this, visitor, true, context);
+                break;
+
+            case TraversingAxis.SelfOrSibling:
+                traverseSelfSiblingOrAncestor.call(
+                    this, visitor, true, false, context);
+                break;
+                
+            case TraversingAxis.Ancestor:
+                traverseAncestors.call(this, visitor, false, context);
+                break;
+                
+            case TraversingAxis.SelfOrAncestor:
+                traverseAncestors.call(this, visitor, true, context);
+                break;
+                
+            case TraversingAxis.Descendant:
+                traverseDescendants.call(this, visitor, false, context);
+                break;
+                
+            case TraversingAxis.DescendantReverse:
+                traverseDescendantsReverse.call(this, visitor, false, context);
+                break;
+                
+            case TraversingAxis.SelfOrDescendant:
+                traverseDescendants.call(this, visitor, true, context);
+                break;
+
+            case TraversingAxis.SelfOrDescendantReverse:
+                traverseDescendantsReverse.call(this, visitor, true, context);
+                break;
+                
+            case TraversingAxis.SelfSiblingOrAncestor:
+                traverseSelfSiblingOrAncestor.call(this, visitor, true, true, context);
+                break;
+
+            default:
+                throw new Error(`Unrecognized TraversingAxis ${axis}.`);
+            }
+        }
+};
 
 function checkCircularity(visited, node) {
     if (visited.indexOf(node) !== -1) {

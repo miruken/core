@@ -56,18 +56,19 @@ const qualifiers = {
     }        
 }
 
-export const TypeInfo = Base.extend({
+export class TypeInfo extends Base {
     constructor(type, flags) {
+        super();
         if (!$isFunction(type)) {
             throw new TypeError("The type is not a constructor function.");
         }
         _(this).type  = type;
         _(this).flags = flags || TypeFlags.None;
-    },
+    }
 
-    get type()       { return _(this).type; },
-    get flags()      { return _(this).flags; },
-    set flags(value) { _(this).flags = value; },
+    get type()       { return _(this).type; }
+    get flags()      { return _(this).flags; }
+    set flags(value) { _(this).flags = value; }
 
     validate(value, require) {
         const type  = this.type,
@@ -103,8 +104,8 @@ export const TypeInfo = Base.extend({
         }
         return validateType(type, flags, value, null, require);
     }
-}, {
-    parse(spec) {
+
+    static parse(spec) {
         if (spec == null)
             throw new Error("The type spec argument is required.")
         
@@ -115,8 +116,9 @@ export const TypeInfo = Base.extend({
                       : input;
                })
              : qualifiers[$contents.key](spec);
-    },
-    registerQualifier(qualifier, visitor) {
+    }
+
+    static registerQualifier(qualifier, visitor) {
         if ($isNothing(qualifier) || !$isSymbol(qualifier.key)) {
             throw new TypeError("The qualifier argument is not valid.");
         }
@@ -125,7 +127,7 @@ export const TypeInfo = Base.extend({
         }
         qualifiers[qualifier.key] = visitor;
     }
-});
+}
 
 function validateType(type, flags, value, index, require) {
     if (type === Boolean) {

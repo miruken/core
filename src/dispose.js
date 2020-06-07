@@ -3,7 +3,7 @@ import {
     $isFunction, $isPromise
 } from "./base2";
 
-import Protocol from "./protocol";
+import { Protocol, conformsTo } from "./protocol";
 import { $isClass } from "./core";
 
 /**
@@ -42,6 +42,17 @@ export const DisposingMixin = Module.extend({
         }
     }
 });
+
+export const disposableMixin = Base => 
+    @conformsTo(Disposing) class extends Base {
+        dispose() {
+            const dispose = this._dispose;
+            if ($isFunction(dispose)) {
+                this.dispose = Undefined;  // dispose once                
+                return dispose.call(this);
+            }        
+        }
+};
 
 /**
  * Convenience function for disposing resources.

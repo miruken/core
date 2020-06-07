@@ -10,19 +10,22 @@ const _ = createKeyChain();
  * @param  {Array}  [...items]  -  initial items
  * @extends Base
  */
-export const ArrayManager = Base.extend({
+export class ArrayManager extends Base {
     constructor(items) {
+        super();
         _(this).items = [];
         if (items) {
             this.append(items);
         }
-    },
+    }
+
     /** 
      * Gets the array.
      * @method getItems
      * @returns  {Array} array.
      */
-    getItems() { return _(this).items; },
+    getItems() { return _(this).items; }
+
     /** 
      * Gets the item at array `index`.
      * @method getIndex
@@ -34,7 +37,8 @@ export const ArrayManager = Base.extend({
         if (items.length > index) {
             return items[index];
         }
-    },
+    }
+
     /** 
      * Sets `item` at array `index` if empty.
      * @method setIndex
@@ -49,7 +53,8 @@ export const ArrayManager = Base.extend({
             items[index] = this.mapItem(item);
         }
         return this;
-    },
+    }
+
     /** 
      * Inserts `item` at array `index`.
      * @method insertIndex
@@ -61,7 +66,8 @@ export const ArrayManager = Base.extend({
     insertIndex(index, item) {
         _(this).items.splice(index, 0, this.mapItem(item));
         return this;
-    },
+    }
+
     /** 
      * Replaces `item` at array `index`.
      * @method replaceIndex
@@ -73,7 +79,8 @@ export const ArrayManager = Base.extend({
     replaceIndex(index, item) {
         _(this).items[index] = this.mapItem(item);
         return this;
-    },
+    }
+
     /** 
      * Removes the item at array `index`.
      * @method removeIndex
@@ -87,7 +94,8 @@ export const ArrayManager = Base.extend({
             items.splice(index, 1);
         }
         return this;
-    },
+    }
+
     /** 
      * Appends one or more items to the end of the array.
      * @method append
@@ -107,7 +115,8 @@ export const ArrayManager = Base.extend({
             }
         }
         return this;
-    },
+    }
+
     /** 
      * Merges the items into the array.
      * @method merge
@@ -123,14 +132,16 @@ export const ArrayManager = Base.extend({
             }
         }
         return this;
-    },    
+    }
+
     /** 
      * Optional mapping for items before adding to the array.
      * @method mapItem
      * @param    {Any}  item  -  item to map
      * @returns  {Any}  mapped item.
      */
-    mapItem(item) { return item; },
+    mapItem(item) { return item; }
+
     /** 
      * Returns an Iterable over the managed array.
      * @returns  {Iterable}  the array iterator.
@@ -138,7 +149,7 @@ export const ArrayManager = Base.extend({
     [Symbol.iterator]() {
         return this.getItems()[Symbol.iterator]();
     }    
-});
+}
 
 const prevSymbol  = Symbol(),
       nextSymbol  = Symbol(),
@@ -151,12 +162,13 @@ const prevSymbol  = Symbol(),
  * @param  {Function}  order  -  partially orders items
  * @extends Base
  */
-export const IndexedList = Base.extend({
+export class IndexedList extends Base {
     constructor(order = defaultOrder) {
+        super();
         const _this = _(this);
         _this.index = Object.create(null);
         _this.order = order;
-    },
+    }
 
     /** 
      * Determines if list is empty.
@@ -165,7 +177,7 @@ export const IndexedList = Base.extend({
      */
     get isEmpty() {
         return !_(this).head;
-    },
+    }
 
     /** 
      * Determines if `node` is present in list using `$equals`.
@@ -181,7 +193,8 @@ export const IndexedList = Base.extend({
             indexedNode = indexedNode[nextSymbol];
         }
         return false;
-    },
+    }
+
     /** 
      * Gets the first node at `index`.
      * @method getFirst
@@ -190,7 +203,8 @@ export const IndexedList = Base.extend({
      */
     getFirst(index) {
         return index && _(this).index[index];
-    },
+    }
+
     /** 
      * Inserts `node` at `index`.
      * @method insert
@@ -238,7 +252,8 @@ export const IndexedList = Base.extend({
             }
         }
         return this;
-    },
+    }
+
     /** 
      * Removes `node` from the list.
      * @method remove
@@ -273,7 +288,8 @@ export const IndexedList = Base.extend({
             }
         }
         return this;
-    },
+    }
+
     /** 
      * Merges `list` into this list.
      * @method list
@@ -313,7 +329,8 @@ export const IndexedList = Base.extend({
             node = next;
         }
         return this;
-    },
+    }
+
     /** 
      * Returns an Iterator from the first index node.
      * If no index is present, it starts from the head.
@@ -327,7 +344,8 @@ export const IndexedList = Base.extend({
             yield node;
             node = node[nextSymbol];
         }
-    },
+    }
+
     /** 
      * Returns an Iterable over the indexed list.
      * @returns  {Iterable}  the list iterator.
@@ -339,7 +357,7 @@ export const IndexedList = Base.extend({
             node = node[nextSymbol];
         }
     }
-});
+}
 
 function defaultOrder(a, b) {
     if (a === undefined && b === undefined) {

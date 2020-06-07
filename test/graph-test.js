@@ -3,21 +3,23 @@ import { createKeyChain } from "../src/privates";
 
 import {
     Traversal, Traversing, TraversingAxis,
-    TraversingMixin
+    traversingMixin
 } from "../src/graph";
 
 import { expect } from "chai";
 
 const _ = createKeyChain();
 
-export const TreeNode = Base.extend(Traversing, TraversingMixin, {
+class TreeNode extends traversingMixin(Base) {
     constructor(data) {
+        super();
         _(this).children = [];
-    },
+    }
 
-    get parent()   { return null; },
-    get children() { return _(this).children; },                
-    get data()     { return data; },
+    get parent()   { return null; }
+    get children() { return _(this).children; }            
+    get data()     { return data; }
+
     addChild(...nodes) {
         const parent = this;
         nodes.forEach(node => {
@@ -26,7 +28,7 @@ export const TreeNode = Base.extend(Traversing, TraversingMixin, {
         });
         return this;
     }   
-});
+}
 
 describe("Traversing", () => {
     describe("#traverse", () => {
@@ -212,21 +214,25 @@ describe("Traversing", () => {
         });
 
         it("should detect circular references", () => {
-            const CircularParent = Base.extend(TraversingMixin, {
-                  constructor(data) { 
-                      this.extend({
-                          get parent() { return this; },
-                          get children() { return []; },
-                      });
-                  }});
+            class CircularParent extends traversingMixin(Base) {
+                constructor(data) { 
+                    super();
+                    this.extend({
+                        get parent() { return this; },
+                        get children() { return []; },
+                    });
+                }
+            }
 
-            const CircularChildren = Base.extend(TraversingMixin, {
-                  constructor(data) { 
-                      this.extend({
-                          get parent() { return null; },
-                          get children() { return [this]; },
-                      });
-                  }});
+            class CircularChildren extends traversingMixin(Base) {
+                constructor(data) { 
+                    super();
+                    this.extend({
+                        get parent() { return null; },
+                        get children() { return [this]; },
+                    });
+                  }
+            }
 
             const circularParent = new CircularParent();
             expect(() => { 
