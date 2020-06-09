@@ -59,16 +59,29 @@ const qualifiers = {
 export class TypeInfo extends Base {
     constructor(type, flags) {
         super();
-        if (!$isFunction(type)) {
+        if (type && !$isFunction(type)) {
             throw new TypeError("The type is not a constructor function.");
         }
-        _(this).type  = type;
-        _(this).flags = flags || TypeFlags.None;
+        this.type  = type;
+        this.flags = flags;
     }
 
-    get type()       { return _(this).type; }
-    get flags()      { return _(this).flags; }
-    set flags(value) { _(this).flags = value; }
+    get type() { return _(this).type; }
+    set type(value) {
+        const type = this.type;
+        if (type) {
+            if (type !== value) {
+                throw new TypeError("TypeInfo type cannot be changed once set.");
+            }
+            return;
+        }
+        _(this).type = value;
+    }
+
+    get flags() { return _(this).flags; }
+    set flags(value) {
+        _(this).flags = value || TypeFlags.None;
+    }
 
     validate(value, require) {
         const type  = this.type,
@@ -105,6 +118,14 @@ export class TypeInfo extends Base {
         return validateType(type, flags, value, null, require);
     }
 
+    merge(otherTypeInfo) {
+        if ($isNothing(this.type)) {
+            this.type = otherTypeInfo.type;
+        }
+        this.flags = this.flags.addFlag(otherTypeInfo.flags);
+        return this;
+    }
+
     static parse(spec) {
         if (spec == null)
             throw new Error("The type spec argument is required.")
@@ -130,6 +151,7 @@ export class TypeInfo extends Base {
 }
 
 function validateType(type, flags, value, index, require) {
+    if ($isNothing(type)) return true;
     if (type === Boolean) {
         if (!$isBoolean(value)) {
             if (require) {

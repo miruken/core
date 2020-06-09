@@ -268,12 +268,13 @@ export class Metadata extends Abstract {
         function decorator(...args) {
             return decorate(handler, args);
         }
-        decorator.get         = _metadataGetter.bind(this, metadataKey, false);
-        decorator.getOwn      = _metadataGetter.bind(this, metadataKey, true);
-        decorator.getKeys     = _metadataKeyGetter.bind(this, metadataKey, false);
-        decorator.getOwnKeys  = _metadataKeyGetter.bind(this, metadataKey, true);        
-        decorator.collect     = _metadataCollector.bind(this, metadataKey);
-        decorator.collectKeys = _metadataKeyCollector.bind(this, metadataKey);
+        decorator.get            = _metadataGetter.bind(this, metadataKey, false);
+        decorator.getOwn         = _metadataGetter.bind(this, metadataKey, true);
+        decorator.getKeys        = _metadataKeyGetter.bind(this, metadataKey, false);
+        decorator.getOwnKeys     = _metadataKeyGetter.bind(this, metadataKey, true);
+        decorator.getOrCreateOwn = this.getOrCreateOwn.bind(this, metadataKey);      
+        decorator.collect        = _metadataCollector.bind(this, metadataKey);
+        decorator.collectKeys    = _metadataKeyCollector.bind(this, metadataKey);
         return decorator;
     }
 }

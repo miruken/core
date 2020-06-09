@@ -25,8 +25,9 @@ import {
     disposableMixin, $using
 } from "../src/dispose";
 
-import { design, returns } from "../src/design";
-import { inject } from "../src/inject";
+import { 
+    design, returns, type, optional
+} from "../src/design";
 
 import { TypeInfo, TypeFlags } from "../src/type-info";
 import { ArrayManager, IndexedList } from "../src/util";
@@ -821,19 +822,6 @@ describe("$flatten", () => {
     });    
 });
 
-function required(key) {
-  return function (target, propertyKey, parameterIndex) {
-    const metadata = `meta_${propertyKey}`;
-    target[metadata] = [
-      ...(target[metadata] || []),
-      {
-        index: parameterIndex,
-        key
-      }
-    ]
-  };
-}
-
 describe("Qualifier", () => {
     describe("$createQualifier", () => {
         it("should create a new qualifier", () => {
@@ -1213,6 +1201,10 @@ describe("@design", () => {
                 @returns(Animal) race(dog, elephant, asianElephant) {
                     return dog;
                 }
+
+                @returns(Person) train(@type(Animal) animal, @optional(Person) assistant) {
+                    return this.trainer || assistant;
+                }                
           },
           PettingZoo =  
             @design(Person, Person, [Animal])
@@ -1252,6 +1244,14 @@ describe("@design", () => {
         expect(args[2].flags.hasFlag(TypeFlags.Optional)).to.be.true;
     });
     
+    it("should get method design with parameter decorators", () => {
+        const { args, returnType } = design.get(Zoo.prototype, "train");
+        expect(returnType.type).to.equal(Person);
+        expect(args[0].type).to.equal(Animal);
+        expect(args[1].type).to.equal(Person);
+        expect(args[1].flags.hasFlag(TypeFlags.Optional)).to.be.true;
+    });
+
     it("should get field design", () => {
         const u = 1;
         const { propertyType } = design.get(Zoo.prototype, "trainer");
@@ -1359,68 +1359,6 @@ describe("@design", () => {
     }); 
 });
 
-describe("@inject", () => {
-    const Circus = Base.extend({
-              @inject($all(Animal))        
-              constructor(animals) {},
-        
-              @inject(Dog)
-              dancingDog(Dance) {},
-        
-              @inject($all(Elephant))
-              elpehantParade(elephant) {}
-          }),
-          RingBrothers = Circus.extend(inject(undefined, Person), {
-              constructor(animals, ringMaster) {},
-          });
-    
-    it("should get class dependencies", () => {
-        const dep = inject.get(Circus.prototype, "dancingDog");
-        expect(dep).to.eql([Dog]);
-    });
-
-    it("should get dependencies with qualifiers", () => {
-        const dep = inject.get(Circus.prototype, "elpehantParade");
-        expect($all.test(dep[0])).to.be.true;
-        expect($contents(dep[0])).to.equal(Elephant);
-    });
-
-    it("should get constructor dependencies", () => {
-        const dep = inject.get(Circus.prototype, "constructor");
-        expect($all.test(dep[0])).to.be.true;
-        expect($contents(dep[0])).to.equal(Animal);
-    });
-
-    it("should apply class dependencies to constructor", () => {
-        const dep = inject.get(RingBrothers.prototype, "constructor");
-        expect(dep).to.eql([undefined, Person]);
-    });
-
-    it("should get own class dependencies", () => {
-        const dep = inject.getOwn(RingBrothers.prototype, "dancingDog");
-        expect(dep).to.be.undefined;
-    });
-
-    it("should get all dependencies", () => {
-        const deps = new Map();
-        inject.getKeys(RingBrothers.prototype, (d, k) => deps.set(k, d));
-        expect(deps.get("dancingDog")).to.eql([Dog]);
-        expect($all.test(deps.get("elpehantParade")[0])).to.be.true;
-        expect($contents(deps.get("elpehantParade")[0])).to.equal(Elephant);
-        expect(deps.get("constructor")).to.eql([undefined, Person]);        
-    });
-
-    it("should get own dependencies", () => {
-        const deps = new Map();
-        inject.getOwnKeys(RingBrothers.prototype, (d, k) => deps.set(k, d));
-        expect(deps.get("dancingDog")).to.be.undefined;
-        expect(deps.get("elpehantParade")).to.be.undefined;
-        expect(deps.get("constructor")).to.eql([undefined, Person]);
-        inject.getOwnKeys(Circus.prototype, (d, k) => deps.set(k,d));
-        expect(deps.get("dancingDog")).to.eql([Dog]);
-    });            
-});
-
 describe("@debounce", () => {
     class System extends Base {
               constructor() {
@@ -1505,7 +1443,15 @@ describe("TypeInfo", () => {
     it("should fail invalid array construct", () => {
         expect(() => {
             TypeInfo.parse([Animal, 1]);
-        }).to.throw(SyntaxError, "Array type specification expects a single type."); 
+        }).to.throw(SyntaxError, "Array type specification expects a single type.");
+    });
+
+    it("should fail changing type", () => {
+        const argument = TypeInfo.parse(Animal);
+        argument.type = Animal;
+        expect(() => {
+            argument.type = Dog;
+        }).to.throw(TypeError, "TypeInfo type cannot be changed once set."); 
     });
 
     describe("#validate", () => {

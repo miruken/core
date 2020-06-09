@@ -23,7 +23,7 @@ class DesignMetadata extends Metadata {
                 meta = this.getOwn(metadataKey, target.prototype, "constructor")
             }
             if (!meta) {
-                meta = buildFromTypescriptDesign(target, targetKey);
+                meta = getDesignFromTypescript(target, targetKey);
             }  
         }
         return meta;
@@ -36,18 +36,18 @@ class DesignMetadata extends Metadata {
                 meta = this.getOwn(metadataKey, target.prototype, "constructor")
             }
             if (!meta) {
-                meta = buildFromTypescriptDesign(target, targetKey);
+                meta = getDesignFromTypescript(target, targetKey);
             } 
         }
         return meta;   
     }
 }
 
-function buildFromTypescriptDesign(target, targetKey) {
+function getDesignFromTypescript(target, targetKey) {
     let meta;
     const args = Reflect.getOwnMetadata(paramTypesKey, target, targetKey)
     if (args) {
-        meta = { args: buildTypeInfo(args) };
+        meta = { args: getTypeInfo(args) };
         const returnType = Reflect.getOwnMetadata(returnTypeKey, target, targetKey);
         if (returnType) {
             meta.returnType = TypeInfo.parse(returnType); 
@@ -74,34 +74,25 @@ function buildFromTypescriptDesign(target, targetKey) {
 export const design = DesignMetadata.decorator(designMetadataKey,
     (target, key, descriptor, types) => {
         if (!isDescriptor(descriptor)) {     
-            const args     = buildTypeInfo(key),
-                  rawTypes = args.map(t => t.type),
-                  meta     = Metadata.getOrCreateOwn(
-                    designMetadataKey, target, () => ({})),
-                  metap    = Metadata.getOrCreateOwn(
-                    designMetadataKey, target.prototype, "constructor", () => ({}));
+            const meta     = design.getOrCreateOwn(target, "constructor", () => ({})),
+                  metap    = design.getOrCreateOwn(target.prototype, "constructor", () => ({})),
+                  args     = getTypeInfo(key, meta ? meta.args : null);
             meta.args = metap.args = args;
-            DesignMetadata.define(paramTypesKey, rawTypes, target);
             return;
         }
         const { value } = descriptor;
         if ($isFunction(value)) {
-            const args     = buildTypeInfo(types),
-                  rawTypes = args.map(t => t.type),
-                  meta     = Metadata.getOrCreateOwn(
-                    designMetadataKey, target, key, () => ({}));
+            const meta     = design.getOrCreateOwn(target, key, () => ({})),
+                  args     = getTypeInfo(types, meta ? meta.args : null);
             meta.args = args;            
-            DesignMetadata.define(paramTypesKey, rawTypes, target, key); 
         } else if (types.length !== 1) {
             throw new SyntaxError(`@design for property '${key}' expects a single property type.`);
-        } else if (DesignMetadata.has(propertyTypeKey, target, key)) {
+        } else if (DesignMetadata.has(designMetadataKey, target, key)) {
             throw new SyntaxError(`@design for property '${key}' should only be specified on getter or setter.`);
         } else {
-            const args = buildTypeInfo(types),
-                  meta = Metadata.getOrCreateOwn(
-                    designMetadataKey, target, key, () => ({}));
+            const meta = design.getOrCreateOwn(target, key, () => ({})),
+                  args = getTypeInfo(types, meta ? meta.args : null);
             meta.propertyType = args[0];
-            DesignMetadata.define(propertyTypeKey, args[0].type, target, key);
         }
     });
 
@@ -123,16 +114,62 @@ export const returns = DesignMetadata.decorator(designMetadataKey,
                 throw new SyntaxError(
                     `@returns for method '${key}' expects a single return type.`);
             }
-            const returnType = TypeInfo.parse(args[0]),
-                  meta       = DesignMetadata.getOrCreateOwn(
-                    designMetadataKey, target, key, () => ({}));
+            const meta       = returns.getOrCreateOwn(target, key, () => ({})),
+                  returnType = TypeInfo.parse(args[0]);
             meta.returnType = returnType;
-            DesignMetadata.define(returnTypeKey, returnType.type, target, key); 
         } else {
             throw new SyntaxError(`@returns ('${key}') cannot be applied to properties.`);
         }
     }); 
 
-function buildTypeInfo(types) {
-    return types.map(t => t == null ? t : TypeInfo.parse(t));   
+export const type     = createTypeInfoDecorator();
+export const all      = createTypeInfoDecorator(TypeFlags.Array);
+export const exact    = createTypeInfoDecorator(TypeFlags.Invariant);
+export const lazy     = createTypeInfoDecorator(TypeFlags.Lazy);
+export const optional = createTypeInfoDecorator(TypeFlags.Optional);
+
+function createTypeInfoDecorator(flags) {
+    return function (target, key, parameterIndex) {
+        if (typeof key == "string" && typeof parameterIndex == "number") {
+            return decorator(target, key, parameterIndex, null, flags);
+        }
+        return function () {
+            const f = (flags || TypeFlags.None).addFlag(key || TypeFlags.None);
+            return decorator(...arguments, target, f);
+        }
+    };
+    function decorator(target, key, parameterIndex, type, flags) {
+        const signature = design.getOrCreateOwn(target, key, () => ({})),
+              typeInfo  = type ? TypeInfo.parse(type) : new TypeInfo(type, flags),
+              args      = signature.args;
+
+        if (type && flags) {
+            typeInfo.flags = typeInfo.flags.addFlag(flags);
+        }
+
+        if (args) {
+            const arg = args[parameterIndex];
+            if (arg) {
+                arg.merge(typeInfo);
+            } else {
+                args[parameterIndex] = typeInfo;
+            }
+        } else {
+            signature.args = [];
+            signature.args[parameterIndex] = typeInfo;
+        }
+    };
 }
+
+function getTypeInfo(types, args) {
+    return types.map((type, index) => {
+        let otherInfo;
+        if (args) otherInfo = args[index];
+        if (type == null) return otherInfo;
+        const typeInfo = TypeInfo.parse(type);
+        return otherInfo == null ? typeInfo
+             : otherInfo.merge(typeInfo);
+    });   
+}
+
+export default design;
