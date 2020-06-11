@@ -119,8 +119,12 @@ export class TypeInfo extends Base {
     }
 
     merge(otherTypeInfo) {
-        if ($isNothing(this.type)) {
-            this.type = otherTypeInfo.type;
+        const type      = this.type,
+              otherType = otherTypeInfo.type;
+        if ($isNothing(type)) {
+            this.type = otherType;
+        } else if (otherType && type !== otherType) {
+            throw new TypeError("Cannot change type once set.")
         }
         this.flags = this.flags.addFlag(otherTypeInfo.flags);
         return this;

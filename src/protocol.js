@@ -38,8 +38,7 @@ export const Protocol = Base.extend({
             if (!(delegate instanceof Delegate)) {
                 throw new TypeError("'toDelegate' method did not return a Delegate.");
             }
-        }
-        else if (!(delegate instanceof Delegate)) {
+        } else if (!(delegate instanceof Delegate)) {
             if (Array.isArray(delegate)) {
                 delegate = new ArrayDelegate(delegate);
             } else {
