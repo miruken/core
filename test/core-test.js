@@ -502,13 +502,6 @@ describe("IndexedList", () => {
         list.insert(item, 19);
         expect(list.getFirst(19)).to.equal(item);
     });
-
-    it("should check for node", () => {
-        const item = new Item(19);
-        list.insert(item, 19);
-        expect(list.has(item)).to.be.true;
-        expect(list.has(new Item("ABC"))).to.be.false;
-    });
  
     it("should remove node", () => {
         const item = new Item("123");
@@ -539,28 +532,6 @@ describe("IndexedList", () => {
         expect(x).to.equal(item1);
         expect(y).to.equal(item2);
         expect(z).to.be.undefined;
-    });
-
-    it("should merge lists", () => {
-        const item = new Item(19);
-        list.insert(item, 19);
-        const otherList = new IndexedList(),
-              item2 = new Item(28);
-        otherList.insert(item2, 28);
-        list.merge(otherList);
-        expect([...list]).to.eql([item, item2]);
-        expect([...otherList]).to.eql([]);
-    });
-
-    it("should merge lists with copy", () => {
-        const item = new Item(19);
-        list.insert(item, 19);
-        const otherList = new IndexedList(),
-              item2 = new Item(28);
-        otherList.insert(item2, 28);
-        list.merge(otherList, item => new Item(item.value + 1));
-        expect([...list]).to.not.eql([item, item2]);
-        expect([...otherList]).to.eql([item2]);
     });
 });
 

@@ -131,8 +131,9 @@ export class TypeInfo extends Base {
     }
 
     static parse(spec) {
-        if (spec == null)
-            throw new Error("The type spec argument is required.")
+        if ($isNothing(spec)) {
+            return new TypeInfo();
+        }
         
         return spec instanceof $contents
              ? spec.visit(function (input, state) {

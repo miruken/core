@@ -1,4 +1,4 @@
-import { $isFunction } from "./base2";
+import { emptyArray, $isFunction } from "./base2";
 import { isDescriptor } from "./decorate";
 import { TypeInfo, TypeFlags } from "./type-info";
 import Metadata from "./metadata";
@@ -129,7 +129,7 @@ export const lazy     = createTypeInfoFlagsDecorator(TypeFlags.Lazy);
 export const optional = createTypeInfoFlagsDecorator(TypeFlags.Optional);
 
 function createTypeInfoFlagsDecorator(typeFlags) {
-    return createTypeInfoDecorator((typeInfo, [type, flags]) => {
+    return createTypeInfoDecorator((key, typeInfo, [type, flags]) => {
         if (type) {
             typeInfo.merge(TypeInfo.parse(type));
         }
@@ -148,7 +148,7 @@ export function createTypeInfoDecorator(configure) {
     }
     return function (target, key, parameterIndex) {
         if (typeof key == "string" && typeof parameterIndex == "number") {
-            return decorator(target, key, parameterIndex, null, configure);
+            return decorator(target, key, parameterIndex, emptyArray);
         }
         const args = [...arguments];
         return function () {
@@ -157,21 +157,13 @@ export function createTypeInfoDecorator(configure) {
     };
     function decorator(target, key, parameterIndex, configArgs) {
         const signature = design.getOrCreateOwn(target, key, () => ({})),
-              args      = signature.args,
-              typeInfo  = new TypeInfo();
+              args      = signature.args || [],
+              typeInfo  = args[parameterIndex] || (args[parameterIndex] = new TypeInfo());      
 
-        configure(typeInfo, configArgs);
+        configure(key, typeInfo, configArgs);
 
-        if (args) {
-            const arg = args[parameterIndex];
-            if (arg) {
-                arg.merge(typeInfo);
-            } else {
-                args[parameterIndex] = typeInfo;
-            }
-        } else {
-            signature.args = [];
-            signature.args[parameterIndex] = typeInfo;
+        if (!signature.args) {
+            signature.args = args;
         }
     };
 }
@@ -182,8 +174,7 @@ function mergeTypeInfo(types, args) {
         if (args) otherInfo = args[index];
         if (type == null) return otherInfo;
         const typeInfo = TypeInfo.parse(type);
-        return otherInfo == null ? typeInfo
-             : otherInfo.merge(typeInfo);
+        return otherInfo == null ? typeInfo : otherInfo.merge(typeInfo);
     });
     if (args && args.length > types.length) {
         for (let i = types.length; i < args.length; ++i) {

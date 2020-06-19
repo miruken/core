@@ -180,22 +180,6 @@ export class IndexedList extends Base {
     }
 
     /** 
-     * Determines if `node` is present in list using `$equals`.
-     * @method has
-     * @param   {Any} node  -  node to test for
-     * @returns  {boolean}  true if `node` exists.
-     */            
-    has(node) {
-        const index = node[indexSymbol];
-        let   indexedNode = this.getFirst(index);
-        while (indexedNode && indexedNode[indexSymbol] === index) {
-            if ($equals(indexedNode, node)) return true;
-            indexedNode = indexedNode[nextSymbol];
-        }
-        return false;
-    }
-
-    /** 
      * Gets the first node at `index`.
      * @method getFirst
      * @param    {Any} index  -  index of node
@@ -286,47 +270,6 @@ export class IndexedList extends Base {
             } else {
                 delete _(this).index[index];
             }
-        }
-        return this;
-    }
-
-    /** 
-     * Merges `list` into this list.
-     * @method list
-     * @param  {IndexedList}  list            -  list to merge
-     * @param  {Function}     [beforeInsert]  -  optional function to
-     * apply to a node before it is inserted.  The returned node is
-     * inserted into the list.  If not provided or returns null, the
-     * node is consumed from the other `list`.
-     * @returns  {IndexedList}  the updated list.
-     * @chainable
-     */
-    merge(list, beforeInsert) {
-        if (!list) { return this; }
-        if (list.constructor !== this.constructor) {
-            throw new TypeError("merge expects lists of equal type.");
-        }
-        if (beforeInsert && !$isFunction(beforeInsert)) {
-             throw new TypeError("If beforeInsert is provided, it must be a function.");
-        }
-        let node = _(list).head;
-        while (node) {
-            const next = node[nextSymbol];
-            if (!this.has(node)) {
-                if (beforeInsert) {
-                    const insert = beforeInsert(node);
-                    if (insert) {
-                        if (insert === node) {
-                            list.remove(node);
-                        }
-                        this.insert(insert, insert[indexSymbol]);
-                    }
-                } else {
-                    list.remove(node);
-                    this.insert(node, node[indexSymbol]);
-                }
-            }
-            node = next;
         }
         return this;
     }

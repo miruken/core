@@ -1,15 +1,11 @@
 import { $isFunction } from "./base2";
-import { decorate, isDescriptor } from "./decorate";
+import { isDescriptor } from "./decorate";
 
 /**
  * Applies copy semantics on properties and return values.
  * @method copy
  */
-export function copy(...args) {
-    return decorate(_copy, args);
-}
-
-function _copy(target, key, descriptor) {
+export function copy(target, key, descriptor) {
     if (!isDescriptor(descriptor)) {
         throw new SyntaxError("@copy can only be applied to methods or properties");
     }
