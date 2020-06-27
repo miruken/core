@@ -151,9 +151,9 @@ export class ArrayManager extends Base {
     }    
 }
 
-const prevSymbol  = Symbol(),
-      nextSymbol  = Symbol(),
-      indexSymbol = Symbol();
+const prevSymbol  = Symbol("prev"),
+      nextSymbol  = Symbol("next"),
+      indexSymbol = Symbol("index");
 /**
  * Maintains a simple doublely-linked list with indexing.
  * Indexes are partially ordered according to the order comparator.
@@ -218,14 +218,14 @@ export class IndexedList extends Base {
                 _(this).head = node;
             }
         } else {
-            delete node[nextSymbol];
+            node[nextSymbol] = null;
             const tail = _(this).tail;
             if (tail) {
                 node[prevSymbol] = tail;
                 tail[nextSymbol] = node;
             } else {
                 _(this).head = node;
-                delete node[prevSymbol];
+                node[prevSymbol] = null;
             }
             _(this).tail = node;
         }
