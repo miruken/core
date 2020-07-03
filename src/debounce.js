@@ -46,6 +46,6 @@ function _debounce(target, key, descriptor,
     } else if ($isFunction(set)) {
         descriptor.set = $debounce(set, wait, immediate, defaultReturnValue);
     } else {
-        throw new SyntaxError("@debounce can only be applied to methods and property setters");
+        throw new SyntaxError("@debounce can only be applied to methods and property setters.");
     }
 }

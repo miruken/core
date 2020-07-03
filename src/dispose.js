@@ -1,6 +1,6 @@
 import { 
     Base, Module, Undefined,
-    $isFunction, $isPromise
+    $isNothing, $isFunction, $isPromise
 } from "./base2";
 
 import { Protocol, conformsTo } from "./protocol";
@@ -17,6 +17,15 @@ export const Disposing = Protocol.extend({
      * @method dispose
      */
     dispose() {}
+}, {
+    dispose(instance) {
+        if (Disposing.isAdoptedBy(instance)) {
+            const dispose = instance.dispose;
+            if (!$isNothing(dispose)) {
+                dispose.call(instance);
+            }
+        }        
+    }
 });
 
 /**

@@ -7,7 +7,7 @@ import { isDescriptor } from "./decorate";
  */
 export function copy(target, key, descriptor) {
     if (!isDescriptor(descriptor)) {
-        throw new SyntaxError("@copy can only be applied to methods or properties");
+        throw new SyntaxError("@copy can only be applied to methods or properties.");
     }
     const { get, set, value, initializer } = descriptor;
     if ($isFunction(value)) {
