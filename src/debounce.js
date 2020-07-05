@@ -40,7 +40,7 @@ export function debounce(...args) {
 
 function _debounce(target, key, descriptor,
                    [wait, immediate, defaultReturnValue]) {
-    const { set, value } = descriptor;
+    const { set, value } = descriptor || {};
     if ($isFunction(value)) {
         descriptor.value = $debounce(value, wait, immediate, defaultReturnValue);
     } else if ($isFunction(set)) {

@@ -1,9 +1,12 @@
+import { emptyArray } from "./base2";
+
 export function decorate(decorator, args) {
-    if (isDescriptor(args[args.length - 1])) {
-        return decorator(...args, []);
+    const [target, key, descriptor] = args || emptyArray;
+    if (isDescriptor(descriptor)) {
+        return decorator(target, key, descriptor, emptyArray);
     }
-    return function () {
-        return decorator(...arguments, args);
+    return function (target, key, descriptor) {
+        return decorator(target, key, descriptor, args);
     };
 }
 

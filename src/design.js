@@ -1,5 +1,6 @@
-import { emptyArray, $isFunction } from "./base2";
-import { isDescriptor } from "./decorate";
+import { 
+    emptyArray, $isNothing, $isFunction
+} from "./base2";
 import { TypeInfo, TypeFlags } from "./type-info";
 import Metadata from "./metadata";
 
@@ -73,10 +74,10 @@ function getDesignFromTypescript(target, targetKey) {
  */
 export const design = DesignMetadata.decorator(designMetadataKey,
     (target, key, descriptor, types) => {
-        if (!isDescriptor(descriptor)) {     
+        if ($isNothing(descriptor)) {     
             const meta  = design.getOrCreateOwn(target, "constructor", () => ({})),
                   metap = design.getOrCreateOwn(target.prototype, "constructor", () => ({})),
-                  args  = mergeTypeInfo(key, meta ? meta.args : null);
+                  args  = mergeTypeInfo(types, meta ? meta.args : null);
             meta.args = metap.args = args;
             return;
         }
@@ -102,7 +103,7 @@ export const design = DesignMetadata.decorator(designMetadataKey,
  */
 export const returns = DesignMetadata.decorator(designMetadataKey,
     (target, key, descriptor, args) => {
-        if (!isDescriptor(descriptor)) {
+        if ($isNothing(descriptor)) {
             throw new SyntaxError(`@returns cannot be applied to classes.`);
         }            
         const { value } = descriptor;
