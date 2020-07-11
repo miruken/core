@@ -52,7 +52,7 @@ export const DisposingMixin = Module.extend({
     }
 });
 
-export const disposableMixin = Base => 
+export const disposable = Base => 
     @conformsTo(Disposing) class extends Base {
         dispose() {
             const dispose = this._dispose;
@@ -102,3 +102,5 @@ export function $using(disposing, action, context) {
         });
     }
 }
+
+export default disposable;

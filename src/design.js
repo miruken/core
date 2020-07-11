@@ -148,7 +148,8 @@ export function createTypeInfoDecorator(configure) {
         throw new TypeError("The configure argument must be a function.");
     }
     return function (target, key, parameterIndex) {
-        if (typeof key == "string" && typeof parameterIndex == "number") {
+        if (target != null && (key == null || typeof key == "string") &&
+                 typeof parameterIndex == "number") {
             return decorator(target, key, parameterIndex, emptyArray);
         }
         const args = [...arguments];

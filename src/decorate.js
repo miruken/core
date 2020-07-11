@@ -1,15 +1,5 @@
 import { emptyArray } from "./base2";
 
-export function decorate(decorator, args) {
-    const [target, key, descriptor] = args || emptyArray;
-    if (isDescriptor(descriptor)) {
-        return decorator(target, key, descriptor, emptyArray);
-    }
-    return function (target, key, descriptor) {
-        return decorator(target, key, descriptor, args);
-    };
-}
-
 export function isDescriptor(desc) {
     if (!desc || !desc.hasOwnProperty) {
         return false;
@@ -25,3 +15,16 @@ export function isDescriptor(desc) {
 
     return false;
 }
+
+export function decorate(decorator, args) {
+    const [target, key, descriptor] = args || emptyArray;
+    if (isDescriptor(descriptor)) {
+        return decorator(target, key, descriptor, emptyArray);
+    }
+    return function (target, key, descriptor) {
+        return decorator(target, key, descriptor, args);
+    };
+}
+
+export default decorate;
+

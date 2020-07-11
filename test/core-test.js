@@ -22,7 +22,7 @@ import {
 
 import {
     Disposing, DisposingMixin,
-    disposableMixin, $using
+    disposable, $using
 } from "../src/dispose";
 
 import { 
@@ -110,7 +110,7 @@ const Tracked = Protocol.extend({
 @conformsTo(Tracked)
 class AsianElephant extends Elephant {}
 
-class ShoppingCart extends disposableMixin(Base) {
+class ShoppingCart extends disposable(Base) {
     constructor() {
         super();
         _(this).items = [];
@@ -586,7 +586,7 @@ describe("Disposing", () => {
 
     it("should only dispose once", () => {
         let counter = 0;
-        class DisposeCounter extends disposableMixin(Base) {
+        class DisposeCounter extends disposable(Base) {
             _dispose() { ++counter; }
         }
         const disposeCounter = new DisposeCounter();

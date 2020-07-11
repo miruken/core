@@ -33,7 +33,7 @@ export function copy(target, key, descriptor) {
 }
 
 function _copyOf(value) {
-    if (value != null && $isFunction(value.copy)) {
+    if ($isFunction(value?.copy)) {
         value = value.copy();
     }
     return value;

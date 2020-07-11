@@ -168,7 +168,7 @@ export const TraversingMixin = Module.extend({
     }
 });
 
-export const traversingMixin = Base => 
+export const traversable = Base => 
     @conformsTo(Traversing) class extends Base {
         traverse(axis, visitor, context) {
             if ($isFunction(axis)) {
@@ -435,3 +435,5 @@ function reverseLevelOrder(node, visitor, context, visited = []) {
         }
     }
 }
+
+export default traversable;

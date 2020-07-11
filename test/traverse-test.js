@@ -3,14 +3,15 @@ import { createKeyChain } from "../src/privates";
 
 import {
     Traversal, Traversing, TraversingAxis,
-    traversingMixin
-} from "../src/graph";
+    traversable
+} from "../src/traverse";
 
 import { expect } from "chai";
 
 const _ = createKeyChain();
 
-class TreeNode extends traversingMixin(Base) {
+@traversable
+class TreeNode extends Base {
     constructor(data) {
         super();
         _(this).children = [];
@@ -214,7 +215,8 @@ describe("Traversing", () => {
         });
 
         it("should detect circular references", () => {
-            class CircularParent extends traversingMixin(Base) {
+            @traversable
+            class CircularParent extends Base {
                 constructor(data) { 
                     super();
                     this.extend({
@@ -224,7 +226,8 @@ describe("Traversing", () => {
                 }
             }
 
-            class CircularChildren extends traversingMixin(Base) {
+            @traversable
+            class CircularChildren extends Base {
                 constructor(data) { 
                     super();
                     this.extend({

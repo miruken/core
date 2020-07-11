@@ -3,7 +3,7 @@ import {
     $isFunction 
 } from "./base2";
 
-import { decorate } from "./decorate";
+import decorate from "./decorate";
 import "reflect-metadata";
 
 /**
