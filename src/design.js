@@ -158,7 +158,7 @@ export function createTypeInfoDecorator(configure) {
         }
     };
     function decorator(target, key, parameterIndex, configArgs) {
-        const signature = design.getOrCreateOwn(target, key, () => ({})),
+        const signature = design.getOrCreateOwn(target, key || "constructor", () => ({})),
               args      = signature.args || [],
               typeInfo  = args[parameterIndex] || (args[parameterIndex] = new TypeInfo());      
 
