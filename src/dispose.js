@@ -103,4 +103,3 @@ export function $using(disposing, action, context) {
     }
 }
 
-export default disposable;

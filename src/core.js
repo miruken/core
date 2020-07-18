@@ -8,8 +8,8 @@ import {
     conformsTo, $isProtocol
 } from "./protocol";
 
-import Enum from "./enum";
-import Metadata from "./metadata";
+import { Enum } from "./enum";
+import { Metadata } from "./metadata";
 import "reflect-metadata";
 
 const baseExtend      = Base.extend,

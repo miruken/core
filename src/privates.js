@@ -76,4 +76,3 @@ function buildKeyChain(key, storeGet) {
        : Object.create(storeGet(obj));
 }
 
-export default createKey;

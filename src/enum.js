@@ -23,7 +23,7 @@ export const Enum = Base.extend({
     get description() {
         const name = this.name;
         return name == null ? "undefined"
-            : this.name.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
+            : name.match(/[A-Z][a-z]+|[0-9]+/g)?.join(" ") || name;
     },
 
     toJSON() {
@@ -188,4 +188,3 @@ function createReadonlyProperty(object, name, value) {
     });
 }
 
-export default Enum;

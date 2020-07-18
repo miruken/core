@@ -3,7 +3,7 @@ import {
     $isObject, $flatten, getPropertyDescriptors
 } from "./base2";
 
-import Metadata from "./metadata";
+import { Metadata } from "./metadata";
 import { isDescriptor } from "./decorate";
 
 import {
@@ -267,4 +267,3 @@ export function conformsTo(...protocols) {
     }
 }
 
-export default Protocol;

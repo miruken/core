@@ -2,7 +2,7 @@ import {
     emptyArray, $isNothing, $isFunction
 } from "./base2";
 import { TypeInfo, TypeFlags } from "./type-info";
-import Metadata from "./metadata";
+import { Metadata } from "./metadata";
 
 import "reflect-metadata";
 
@@ -186,4 +186,3 @@ function mergeTypeInfo(types, args) {
     return result;
 }
 
-export default design;

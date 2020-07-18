@@ -1,5 +1,5 @@
 import { $isFunction } from "./base2";
-import decorate from "./decorate";
+import { decorate } from "./decorate";
 
 /**
  * Throttles `fn` over a time period.

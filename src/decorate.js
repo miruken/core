@@ -26,5 +26,4 @@ export function decorate(decorator, args) {
     };
 }
 
-export default decorate;
 

@@ -3,7 +3,7 @@ import {
     $isFunction, $equals
 } from "./base2";
 
-import Enum from "./enum";
+import { Enum } from "./enum";
 import { Protocol, conformsTo } from "./protocol";
 
 /**
@@ -436,4 +436,3 @@ function reverseLevelOrder(node, visitor, context, visited = []) {
     }
 }
 
-export default traversable;
