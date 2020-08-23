@@ -157,23 +157,6 @@ export const Initializing = Protocol.extend({
 export const ResolvingProtocol = Protocol.extend();
 
 /**
- * Protocol for targets that can execute functions.
- * @class Invoking
- * @extends StrictProtocol
- */
-export const Invoking = StrictProtocol.extend({
-    /**
-     * Invokes the `fn` with `dependencies`.
-     * @method invoke
-     * @param    {Function} fn           - function to invoke
-     * @param    {Array}    dependencies - function dependencies
-     * @param    {Object}   [ctx]        - function context
-     * @returns  {Any}      result of the function.
-     */
-    invoke(fn, dependencies, ctx) {}
-});
-
-/**
  * Protocol for targets that have parent/child relationships.
  * @class Parenting
  * @extends Protocol

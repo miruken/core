@@ -166,7 +166,7 @@ export class Metadata extends Abstract {
         metadataKeys.forEach(metadataKey => {
             const sourceMetadata = this.getOwn(metadataKey, source, sourceKey);
             if (sourceMetadata) {
-                const copyMetadata = sourceMetadata.copyMetadata;
+                const copyMetadata = sourceMetadata?.copyMetadata;
                 if ($isFunction(copyMetadata)) {
                     const targetMetadata = copyMetadata.call(sourceMetadata,
                         target, source, sourceKey, metadataKey);
@@ -207,13 +207,13 @@ export class Metadata extends Abstract {
             const targetMetadata = this.getOwn(metadataKey, target, sourceKey),
                   sourceMetadata = this.getOwn(metadataKey, source, sourceKey);
             if (targetMetadata) {
-                const mergeMetadata = targetMetadata.mergeMetadata;
+                const mergeMetadata = targetMetadata?.mergeMetadata;
                 if ($isFunction(mergeMetadata)) {
                     mergeMetadata.call(targetMetadata,
                         sourceMetadata, target, source, sourceKey, metadataKey);
                 }
             } else {
-                const copyMetadata = sourceMetadata.copyMetadata;
+                const copyMetadata = sourceMetadata?.copyMetadata;
                 if ($isFunction(copyMetadata)) {
                     const targetMetadata = copyMetadata.call(sourceMetadata,
                         target, source, sourceKey, metadataKey);
