@@ -10,14 +10,12 @@ import {
 } from "../src/protocol";
 
 import {
-    MethodType, $isClass, $decorator,
-    $decorate, $decorated
+    MethodType, $decorator, $decorate, $decorated
 } from "../src/core";
 
 import { 
     $createQualifier, $eq, $lazy,
-    $eval, $all, $optional, $use,
-    $contents
+    $all, $optional, $use, $contents
 } from "../src/qualifier";
 
 import {
@@ -550,12 +548,6 @@ describe("ArrayManager", () => {
         arrayMgr.append("xyz", "789");
         expect([...arrayMgr]).to.eql(["xyz", "789"]);
     });   
-});
-
-describe("$isClass", () => {
-    it("should identify miruken classes", () => {
-        expect($isClass(Dog)).to.be.true;
-    });
 });
 
 describe("$isFunction", () => {

@@ -4,7 +4,6 @@ import {
 } from "./base2";
 
 import { Protocol, conformsTo } from "./protocol";
-import { $isClass } from "./core";
 
 /**
  * Protocol for targets that manage disposal lifecycle.
@@ -45,7 +44,7 @@ export const DisposingMixin = Module.extend({
 }, {
     coerce(target) {
         // Behave as class decorator
-        if (arguments.length == 1 && $isClass(target)) {
+        if (arguments.length == 1 && $isFunction(target)) {
             Disposing.adoptBy(target);
             return target.implement(DisposingMixin);
         }

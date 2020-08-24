@@ -195,19 +195,6 @@ export class Startup extends Base {
 }
 
 /**
- * Determines if `target` is a class.
- * @method $isClass
- * @param    {Any}     target  - target to test
- * @returns  {boolean} true if a class (and not a protocol).
- */
-export function $isClass(target) {
-    if (!target || $isProtocol(target)) return false;    
-    if (target.prototype instanceof Base) return true;
-    const name = target.name;  // use Capital name convention
-    return name && $isFunction(target) && isUpperCase(name.charAt(0));
-}
-
-/**
  * Gets the class `instance` is a member of.
  * @method $classOf
  * @param    {Object}  instance  - object
