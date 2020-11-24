@@ -213,4 +213,3 @@ function validateType(type, flags, value, index, require) {
     }
     return true;
 }
-

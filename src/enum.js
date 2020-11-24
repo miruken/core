@@ -172,7 +172,7 @@ export const Flags = Enum.extend({
             if (flag.value === value) {
                 return flag;
             }
-            if ((value & flag.value) === flag.value) {
+            if (flag.value > 0 && (value & flag.value) === flag.value) {
                 name = name ? (name + "," + flag.name) : flag.name;
             }
         }

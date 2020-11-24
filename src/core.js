@@ -150,13 +150,6 @@ export const Initializing = Protocol.extend({
 });
 
 /**
- * Protocol marking resolve semantics.
- * @class ResolvingProtocol
- * @extends Protocol
- */
-export const ResolvingProtocol = Protocol.extend();
-
-/**
  * Protocol for targets that have parent/child relationships.
  * @class Parenting
  * @extends Protocol
