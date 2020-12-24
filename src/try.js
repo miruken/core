@@ -8,7 +8,7 @@ export class Try extends Either {
         super();
     }
 
-    static Failure = left(Try, Error, true);
+    static Failure = left(Try);
     static Success = right(Try);
     
     static failure(error) {

@@ -37,19 +37,7 @@ describe("Try", () => {
             const failure = Try.failure(new Error("Name is required")),
                   result  = failure.fold(l => l.message);
             expect(result).to.equal("Name is required");
-        });  
-
-        it("should fail if no value provided", () => {
-            expect(() => {
-                Try.failure();                
-            }).to.throw(Error, "The value argument is required.");
-        });
-
-        it("should fail if value is not an Error", () => {
-            expect(() => {
-                Try.failure(123);                
-            }).to.throw(Error, "123 is not a valid Error object.");
-        });                                 
+        });                               
     });
 
     describe("Success", () => {
