@@ -1,5 +1,6 @@
 import {
-    Base, $isSomething, $isFunction, $isNumber
+    Base, $isSomething, $isFunction,
+    $isString, $isNumber
 } from "./base2";
 
 /**
@@ -28,7 +29,7 @@ export const Enum = Base.extend({
 
     toJSON() {
         const value = this.valueOf();
-        return value != null && value !== value &&
+        return value != null && value !== this &&
                $isFunction(value.toJSON)
              ? value.toJSON()
              : value;
@@ -83,7 +84,17 @@ export const Enum = Base.extend({
         createReadonlyProperty(en, "items", Object.freeze(items));
         delete en[Defining]
         return en;
-    }
+    },
+    fromName(name) {
+        if (!$isString(name)) {
+            throw new TypeError(`The name '${name}' is not a valid string.`);
+        }
+        const choice = this[name];
+        if (!choice) {
+            throw new TypeError(`'${name}' is not a valid choice for this Enum.`);
+        }
+        return choice;
+    }  
 });
 Enum.prototype.valueOf = function () {
     return "value" in this ? this.value : this;
@@ -177,7 +188,24 @@ export const Flags = Enum.extend({
             }
         }
         return new this(value, name);
-    }
+    },
+    fromName(name) {
+        if (!$isString(name)) {
+            throw new TypeError(`The name '${name}' is not a valid string.`);
+        }
+        const flags = name.split(",");
+        let value = 0;
+        for (let i = 0; i < flags.length; ++i) {
+            const flag   = flags[i],
+                  choice = this[flag];
+            if (!choice) {
+                throw new TypeError(`'${flag}' is not a valid choice for this Flags.`);
+            }
+            if (flags.length === 1) return choice;
+            value += choice.value;
+        }
+        return this.fromValue(value);
+    }  
 });
 
 function createReadonlyProperty(object, name, value) {

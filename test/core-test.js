@@ -254,6 +254,25 @@ describe("Enum", () => {
         }); 
     });
     
+    describe("#fromName", () => {
+        it("should obtain enum from name", () => {
+            expect(Color.fromName("red")).to.equal(Color.red);
+            expect(Color.fromName("blue")).to.equal(Color.blue);
+        });
+
+        it("should throw exception if not string name", () => {
+            expect(() => {
+                Color.fromName(true);
+            }).to.throw(Error, "The name 'true' is not a valid string.");            
+        })
+
+        it("should throw exception if invalid name", () => {
+            expect(() => {
+                Color.fromName("orange");
+            }).to.throw(Error, "'orange' is not a valid choice for this Enum.");            
+        });
+    });
+
     it("should support logical operations", () => {
         expect(Color.red == Color.red).to.be.true;
         expect(Color.red === Color.red).to.be.true
@@ -463,6 +482,26 @@ describe("Flags", () => {
             expect(DayOfWeek.Saturday | DayOfWeek.Sunday).to.equal(+DayOfWeek.Weekend);
             expect(DayOfWeek(DayOfWeek.Saturday | DayOfWeek.Sunday)).to.equal(DayOfWeek.Weekend);            
         });        
+    });
+
+    describe("#fromName", () => {
+        it("should obtain enum from name", () => {
+            expect(DayOfWeek.fromName("Monday")).to.equal(DayOfWeek.Monday);
+            expect(DayOfWeek.fromName("Wednesday")).to.equal(DayOfWeek.Wednesday);
+            expect(+DayOfWeek.fromName("Saturday,Sunday")).to.equal(DayOfWeek.Saturday | DayOfWeek.Sunday);
+        });
+
+        it("should throw exception if not string name", () => {
+            expect(() => {
+                DayOfWeek.fromName(16);
+            }).to.throw(Error, "The name '16' is not a valid string.");            
+        });  
+
+        it("should throw exception if invalid name", () => {
+            expect(() => {
+                DayOfWeek.fromName("Monday,Lunarday");
+            }).to.throw(Error, "'Lunarday' is not a valid choice for this Flags.");            
+        });
     });
 
     describe("#hasFlag", () => {
