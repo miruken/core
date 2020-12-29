@@ -15,8 +15,8 @@ import { singleton } from "./singleton-lifestyle";
 import { unmanaged } from "./unmanaged";
 
 import { ErrorHandler } from "./handler-errors";
-import { CachedHandler } from "./api/cache/cached-handler";
-import { Scheduler } from "./api/schedule/scheduler";
+import { CachedHandler } from "../api/cache/cached-handler";
+import { Scheduler } from "../api/schedule/scheduler";
 
 const _ = createKey(),
       defaultDecorators = [singleton];

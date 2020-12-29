@@ -1,10 +1,6 @@
 import { Base } from "../../src/core/base2";
-
 import { $decorate, $decorator } from "../../src/core/core";
-
-import {
-    createKey, createKeyChain, createKeyState
-} from "../../src/core/privates";
+import { createKey, createKeyChain } from "../../src/core/privates";
 
 const _ = createKey(),
       C = createKeyChain();

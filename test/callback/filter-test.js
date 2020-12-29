@@ -435,12 +435,15 @@ describe("HandleMethod", () => {
 
     let handler;
     beforeEach(() => {
-        HandleMethod.globalFilters.removeAllFilters();
         HandleMethod.globalFilters.addFilters(
             new FilterSpecProvider(new FilterSpec(LogFilter)));
         
         handler = new InferenceHandler(
             SpaceX, LogFilter, ConsoleLogger, ExceptionFilter);
+    });
+
+    afterEach(() => {
+        HandleMethod.globalFilters.removeAllFilters();
     });
 
     it("should apply global filters on methods", () => {

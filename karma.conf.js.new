@@ -1,0 +1,76 @@
+var paths            = require('./build/paths');
+var includePaths     = require("rollup-plugin-includepaths");
+var resolve          = require("@rollup/plugin-node-resolve").default;
+var rollupMultiEntry = require("@rollup/plugin-multi-entry");
+var rollupBabel      = require("@rollup/plugin-babel").default;
+var commons          = require("@rollup/plugin-commonjs");
+var pkg              = require('./package.json');
+
+var includePathOptions = {
+    include: {},
+    paths: ['src', 'src/core'],
+    external: [],
+    extensions: ['.js', '.json', '.html']
+};
+
+
+module.exports = function(config) {
+
+    config.set({
+        
+        frameworks: ['jspm', 'mocha', 'chai'],
+
+        jspm: {
+            loadFiles:  [paths.tests],
+            serveFiles: [paths.source]
+        },
+        
+        files: [],
+
+        plugins: ['@metahub/karma-rollup-preprocessor', 'karma-*'],
+        
+        preprocessors: {
+            [paths.tests]: ['rollup'],
+            [paths.source]: ['rollup']
+        },
+
+        babelPreprocessor: {
+            options: {
+                "presets": [
+                    ["@babel/preset-env", {
+                        "targets": {
+                            "browsers": [ "last 2 Chrome versions" ]
+                        }
+                    }]
+                ]
+            }
+        },
+
+        rollupPreprocessor: {
+            options: {
+                external: Object.keys(pkg.jspm.dependencies),
+                plugins: [
+//                    rollupMultiEntry(),
+                    rollupBabel({ babelHelpers: 'bundled' }),
+                    includePaths(includePathOptions),
+                    resolve(),
+                    commons()
+                ]
+            }
+        },
+        
+        reporters: ['progress'],
+ 
+        port: 9876,
+        
+        colors: true,
+        
+        logLevel: config.LOG_INFO,
+        
+        autoWatch: true,
+        
+        browsers: ['Chrome'],
+        
+        singleRun: false
+    });
+};

@@ -12,6 +12,8 @@ module.exports = function(config) {
         },
         
         files: [],
+
+        //plugins: ['@metahub/karma-rollup-preprocessor', 'karma-*'],
         
         preprocessors: {
             [paths.tests]: ['babel'],
@@ -29,7 +31,7 @@ module.exports = function(config) {
                 ]
             }
         },
-
+                
         reporters: ['progress'],
  
         port: 9876,
