@@ -188,16 +188,6 @@ export class Startup extends Base {
 }
 
 /**
- * Gets the class `instance` is a member of.
- * @method $classOf
- * @param    {Object}  instance  - object
- * @returns  {Function} instance class. 
- */
-export function $classOf(instance) {
-    return instance == null ? undefined : instance.constructor;
-}
-
-/**
  * Creates a decorator builder.<br/>
  * See [Decorator Pattern](http://en.wikipedia.org/wiki/Decorator_pattern)
  * @method

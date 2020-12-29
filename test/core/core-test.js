@@ -1,39 +1,39 @@
 import { 
     Base, assignID, $isString,
     $isFunction, $flatten
-} from "../src/base2";
+} from "../../src/core/base2";
 
-import { Enum, Flags } from "../src/enum";
+import { Enum, Flags } from "../../src/core/enum";
 
 import { 
     Protocol, conformsTo, $protocols
-} from "../src/protocol";
+} from "../../src/core/protocol";
 
 import {
     MethodType, $decorator, $decorate, $decorated
-} from "../src/core";
+} from "../../src/core/core";
 
 import { 
     $createQualifier, $eq, $lazy,
     $all, $optional, $use, $contents
-} from "../src/qualifier";
+} from "../../src/core/qualifier";
 
 import {
     Disposing, DisposingMixin,
     disposable, $using
-} from "../src/dispose";
+} from "../../src/core/dispose";
 
 import { 
     design, returns, type, optional
-} from "../src/design";
+} from "../../src/core/design";
 
-import { TypeInfo, TypeFlags } from "../src/type-info";
-import { ArrayManager, IndexedList } from "../src/util";
-import { debounce } from "../src/debounce";
-import { createKeyChain } from "../src/privates";
+import { TypeInfo, TypeFlags } from "../../src/core/type-info";
+import { ArrayManager, IndexedList } from "../../src/core/util";
+import { debounce } from "../../src/core/debounce";
+import { createKeyChain } from "../../src/core/privates";
 
 import "reflect-metadata";
-import "../src/promise";
+import "../../src/core/promise";
 
 import { expect } from "chai";
 

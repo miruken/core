@@ -1,10 +1,10 @@
-import { Base } from "../src/base2";
-import { createKeyChain } from "../src/privates";
+import { Base } from "../../src/core/base2";
+import { createKeyChain } from "../../src/core/privates";
 
 import {
     Traversal, Traversing, TraversingAxis,
     traversable
-} from "../src/traverse";
+} from "../../src/core/traverse";
 
 import { expect } from "chai";
 
