@@ -1,12 +1,12 @@
 import { 
     Base, emptyArray, $isNothing,
     $isFunction, getPropertyDescriptors
-    } from "../core/base2";
+} from "core/base2";
 
-import { createKey } from "../core/privates";
-import { conformsTo } from "../core/protocol";
-import { $optional } from "../core/qualifier";
-import { createTypeInfoDecorator } from "../core/design";
+import { createKey } from "core/privates";
+import { conformsTo } from "core/protocol";
+import { $optional } from "core/qualifier";
+import { createTypeInfoDecorator } from "core/design";
 import { KeyResolving } from "./key-resolving";
 
 const _ = createKey();

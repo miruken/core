@@ -1,9 +1,9 @@
-import { Base } from "../../src/core/base2";
-import { Request } from "../../src/api/request";
-import { NotHandledError } from "../../src/callback/errors";
-import { format } from "../../src/map/maps";
-import { typeId } from "../../src/api/type-id";
-import "../../src/map/handler-map";
+import { Base } from "core/base2";
+import { Request } from "api/request";
+import { NotHandledError } from "callback/errors";
+import { format } from "map/maps";
+import { typeId } from "api/type-id";
+import "map/handler-map";
 
 import { expect } from "chai";
 

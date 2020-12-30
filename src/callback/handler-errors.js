@@ -1,5 +1,5 @@
-import { $isPromise} from "../core/base2";
-import { DuckTyping, conformsTo } from "../core/protocol";
+import { $isPromise} from "core/base2";
+import { DuckTyping, conformsTo } from "core/protocol";
 import { Handler, $composer } from "./handler";
 import { provides } from "./callback-policy";
 import { singleton } from "./singleton-lifestyle";

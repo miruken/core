@@ -1,6 +1,6 @@
 import { 
     emptyArray, $isNothing, $isFunction, $classOf
-} from "../core/base2";
+} from "core/base2";
 
 import { Handler } from "./handler";
 import { Options } from "./options";

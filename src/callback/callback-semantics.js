@@ -1,5 +1,5 @@
-import { createKeyChain } from "../core/privates";
-import { Flags } from "../core/enum";
+import { createKeyChain } from "core/privates";
+import { Flags } from "core/enum";
 import { Handler } from "./handler";
 import { Composition } from "./composition";
 import { NotHandledError, RejectedError } from "./errors";

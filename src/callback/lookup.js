@@ -1,11 +1,11 @@
 import {
     Base, Undefined, $isNothing,
     $isPromise, $flatten
-} from "../core/base2";
+} from "core/base2";
 
-import { createKeyChain } from "../core/privates";
-import { conformsTo } from "../core/protocol";
-import { $instant } from "../core/qualifier";
+import { createKeyChain } from "core/privates";
+import { conformsTo } from "core/protocol";
+import { $instant } from "core/qualifier";
 import { CallbackControl } from "./callback-control";
 import { looksup } from "./callback-policy";
 

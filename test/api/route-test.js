@@ -1,13 +1,13 @@
-import { assignID } from "../../src/core/base2";
-import { handles } from "../../src/callback/callback-policy";
-import { HandlerBuilder } from "../../src/callback/handler-builder";
-import { Concurrent } from "../../src/api/schedule/scheduled";
-import { PassThroughRouter } from "../../src/api/route/pass-through-router";
-import { Routed } from "../../src/api/route/routed";
-import { routes } from "../../src/api/route/routes";
-import { typeId } from "../../src/api/type-id";
-import { NotHandledError } from "../../src/callback/errors";
-import "../../src/callback/handler-batch";
+import { assignID } from "core/base2";
+import { handles } from "callback/callback-policy";
+import { HandlerBuilder } from "callback/handler-builder";
+import { Concurrent } from "api/schedule/scheduled";
+import { PassThroughRouter } from "api/route/pass-through-router";
+import { Routed } from "api/route/routed";
+import { routes } from "api/route/routes";
+import { typeId } from "api/type-id";
+import { NotHandledError } from "callback/errors";
+import "callback/handler-batch";
 
 import { 
     StockQuote, GetStockQuote, SellStock,

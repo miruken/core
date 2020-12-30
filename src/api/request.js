@@ -1,6 +1,6 @@
 import {
     Base, $isNothing, $classOf, assignID
-} from "../core/base2";
+} from "core/base2";
 
 export class Request extends Base {
     getCacheKey() {

@@ -1,8 +1,5 @@
-import {
-    $isNothing, $isFunction, $isBoolean
-} from "../../core/base2";
-
-import { Metadata } from "../../core/metadata";
+import { $isNothing, $isFunction, $isBoolean } from "core/base2";
+import { Metadata } from "core/metadata";
 import { FilterSpec } from "./filter-spec";
 import { FilterSpecProvider } from "./filter-spec-provider";
 import { FilteredScope } from "./filtered-scope";

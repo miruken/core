@@ -1,13 +1,12 @@
 import {
-    Base, Undefined, $isNothing,
-    $isSomething, $isPromise, $classOf,
-    $flatten, 
-} from "../core/base2";
+    Base, Undefined, $isNothing, $isSomething,
+    $isPromise, $classOf, $flatten, 
+} from "core/base2";
 
-import { createKeyChain } from "../core/privates";
-import { Variance } from "../core/core";
-import { conformsTo } from "../core/protocol";
-import { $instant } from "../core/qualifier";
+import { createKeyChain } from "core/privates";
+import { Variance } from "core/core";
+import { conformsTo } from "core/protocol";
+import { $instant } from "core/qualifier";
 import { CallbackControl } from "./callback-control";
 import { Binding } from "./binding/binding";
 import { BindingScope } from "./binding/binding-scope";

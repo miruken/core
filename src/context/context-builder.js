@@ -1,6 +1,6 @@
-import { $isNothing } from "../core/base2";
-import { InferenceHandler } from "../callback/inference-handler";
-import { HandlerBuilder } from "../callback/handler-builder";
+import { $isNothing } from "core/base2";
+import { InferenceHandler } from "callback/inference-handler";
+import { HandlerBuilder } from "callback/handler-builder";
 import { Context } from "./context";
 
 export class ContextBuilder extends HandlerBuilder {

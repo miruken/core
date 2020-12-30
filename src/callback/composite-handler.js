@@ -1,5 +1,5 @@
-import { createKeyChain } from "../core/privates";
-import { $flatten } from "../core/base2";
+import { createKeyChain } from "core/privates";
+import { $flatten } from "core/base2";
 import { Handler, HandlerAdapter } from "./handler";
 import { unmanaged } from "./unmanaged";
 

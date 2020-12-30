@@ -1,4 +1,4 @@
-import { $isNothing } from "../../core/base2";
+import { $isNothing } from "core/base2";
 import { Request } from "../request";
 import { Message, MessageWrapper } from "../message";
 import { response } from "../response";

@@ -1,11 +1,11 @@
 import {
     $isFunction, $isNothing, $isPromise,
     $isPlainObject, $flatten,
-} from "../core/base2";
+} from "core/base2";
 
-import { $decorate } from "../core/core";
-import { $optional, $contents } from "../core/qualifier";
-import { TypeFlags } from "../core/type-info";
+import { $decorate } from "core/core";
+import { $optional, $contents } from "core/qualifier";
+import { TypeFlags } from "core/type-info";
 import { Command } from "./command";
 import { Lookup } from "./lookup";
 import { Inquiry } from "./inquiry";

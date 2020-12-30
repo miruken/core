@@ -3,10 +3,19 @@ System.config({
   transpiler: false,
   paths: {
     "github:*": "jspm_packages/github/*",
-    "npm:*": "jspm_packages/npm/*"
+    "npm:*": "jspm_packages/npm/*",
+    "src:*": "src/*",
+    "test:*": "test/*"  
   },
 
   map: {
+    '@': 'src',
+    'core': 'src:core',
+    'callback': 'src:callback',
+    'context': 'src:context',
+    'map': 'src:map',
+    'api': 'src:api',      
+    'test': 'test',
     "chai": "npm:chai@4.2.0",
     "reflect-metadata": "npm:reflect-metadata@0.1.12",
     "github:jspm/nodelibs-assert@0.1.0": {

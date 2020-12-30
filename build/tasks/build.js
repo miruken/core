@@ -11,7 +11,7 @@ var camelCase        = require("camelcase");
 var pkg              = require('../../package.json');
 
 var jsName           = paths.packageName + '.js';
-var projectRootDir   = path.join(__dirname, '../..')
+var root             = path.join(__dirname, '../..')
 
 gulp.task("rollup", function(done) {
     rollup({
@@ -21,9 +21,14 @@ gulp.task("rollup", function(done) {
             rollupMultiEntry(),
             rollupBabel({ babelHelpers: 'bundled' }),
             alias({
-                entries: [{
-                    find: '@', replacement: path.resolve(projectRootDir, 'src')
-                }]
+                entries: [
+                    { find: '@', replacement: path.resolve(root, 'src') },
+                    { find: 'core', replacement: path.resolve(root, 'src/core') },
+                    { find: 'callback', replacement: path.resolve(root, 'src/callback') },
+                    { find: 'context', replacement: path.resolve(root, 'src/context') },
+                    { find: 'map', replacement: path.resolve(root, 'src/map') },
+                    { find: 'api', replacement: path.resolve(root, 'src/api') }
+                ]
             }),
             resolve()
         ]

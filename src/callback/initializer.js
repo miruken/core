@@ -1,17 +1,11 @@
-import { 
-    $isNothing, $isFunction, $isPromise
-} from "../core/base2";
-
-import { createKey } from "../core/privates";
-import { conformsTo } from "../core/protocol";
-import { isDescriptor } from "../core/decorate";
+import { $isNothing, $isFunction, $isPromise } from "core/base2";
+import { createKey } from "core/privates";
+import { conformsTo } from "core/protocol";
+import { isDescriptor } from "core/decorate";
 import { Inquiry } from "./inquiry";
 import { Creation } from "./creation";
 
-import { 
-    Filtering, FilteringProvider
-} from "./filter/filtering";
-
+import { Filtering, FilteringProvider } from "./filter/filtering";
 import { FilteredScope } from "./filter/filtered-scope";
 import { filter } from "./filter/filter";
 

@@ -1,15 +1,15 @@
-import { createKey } from "../../src/core/privates";
-import { Enum } from "../../src/core/enum";
-import { type } from "../../src/core/design";
-import { conformsTo } from "../../src/core/protocol";
-import { Handler } from "../../src/callback/handler";
-import { InferenceHandler } from "../../src/callback/inference-handler";
-import { handles, provides } from "../../src/callback/callback-policy";
-import { Filtering } from "../../src/callback/filter/filtering";
-import { filter } from "../../src/callback/filter/filter";
-import { Stash } from "../../src/api/stash";
-import { NotHandledError } from "../../src/callback/errors";
-import "../../src/api/handler-stash";
+import { createKey } from "core/privates";
+import { Enum } from "core/enum";
+import { type } from "core/design";
+import { conformsTo } from "core/protocol";
+import { Handler } from "callback/handler";
+import { InferenceHandler } from "callback/inference-handler";
+import { handles, provides } from "callback/callback-policy";
+import { Filtering } from "callback/filter/filtering";
+import { filter } from "callback/filter/filter";
+import { Stash } from "api/stash";
+import { NotHandledError } from "callback/errors";
+import "api/handler-stash";
 
 import { expect } from "chai";
 

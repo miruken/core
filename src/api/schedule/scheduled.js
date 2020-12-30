@@ -1,5 +1,5 @@
-import { Try } from "../../core/try";
-import { design } from "../../core/design";
+import { Try } from "core/try";
+import { design } from "core/design";
 import { Request } from "../request";
 import { response } from "../response";
 import { MessageWrapper } from "../message";

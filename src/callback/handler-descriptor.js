@@ -2,15 +2,15 @@ import {
     Base, Abstract, $isNothing,
     $isFunction, $isString, $isPromise,
     $classOf, $isObject, assignID, pcopy
-} from "../core/base2";
+} from "core/base2";
 
-import { createKey } from "../core/privates";
-import { Variance } from "../core/core";
-import { IndexedList } from "../core/util";
-import { Metadata } from "../core/metadata";
-import { TypeFlags } from "../core/type-info";
-import { design } from "../core/design";
-import { $eq, $optional, $contents } from "../core/qualifier";
+import { createKey } from "core/privates";
+import { Variance } from "core/core";
+import { IndexedList } from "core/util";
+import { Metadata } from "core/metadata";
+import { TypeFlags } from "core/type-info";
+import { design } from "core/design";
+import { $eq, $optional, $contents } from "core/qualifier";
 import { Binding } from "./binding/binding";
 import { Inquiry } from "./inquiry";
 import { KeyResolver } from "./key-resolver";

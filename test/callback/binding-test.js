@@ -1,11 +1,11 @@
-import { createKeyChain } from "../../src/core/privates";
-import { type } from "../../src/core/design";
-import { Protocol, conformsTo } from "../../src/core/protocol";
-import { provides } from "../../src/callback/callback-policy";
-import { InferenceHandler } from "../../src/callback/inference-handler";
-import { named } from "../../src/callback/binding/named";
-import { metadata } from "../../src/callback/binding/metadata";
-import { createQualifier } from "../../src/callback/binding/qualifier-constraint";
+import { createKeyChain } from "core/privates";
+import { type } from "core/design";
+import { Protocol, conformsTo } from "core/protocol";
+import { provides } from "callback/callback-policy";
+import { InferenceHandler } from "callback/inference-handler";
+import { named } from "callback/binding/named";
+import { metadata } from "callback/binding/metadata";
+import { createQualifier } from "callback/binding/qualifier-constraint";
 
 import { expect } from "chai";
 

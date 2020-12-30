@@ -1,4 +1,4 @@
-import { hyphenNaming } from "../../../src/map/strategy/hyphen-naming";
+import { hyphenNaming } from "map/strategy/hyphen-naming";
 import { expect } from "chai";
 
 describe("HyphenNaming", () => {

@@ -1,4 +1,4 @@
-import { Enum } from "../core/enum";
+import { Enum } from "core/enum";
 
 /**
  * Standard filter precedence.

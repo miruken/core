@@ -1,12 +1,12 @@
 import { 
     $isNothing, $isFunction, $isPromise,
     $classOf, assignID
-} from "../../core/base2"
+} from "core/base2"
 
-import { createKey } from "../../core/privates";
-import { Handler } from "../../callback/handler";
-import { handles, provides } from "../../callback/callback-policy";
-import { singleton } from "../../callback/singleton-lifestyle";
+import { createKey } from "core/privates";
+import { Handler } from "callback/handler";
+import { handles, provides } from "callback/callback-policy";
+import { singleton } from "callback/singleton-lifestyle";
 import { Cached, CacheAction } from "./cached";
 
 const ONE_DAY_MS = 86400000,

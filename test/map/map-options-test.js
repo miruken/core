@@ -1,5 +1,5 @@
-import { Handler } from "../../src/callback/handler";
-import { MapOptions } from "../../src/map/map-options";
+import { Handler } from "callback/handler";
+import { MapOptions } from "map/map-options";
 import { expect } from "chai";
 
 describe("MapOptions", () => {

@@ -1,10 +1,10 @@
 import { 
     $isNothing, $isFunction, $isString, $classOf
-} from "../../core/base2";
+} from "core/base2";
 
-import { Variance } from "../../core/core";
-import { $isProtocol } from "../../core/protocol";
-import { $eq, $eval, $contents } from "../../core/qualifier";
+import { Variance } from "core/core";
+import { $isProtocol } from "core/protocol";
+import { $eq, $eval, $contents } from "core/qualifier";
 
 export class Binding {
     constructor(constraint, owner, handler, key, removed) {

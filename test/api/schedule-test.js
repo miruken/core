@@ -1,7 +1,7 @@
-import { Concurrent } from "../../src/api/schedule/scheduled";
-import { HandlerBuilder } from "../../src/callback/handler-builder";
-import { Publish } from "../../src/api/schedule/scheduled";
-import "../../src/api/schedule/handler-scheduled";
+import { Concurrent } from "api/schedule/scheduled";
+import { HandlerBuilder } from "callback/handler-builder";
+import { Publish } from "api/schedule/scheduled";
+import "api/schedule/handler-scheduled";
 
 import { 
     StockQuote, GetStockQuote, SellStock,

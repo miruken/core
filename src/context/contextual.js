@@ -1,6 +1,6 @@
-import { $isNothing } from "../core/base2";
-import { Protocol, conformsTo } from "../core/protocol";
-import { $composer } from "../callback/handler";
+import { $isNothing } from "core/base2";
+import { Protocol, conformsTo } from "core/protocol";
+import { $composer } from "callback/handler";
 import { ContextState } from "./context";
 
 const ContextField = Symbol();

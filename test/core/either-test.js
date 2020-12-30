@@ -1,4 +1,4 @@
-import { Either } from "../../src/core/either";
+import { Either } from "core/either";
 import { expect } from "chai";
 
 describe("Either", () => {

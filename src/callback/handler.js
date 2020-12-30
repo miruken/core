@@ -1,8 +1,5 @@
-import {
-    Base, $isNothing, $isFunction, 
-} from "../core/base2";
-
-import { $decorator } from "../core/core";
+import { Base, $isNothing, $isFunction } from "core/base2";
+import { $decorator } from "core/core";
 import { Composition } from "./composition";
 import { CallbackPolicy } from "./callback-policy";
 import { unmanaged } from "./unmanaged";

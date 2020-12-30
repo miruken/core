@@ -1,4 +1,4 @@
-import { Protocol } from "../../core/protocol";
+import { Protocol } from "core/protocol";
 
 export const BindingScope = Protocol.extend({
     /**

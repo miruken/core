@@ -1,9 +1,6 @@
-import {
-    Base, $isPromise, $isNothing
-} from "../core/base2";
-
-import { createKeyChain } from "../core/privates";
-import { conformsTo } from "../core/protocol";
+import { Base, $isPromise, $isNothing } from "core/base2";
+import { createKeyChain } from "core/privates";
+import { conformsTo } from "core/protocol";
 import { CallbackControl } from "./callback-control";
 import { creates } from "./callback-policy";
 

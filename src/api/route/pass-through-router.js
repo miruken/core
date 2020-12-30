@@ -1,7 +1,7 @@
-import { Handler } from "../../callback/handler";
-import { handles, $unhandled } from "../../callback/callback-policy";
-import { unmanaged } from "../../callback/unmanaged";
-import { skipFilters } from "../../callback/filter/filter";
+import { Handler } from "callback/handler";
+import { handles, $unhandled } from "callback/callback-policy";
+import { unmanaged } from "callback/unmanaged";
+import { skipFilters } from "callback/filter/filter";
 import { Routed } from "./routed";
 import "../handler-api";
 

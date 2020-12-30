@@ -1,4 +1,4 @@
-import { createKey } from "../core/privates";
+import { createKey } from "core/privates";
 
 const _ = createKey();
 

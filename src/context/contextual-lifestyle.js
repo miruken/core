@@ -1,22 +1,16 @@
 import { 
     $isNothing, $isPromise, pcopy,
     getPropertyDescriptors
-} from "../core/base2";
+} from "core/base2";
 
-import { createKey } from "../core/privates";
-import { $decorated } from "../core/core";
-import { Disposing } from "../core/dispose";
-
-import { 
-    Lifestyle, LifestyleProvider 
-} from "../callback/lifestyle";
-
-import { filter } from "../callback/filter/filter";
-import { QualifierConstraint } from "../callback/binding/qualifier-constraint";
-import { ConstraintProvider } from "../callback/binding/constraint-filter";
-import { createFilterDecorator } from "../callback/filter/filter";
-
-
+import { createKey } from "core/privates";
+import { $decorated } from "core/core";
+import { Disposing } from "core/dispose";
+import { Lifestyle, LifestyleProvider } from "callback/lifestyle";
+import { filter } from "callback/filter/filter";
+import { QualifierConstraint } from "callback/binding/qualifier-constraint";
+import { ConstraintProvider } from "callback/binding/constraint-filter";
+import { createFilterDecorator } from "callback/filter/filter";
 import { Context } from "./context";
 import { Contextual } from "./contextual";
 

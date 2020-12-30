@@ -1,12 +1,8 @@
-import { $isPromise } from "../core/base2";
-import { createKeyChain } from "../core/privates";
-
-import { 
-    Protocol, StrictProtocol, DuckTyping
-} from "../core/protocol";
-
-import { MethodType } from "../core/core";
-import { Delegate } from "../core/delegate";
+import { $isPromise } from "core/base2";
+import { createKeyChain } from "core/privates";
+import { Protocol, StrictProtocol, DuckTyping } from "core/protocol";
+import { MethodType } from "core/core";
+import { Delegate } from "core/delegate";
 import { Handler } from "./handler";
 import { HandleMethod } from "./handle-method";
 import { CallbackOptions, CallbackSemantics } from "./callback-semantics"

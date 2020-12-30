@@ -1,9 +1,6 @@
-import { 
-    Base, Undefined, $isFunction,
-} from "../core/base2";
-
-import { createKeyChain } from "../core/privates";
-import { conformsTo } from "../core/protocol";
+import { Base, Undefined, $isFunction } from "core/base2";
+import { createKeyChain } from "core/privates";
+import { conformsTo } from "core/protocol";
 import { CallbackControl } from "./callback-control";
 import { CallbackPolicy, handles } from "./callback-policy";
 

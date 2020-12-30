@@ -1,5 +1,5 @@
-import { $isNothing } from "../core/base2";
-import { Metadata } from "../core/metadata";
+import { $isNothing } from "core/base2";
+import { Metadata } from "core/metadata";
 
 const unmanagedMetadataKey = Symbol("unmanaged-metadata")
 

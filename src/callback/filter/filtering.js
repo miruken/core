@@ -1,4 +1,4 @@
-import { Protocol } from "../../core/protocol";
+import { Protocol } from "core/protocol";
 
 /**
  * Protocol for providing filters.

@@ -1,4 +1,4 @@
-import { $isNothing } from "../core/base2";
+import { $isNothing } from "core/base2";
 import { Handler } from "./handler";
 import { unmanaged } from "./unmanaged";
 

@@ -1,30 +1,30 @@
-import { Base, $classOf } from "../../src/core/base2";
-import { type } from "../../src/core/design";
-import { Protocol, conformsTo } from "../../src/core/protocol";
+import { Base, $classOf } from "core/base2";
+import { type } from "core/design";
+import { Protocol, conformsTo } from "core/protocol";
 
 import {
     handles, provides, looksup, creates
-} from "../../src/callback/callback-policy";
+} from "callback/callback-policy";
 
-import { Command } from "../../src/callback/command";
-import { Handler } from "../../src/callback/handler";
-import { HandleMethod } from "../../src/callback/handle-method";
-import { CompositeHandler } from "../../src/callback/composite-handler";
-import { InferenceHandler } from "../../src/callback/inference-handler";
-import { Filtering } from "../../src/callback/filter/filtering";
-import { FilterSpec } from "../../src/callback/filter/filter-spec";
-import { FilteredScope } from "../../src/callback/filter/filtered-scope";
-import { FilterSpecProvider } from "../../src/callback/filter/filter-spec-provider";
-import { FilterInstanceProvider } from "../../src/callback/filter/filter-instance-provider";
-import { FilterOptions } from "../../src/callback/filter/filter-options";
+import { Command } from "callback/command";
+import { Handler } from "callback/handler";
+import { HandleMethod } from "callback/handle-method";
+import { CompositeHandler } from "callback/composite-handler";
+import { InferenceHandler } from "callback/inference-handler";
+import { Filtering } from "callback/filter/filtering";
+import { FilterSpec } from "callback/filter/filter-spec";
+import { FilteredScope } from "callback/filter/filtered-scope";
+import { FilterSpecProvider } from "callback/filter/filter-spec-provider";
+import { FilterInstanceProvider } from "callback/filter/filter-instance-provider";
+import { FilterOptions } from "callback/filter/filter-options";
+
 import { 
     filter, skipFilters, createFilterSpecDecorator 
-} from "../../src/callback/filter/filter";
+} from "callback/filter/filter";
 
-import { singleton } from "../../src/callback/singleton-lifestyle";
-import { initialize } from "../../src/callback/initializer";
-
-import "../../src/callback/filter/filter-helper";
+import { singleton } from "callback/singleton-lifestyle";
+import { initialize } from "callback/initializer";
+import "callback/filter/filter-helper";
 
 import { expect } from "chai";
 

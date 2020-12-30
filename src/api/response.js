@@ -1,8 +1,8 @@
 import { 
     Base, $isNothing, $isFunction, $classOf
-} from "../core/base2";
+} from "core/base2";
 
-import { decorate } from "../core/decorate";
+import { decorate } from "core/decorate";
 
 const ResponseTypeResolver = Symbol("response-type");
 

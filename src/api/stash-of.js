@@ -1,9 +1,9 @@
-import {  $isNothing, $isFunction } from "../core/base2";
-import { createKey } from "../core/privates";
-import { conformsTo } from "../core/protocol";
-import { createTypeInfoDecorator } from "../core/design";
+import { $isNothing, $isFunction } from "core/base2";
+import { createKey } from "core/privates";
+import { conformsTo } from "core/protocol";
+import { createTypeInfoDecorator } from "core/design";
+import { KeyResolving } from "callback/key-resolving";
 import { Stash } from "./stash";
-import { KeyResolving } from "../callback/key-resolving";
 
 const _ = createKey();
 

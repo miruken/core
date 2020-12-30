@@ -1,8 +1,8 @@
-import { $isNothing, $isPromise } from "../../core/base2";
-import { Try } from "../../core/try";
-import { Handler } from "../../callback/handler";
-import { handles, provides } from "../../callback/callback-policy";
-import { singleton } from "../../callback/singleton-lifestyle";
+import { $isNothing, $isPromise } from "core/base2";
+import { Try } from "core/try";
+import { Handler } from "callback/handler";
+import { handles, provides } from "callback/callback-policy";
+import { singleton } from "callback/singleton-lifestyle";
 
 import { 
     Sequential, Concurrent, ScheduledResult,

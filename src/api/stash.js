@@ -1,12 +1,12 @@
-import { $isNothing } from "../core/base2";
-import { createKey } from "../core/privates";
+import { $isNothing } from "core/base2";
+import { createKey } from "core/privates";
 
 import { 
     handles, provides, $unhandled 
-} from "../callback/callback-policy";
+} from "callback/callback-policy";
 
-import { Handler } from "../callback/handler";
-import { unmanaged } from "../callback/unmanaged";
+import { Handler } from "callback/handler";
+import { unmanaged } from "callback/unmanaged";
 
 const _ = createKey();
 

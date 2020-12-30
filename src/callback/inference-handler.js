@@ -1,7 +1,7 @@
 import { 
     Undefined, pcopy, $isNothing,
     $classOf, $isPromise
-} from "../core/base2";
+} from "core/base2";
 
 import { HandlerDescriptor } from "./handler-descriptor";
 import { Handler } from "./handler";

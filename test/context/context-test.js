@@ -1,20 +1,20 @@
-import { True, Base, pcopy } from "../../src/core/base2";
-import { type } from "../../src/core/design";
-import { $decorate, $decorated } from "../../src/core/core";
-import { disposable, $using } from "../../src/core/dispose";
-import { Protocol, conformsTo } from "../../src/core/protocol";
-import { Handler, $composer } from "../../src/callback/handler";
-import { InferenceHandler } from "../../src/callback/inference-handler";
-import { provides } from "../../src/callback/callback-policy";
-import { singleton } from "../../src/callback/singleton-lifestyle";
-import { Context, ContextState } from "../../src/context/context";
-import { Contextual, contextual } from "../../src/context/contextual";
+import { True, Base, pcopy } from "core/base2";
+import { type } from "core/design";
+import { $decorate, $decorated } from "core/core";
+import { disposable, $using } from "core/dispose";
+import { Protocol, conformsTo } from "core/protocol";
+import { Handler, $composer } from "callback/handler";
+import { InferenceHandler } from "callback/inference-handler";
+import { provides } from "callback/callback-policy";
+import { singleton } from "callback/singleton-lifestyle";
+import { Context, ContextState } from "context/context";
+import { Contextual, contextual } from "context/contextual";
 
 import { 
     scoped, scopedRooted, scopedQualifier
-} from "../../src/context/contextual-lifestyle";
+} from "context/contextual-lifestyle";
 
-import "../../src/context/handler-context";
+import "context/handler-context";
 
 import { expect } from "chai";
 

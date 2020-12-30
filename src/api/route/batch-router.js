@@ -1,13 +1,13 @@
-import { $isNothing } from "../../core/base2";
-import { createKey } from "../../core/privates";
-import { conformsTo } from "../../core/protocol";
-import { handles, $unhandled } from "../../callback/callback-policy";
-import { Handler } from "../../callback/handler";
-import { Command } from "../../callback/command";
-import { Batching } from "../../callback/batch";
-import { Routed, BatchRouted } from "./routed";
+import { $isNothing } from "core/base2";
+import { createKey } from "core/privates";
+import { conformsTo } from "core/protocol";
+import { handles, $unhandled } from "callback/callback-policy";
+import { Handler } from "callback/handler";
+import { Command } from "callback/command";
+import { unmanaged } from "callback/unmanaged";
+import { Batching } from "callback/batch";
 import { Concurrent, Publish } from "../schedule/scheduled";
-import { unmanaged } from "../../callback/unmanaged";
+import { Routed, BatchRouted } from "./routed";
 import "../handler-api";
 
 const _ = createKey();

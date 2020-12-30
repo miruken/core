@@ -1,7 +1,6 @@
 import { 
-    emptyArray, $isFunction, $isNothing,
-    $classOf
-} from "../../core/base2";
+    emptyArray, $isFunction, $isNothing, $classOf
+} from "core/base2";
 
 import { Binding } from "../binding/binding";
 import { Handler } from "../handler";

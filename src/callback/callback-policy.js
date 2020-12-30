@@ -3,11 +3,11 @@ import {
     $classOf, $lift
 } from "../core/base2";
 
-import { createKey } from "../core/privates";
-import { Variance } from "../core/core";
-import { design } from "../core/design";
-import { $contents } from "../core/qualifier";
-import { decorate, isDescriptor } from "../core/decorate";
+import { createKey } from "core/privates";
+import { Variance } from "core/core";
+import { design } from "core/design";
+import { $contents } from "core/qualifier";
+import { decorate, isDescriptor } from "core/decorate";
 import { HandlerDescriptor } from "./handler-descriptor";
 import { FilteredScope } from "./filter/filtered-scope";
 

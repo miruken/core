@@ -1,5 +1,5 @@
-import { $isNothing } from "../../core/base2";
-import { createKey } from "../../core/privates";
+import { $isNothing } from "core/base2";
+import { createKey } from "core/privates";
 
 const _ = createKey();
 

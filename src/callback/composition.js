@@ -1,4 +1,4 @@
-import { $isNothing } from "../core/base2";
+import { $isNothing } from "core/base2";
 import { Trampoline } from "./trampoline";
 
 /**

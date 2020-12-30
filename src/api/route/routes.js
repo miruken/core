@@ -1,15 +1,11 @@
-import { $isNothing, $flatten } from "../../core/base2";
-import { createKey } from "../../core/privates";
-import { conformsTo } from "../../core/protocol";
-
-import { 
-    Filtering, FilteringProvider
-} from "../../callback/filter/filtering";
-
-import { Stage } from "../../callback/stage";
+import { $isNothing, $flatten } from "core/base2";
+import { createKey } from "core/privates";
+import { conformsTo } from "core/protocol";
+import { Filtering, FilteringProvider } from "callback/filter/filtering";
+import { createFilterDecorator } from "callback/filter/filter";
+import { Stage } from "callback/stage";
 import { BatchRouted } from "./routed";
 import { BatchRouter } from "./batch-router";
-import { createFilterDecorator } from "../../callback/filter/filter";
 
 const _ = createKey();
 

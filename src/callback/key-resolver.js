@@ -1,10 +1,7 @@
-import { 
-    Base, $isNothing, $isPromise
-} from "../core/base2";
-
-import { conformsTo } from "../core/protocol";
-import { TypeFlags } from "../core/type-info";
-import { $optional } from "../core/qualifier";
+import { Base, $isNothing, $isPromise } from "core/base2";
+import { conformsTo } from "core/protocol";
+import { TypeFlags } from "core/type-info";
+import { $optional } from "core/qualifier";
 import { Inquiry } from "./inquiry";
 import { KeyResolving } from "./key-resolving";
 

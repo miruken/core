@@ -1,32 +1,18 @@
-import { Base, $isPlainObject } from "../../src/core/base2";
-import { createKeyChain } from "../../src/core/privates";
-import { Enum } from "../../src/core/enum";
-import { Either } from "../../src/core/either";
-import { design } from "../../src/core/design";
-import { HandlerBuilder } from "../../src/callback/handler-builder";
-
-import { 
-    root, ignore, useEnumName
-} from "../../src/map/mapping";
-
-import { MapTo } from "../../src/map/map-callback";
-
-import { 
-    JsonFormat, JsonMapping
-} from "../../src/map/json-mapping";
-
-import { 
-    mapsFrom, mapsTo, formats
-} from "../../src/map/maps";
-
-import { 
-    TypeIdHandling, typeId, typeInfo
-} from "../../src/api/type-id";
-
-import { hyphenNaming } from "../../src/map/strategy/hyphen-naming";
-import { useEnumNames } from "../../src/map/strategy/use-enum-names";
-import { unmanaged } from "../../src/callback/unmanaged";
-import { surrogate } from "../../src/map/surrogate";
+import { Base, $isPlainObject } from "core/base2";
+import { createKeyChain } from "core/privates";
+import { Enum } from "core/enum";
+import { Either } from "core/either";
+import { design } from "core/design";
+import { HandlerBuilder } from "callback/handler-builder";
+import { root, ignore, useEnumName } from "map/mapping";
+import { MapTo } from "map/map-callback";
+import { JsonFormat, JsonMapping } from "map/json-mapping";
+import { mapsFrom, mapsTo, formats } from "map/maps";
+import { TypeIdHandling, typeId, typeInfo } from "api/type-id";
+import { hyphenNaming } from "map/strategy/hyphen-naming";
+import { useEnumNames } from "map/strategy/use-enum-names";
+import { unmanaged } from "callback/unmanaged";
+import { surrogate } from "map/surrogate";
 
 import { expect } from "chai";
 

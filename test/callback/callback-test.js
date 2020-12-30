@@ -1,51 +1,47 @@
 import {
     True, False, Undefined, Base,
     $isPromise, assignID, $flatten
-} from "../../src/core/base2";
+} from "core/base2";
 
-import { createKeyChain } from "../../src/core/privates";
-
-import { 
-    Protocol, DuckTyping, conformsTo 
-} from "../../src/core/protocol";
-
-import { copy } from "../../src/core/copy";
-import { TypeInfo } from "../../src/core/type-info";
-import { Variance, MethodType } from "../../src/core/core";
-import { design, returns, type } from "../../src/core/design";
+import { createKeyChain } from "core/privates";
+import { Protocol, DuckTyping, conformsTo } from "core/protocol";
+import { copy } from "core/copy";
+import { TypeInfo } from "core/type-info";
+import { Variance, MethodType } from "core/core";
+import { design, returns, type } from "core/design";
 
 import { 
     $eq, $eval, $optional, $instant, $lazy
-} from "../../src/core/qualifier";
+} from "core/qualifier";
 
-import { Handler, $composer } from "../../src/callback/handler";
-import { CascadeHandler } from "../../src/callback/cascade-handler";
-import { CompositeHandler } from "../../src/callback/composite-handler";
-import { InferenceHandler } from "../../src/callback/inference-handler";
-import { HandleMethod } from "../../src/callback/handle-method";
-import { Batching } from "../../src/callback/batch";
-import { Options, options } from "../../src/callback/options";
-import { Binding } from "../../src/callback/binding/binding";
+import { Handler, $composer } from "callback/handler";
+import { CascadeHandler } from "callback/cascade-handler";
+import { CompositeHandler } from "callback/composite-handler";
+import { InferenceHandler } from "callback/inference-handler";
+import { HandleMethod } from "callback/handle-method";
+import { Batching } from "callback/batch";
+import { Options, options } from "callback/options";
+import { Binding } from "callback/binding/binding";
 
 import {
     CallbackPolicy, handles, provides,
     looksup, creates, $unhandled
-} from "../../src/callback/callback-policy";
+} from "callback/callback-policy";
 
-import { HandlerDescriptor } from "../../src/callback/handler-descriptor";
+import { HandlerDescriptor } from "callback/handler-descriptor";
 
 import {
     RejectedError, TimeoutError, NotHandledError
-} from "../../src/callback/errors";
+} from "callback/errors";
 
-import { KeyResolver } from "../../src/callback/key-resolver";
-import { proxy } from "../../src/callback/proxy";
-import { unmanaged } from "../../src/callback/unmanaged";
-import { handlesOptions } from "../../src/callback/handler-options";
+import { KeyResolver } from "callback/key-resolver";
+import { proxy } from "callback/proxy";
+import { unmanaged } from "callback/unmanaged";
+import { handlesOptions } from "callback/handler-options";
 
-import "../../src/callback/handler-helper";
-import "../../src/callback/handler-protocol";
-import "../../src/callback/handler-batch";
+import "callback/handler-helper";
+import "callback/handler-protocol";
+import "callback/handler-batch";
 
 import { expect } from "chai";
 

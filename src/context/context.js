@@ -1,20 +1,20 @@
 import {
     $isNothing, $classOf, $equals, assignID
-} from "../core/base2";
+} from "core/base2";
 
-import { createKeyChain } from "../core/privates";
-import { Enum } from "../core/enum";
-import { Protocol, conformsTo } from "../core/protocol";
-import { Parenting, $decorated } from "../core/core";
-import { Disposing } from "../core/dispose";
+import { createKeyChain } from "core/privates";
+import { Enum } from "core/enum";
+import { Protocol, conformsTo } from "core/protocol";
+import { Parenting, $decorated } from "core/core";
+import { Disposing } from "core/dispose";
 
 import { 
     Traversing, TraversingAxis, traversable
-} from "../core/traverse";
+} from "core/traverse";
 
-import { Composition } from "../callback/composition";
-import { CompositeHandler } from "../callback/composite-handler";
-import { provides } from "../callback/callback-policy";
+import { Composition } from "callback/composition";
+import { CompositeHandler } from "callback/composite-handler";
+import { provides } from "callback/callback-policy";
 
 const _ = createKeyChain();
 

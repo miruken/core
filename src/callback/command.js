@@ -1,10 +1,10 @@
 import { 
     Base, Undefined, $isNothing,
     $isFunction, $isPromise
-} from "../core/base2";
+} from "core/base2";
 
-import { createKeyChain } from "../core/privates";
-import { conformsTo } from "../core/protocol";
+import { createKeyChain } from "core/privates";
+import { conformsTo } from "core/protocol";
 import { CallbackControl } from "./callback-control";
 import { handles } from "./callback-policy";
 

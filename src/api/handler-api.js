@@ -1,8 +1,8 @@
-import { $isNothing } from "../core/base2";
-import { Handler } from "../callback/handler";
-import { Command } from "../callback/command";
+import { $isNothing } from "core/base2";
+import { Handler } from "callback/handler";
+import { Command } from "callback/command";
+import { NotHandledError } from "callback/errors";
 import { Stash } from "./stash";
-import { NotHandledError } from "../callback/errors";
 
 Handler.implement({
     send(request) {

@@ -1,6 +1,6 @@
-import { $isNothing } from "../../core/base2";
-import { createKey } from "../../core/privates";
-import { conformsTo } from "../../core/protocol";
+import { $isNothing } from "core/base2";
+import { createKey } from "core/privates";
+import { conformsTo } from "core/protocol";
 import { FilteringProvider } from "../filter/filtering";
 import { Filtering } from "../filter/filtering";
 import { Stage } from "../stage";

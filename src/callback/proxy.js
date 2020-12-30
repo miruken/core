@@ -1,8 +1,8 @@
-import { $isNothing } from "../core/base2";
-import { conformsTo } from "../core/protocol";
-import { $createQualifier } from "../core/qualifier";
-import { TypeInfo, TypeFlags } from "../core/type-info";
-import { createTypeInfoDecorator } from "../core/design";
+import { $isNothing } from "core/base2";
+import { conformsTo } from "core/protocol";
+import { $createQualifier } from "core/qualifier";
+import { TypeInfo, TypeFlags } from "core/type-info";
+import { createTypeInfoDecorator } from "core/design";
 import { KeyResolving } from "./key-resolving";
 
 export const $proxy = $createQualifier();

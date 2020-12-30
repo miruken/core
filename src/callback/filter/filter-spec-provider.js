@@ -1,6 +1,6 @@
-import { emptyArray, $isNothing } from "../../core/base2";
-import { createKey } from "../../core/privates";
-import { conformsTo } from "../../core/protocol";
+import { emptyArray, $isNothing } from "core/base2";
+import { createKey } from "core/privates";
+import { conformsTo } from "core/protocol";
 import { FilteringProvider } from "./filtering";
 
 const _ = createKey();

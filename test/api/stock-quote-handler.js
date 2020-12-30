@@ -1,11 +1,11 @@
-import { Base } from "../../src/core/base2";
-import { Handler } from "../../src/callback/handler";
-import { handles } from "../../src/callback/callback-policy";
-import { Request } from "../../src/api/request";
-import { Message } from "../../src/api/message";
-import { ignore } from "../../src/map/mapping";
-import { typeId } from "../../src/api/type-id";
-import { response } from "../../src/api/response";
+import { Base } from "core/base2";
+import { Handler } from "callback/handler";
+import { handles } from "callback/callback-policy";
+import { Request } from "api/request";
+import { Message } from "api/message";
+import { ignore } from "map/mapping";
+import { typeId } from "api/type-id";
+import { response } from "api/response";
 
 @typeId("StockQuote")
 export class StockQuote extends Base {

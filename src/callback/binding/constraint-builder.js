@@ -1,8 +1,8 @@
 import { 
     $isNothing, $isFunction, $isString,
-} from "../../core/base2";
+} from "core/base2";
 
-import { createKey } from "../../core/privates";
+import { createKey } from "core/privates";
 import { BindingMetadata } from "./binding-metadata";
 import { BindingConstraint } from "./binding-constraint";
 import { NamedConstraint } from "./named";

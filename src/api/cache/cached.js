@@ -1,5 +1,5 @@
-import { $isNothing } from "../../core/base2";
-import { Enum } from "../../core/enum"
+import { $isNothing } from "core/base2";
+import { Enum } from "core/enum"
 import { Request, RequestWrapper } from "../request";
 import { response } from "../response";
 import { typeId } from "../type-id";

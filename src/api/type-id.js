@@ -1,14 +1,12 @@
 import {
-    $isNothing, $isFunction, $isString,
-    $classOf
-} from "../core/base2";
+    $isNothing, $isFunction, $isString, $classOf
+} from "core/base2";
 
-import { Enum } from "../core/enum";
-import { Metadata } from "../core/metadata";
-import { decorate } from "../core/decorate";
-import { Handler } from "../callback/handler";
-import { mapsTo } from "../map/maps";
-import { ignore } from  "../map/mapping";
+import { Enum } from "core/enum";
+import { Metadata } from "core/metadata";
+import { decorate } from "core/decorate";
+import { Handler } from "callback/handler";
+import { ignore } from "map/mapping";
 
 const idToType            = new Map(),
       typeToId            = new WeakMap(),

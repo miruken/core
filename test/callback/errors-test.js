@@ -1,7 +1,7 @@
-import { Base } from "../../src/core/base2";
-import { Protocol } from "../../src/core/protocol";
-import { CompositeHandler } from "../../src/callback/composite-handler";
-import { Errors, ErrorHandler } from "../../src/callback/handler-errors";
+import { Base } from "core/base2";
+import { Protocol } from "core/protocol";
+import { CompositeHandler } from "callback/composite-handler";
+import { Errors, ErrorHandler } from "callback/handler-errors";
 import { expect } from "chai";
 
 describe("ErrorHandler", () => {

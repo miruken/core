@@ -1,6 +1,6 @@
-import { Base, $isNothing } from "../../core/base2";
-import { createKeyChain } from "../../core/privates";
-import { conformsTo } from "../../core/protocol";
+import { Base, $isNothing } from "core/base2";
+import { createKeyChain } from "core/privates";
+import { conformsTo } from "core/protocol";
 import { FilteringProvider } from "./filtering";
 
 const _ = createKeyChain();

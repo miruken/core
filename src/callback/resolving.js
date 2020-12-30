@@ -1,5 +1,5 @@
-import { $isNothing, $isFunction } from "../core/base2";
-import { createKeyChain } from "../core/privates";
+import { $isNothing, $isFunction } from "core/base2";
+import { createKeyChain } from "core/privates";
 import { Inquiry } from "./inquiry";
 import { CallbackPolicy } from "./callback-policy";
 

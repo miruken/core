@@ -1,10 +1,10 @@
-import { Base } from "../../src/core/base2";
-import { createKey } from "../../src/core/privates";
-import { type, all, optional } from "../../src/core/design";
-import { Protocol, conformsTo } from "../../src/core/protocol";
-import { disposable } from "../../src/core/dispose";
-import { inject } from "../../src/callback/inject";
-import { initialize } from "../../src/callback/initializer";
+import { Base } from "core/base2";
+import { createKey } from "core/privates";
+import { type, all, optional } from "core/design";
+import { Protocol, conformsTo } from "core/protocol";
+import { disposable } from "core/dispose";
+import { inject } from "callback/inject";
+import { initialize } from "callback/initializer";
 
 const _ = createKey();
 

@@ -1,5 +1,5 @@
-import { $isNothing, $isPromise } from "../core/base2";
-import { createKey } from "../core/privates";
+import { $isNothing, $isPromise } from "core/base2";
+import { createKey } from "core/privates";
 import { Lifestyle, LifestyleProvider } from "./lifestyle";
 import { createFilterDecorator } from "./filter/filter";
 

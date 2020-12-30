@@ -40,7 +40,6 @@
     "@babel/plugin-proposal-optional-chaining": "^7.12.7",
     "@babel/plugin-transform-block-scoping": "^7.12.1",
     "@babel/preset-env": "^7.12.7",
-    "@metahub/karma-rollup-preprocessor": "^6.0.0",
     "@rollup/plugin-alias": "^3.1.1",
     "@rollup/plugin-babel": "^5.2.1",
     "@rollup/plugin-commonjs": "^17.0.0",

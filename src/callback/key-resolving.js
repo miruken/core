@@ -1,7 +1,7 @@
-import { $isNothing } from "../core/base2";
-import { $compose2 } from "../core/core";
-import { TypeInfo } from "../core/type-info";
-import { StrictProtocol } from "../core/protocol";
+import { $isNothing } from "core/base2";
+import { $compose2 } from "core/core";
+import { TypeInfo } from "core/type-info";
+import { StrictProtocol } from "core/protocol";
 import { BindingConstraint } from "./binding/binding-constraint";
 
 export const KeyResolving = StrictProtocol.extend({

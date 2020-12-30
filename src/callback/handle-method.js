@@ -1,12 +1,12 @@
 import {
     Base, $isNothing, $isFunction, $isPromise,  
-} from "../core/base2";
+} from "core/base2";
 
-import { createKeyChain } from "../core/privates";
-import { MethodType } from "../core/core";
-import { conformsTo, $isProtocol } from "../core/protocol";
-import { design } from "../core/design";
-import { $optional, $contents } from "../core/qualifier";
+import { createKeyChain } from "core/privates";
+import { MethodType } from "core/core";
+import { conformsTo, $isProtocol } from "core/protocol";
+import { design } from "core/design";
+import { $optional, $contents } from "core/qualifier";
 import { Trampoline } from "./trampoline";
 import { Resolving } from "./resolving";
 import { Inquiry } from "./inquiry";

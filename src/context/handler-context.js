@@ -1,4 +1,4 @@
-import { Handler } from "../callback/handler";
+import { Handler } from "callback/handler";
 import { ContextualHelper } from "./context-helper";
 
 Handler.implement({

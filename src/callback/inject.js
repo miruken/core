@@ -1,7 +1,7 @@
-import { $isNothing } from "../core/base2";
-import { createKey } from "../core/privates";
-import { TypeFlags } from "../core/type-info";
-import { createTypeInfoDecorator } from "../core/design";
+import { $isNothing } from "core/base2";
+import { createKey } from "core/privates";
+import { TypeFlags } from "core/type-info";
+import { createTypeInfoDecorator } from "core/design";
 import { Inquiry } from "./inquiry";
 import { KeyResolver } from "./key-resolver";
 

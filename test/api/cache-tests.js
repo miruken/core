@@ -1,8 +1,8 @@
-import { HandlerBuilder } from "../../src/callback/handler-builder";
-import { Cached } from "../../src/api/cache/cached";
-import { CachedHandler } from "../../src/api/cache/cached-handler";
-import { typeId } from "../../src/api/type-id";
-import "../../src/api/handler-api";
+import { HandlerBuilder } from "callback/handler-builder";
+import { Cached } from "api/cache/cached";
+import { CachedHandler } from "api/cache/cached-handler";
+import { typeId } from "api/type-id";
+import "api/handler-api";
 
 import { 
     StockQuote, GetStockQuote, StockQuoteHandler, SellStock

@@ -1,10 +1,9 @@
 import { 
-    $isNothing, $isFunction, $isPromise,
-    $classOf
-} from "../core/base2";
+    $isNothing, $isFunction, $isPromise, $classOf
+} from "core/base2";
 
-import { Handler } from "../callback/handler";
-import { NotHandledError } from "../callback/errors";
+import { Handler } from "callback/handler";
+import { NotHandledError } from "callback/errors";
 import { StashAction } from "./stash";
 
 Handler.implement({

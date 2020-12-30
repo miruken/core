@@ -1,11 +1,7 @@
-import { $isNothing, $flatten } from "../../core/base2";
-import { Handler } from "../../callback/handler";
+import { $isNothing, $flatten } from "core/base2";
+import { Handler } from "callback/handler";
 import "../handler-api";
-
-import { 
-    Concurrent, Sequential, ScheduledResult
-} from "./scheduled";
-
+import { Concurrent, Sequential, ScheduledResult } from "./scheduled";
 
 Handler.implement({
     concurrent(...requests) {

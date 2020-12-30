@@ -1,4 +1,4 @@
-import { underscoreNaming } from "../../../src/map/strategy/underscore-naming";
+import { underscoreNaming } from "map/strategy/underscore-naming";
 import { expect } from "chai";
 
 describe("UnderscoreNaming", () => {

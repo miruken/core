@@ -1,10 +1,10 @@
 import { 
     Base, $isNothing, $isSomething, $isFunction
-} from "../core/base2";
+} from "core/base2";
 
-import { createKey } from "../core/privates";
-import { design } from "../core/design";
-import { $isProtocol } from "../core/protocol";
+import { createKey } from "core/privates";
+import { design } from "core/design";
+import { $isProtocol } from "core/protocol";
 import { Handler } from "./handler";
 import { CompositeHandler } from "./composite-handler";
 import { InferenceHandler } from "./inference-handler";

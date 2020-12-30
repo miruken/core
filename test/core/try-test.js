@@ -1,4 +1,4 @@
-import { Try } from "../../src/core/try";
+import { Try } from "core/try";
 import { expect } from "chai";
 
 describe("Try", () => {

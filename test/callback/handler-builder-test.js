@@ -1,8 +1,8 @@
-import { True } from "../../src/core/base2";
-import { type } from "../../src/core/design";
-import { Handler } from "../../src/callback/handler";
-import { HandlerBuilder } from "../../src/callback/handler-builder";
-import { provides } from "../../src/callback/callback-policy";
+import { True } from "core/base2";
+import { type } from "core/design";
+import { Handler } from "callback/handler";
+import { HandlerBuilder } from "callback/handler-builder";
+import { provides } from "callback/callback-policy";
 import * as cars from "./cars";
 import * as casino from "./callback-test";
 import { expect } from "chai";

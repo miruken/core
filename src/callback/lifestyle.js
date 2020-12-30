@@ -1,14 +1,8 @@
-import { 
-    emptyArray, $isNothing, $isFunction
-} from "../core/base2";
-
-import { createKey } from "../core/privates";
-import { conformsTo } from "../core/protocol";
+import { emptyArray, $isNothing, $isFunction } from "core/base2";
+import { createKey } from "core/privates";
+import { conformsTo } from "core/protocol";
 import { Inquiry } from "./inquiry";
-
-import { 
-    Filtering, FilteringProvider
-} from "./filter/filtering";
+import { Filtering, FilteringProvider } from "./filter/filtering";
 
 const _ = createKey();
 

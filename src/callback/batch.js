@@ -1,6 +1,6 @@
-import { $isPromise, $flatten } from "../core/base2";
-import { createKeyChain } from "../core/privates";
-import { Protocol, conformsTo } from "../core/protocol";
+import { $isPromise, $flatten } from "core/base2";
+import { createKeyChain } from "core/privates";
+import { Protocol, conformsTo } from "core/protocol";
 import { Trampoline } from "./trampoline";
 import { CompositeHandler } from "./composite-handler";
 import { provides } from "./callback-policy";

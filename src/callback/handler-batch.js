@@ -1,7 +1,6 @@
 import { 
-    $isNothing, $isFunction, $isPromise,
-    $flatten
-} from "../core/base2";
+    $isNothing, $isFunction, $isPromise, $flatten
+} from "core/base2";
 
 import { Handler } from "./handler";
 import { Inquiry } from "./inquiry";

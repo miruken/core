@@ -1,5 +1,5 @@
-import { $isFunction } from "../core/base2";
-import { Enum } from "../core/enum";
+import { $isFunction } from "core/base2";
+import { Enum } from "core/enum";
 
 export const HandleResult = Enum(HandleResult => ({
     Handled:           HandleResult(true,  false),
