@@ -1,5 +1,5 @@
 {
-  "name": "miruken-core",
+  "name": "@miruken/core",
   "version": "0.0.3",
   "registry": "npm",
   "description": "Enhancements to the javascript language",
