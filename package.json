@@ -9,17 +9,17 @@
   "homepage": "http://miruken.com",
   "license": "MIT",
   "author": "Craig Neuwirt <Craig.Neuwirt@Improving.com>",
-  "main": "dist/cjs/miruken-core.js",
-  "module": "dist/es/miruken-core.js",
+  "main": "dist/cjs/@miruken/core.js",
+  "module": "dist/es/@miruken/core.js",
   "repository": {
     "type": "git",
     "url": "http://github.com/miruken/core"
   },
   "jspm": {
-    "main": "miruken-core.js",
+    "main": "core.js",
     "format": "amd",
     "directories": {
-      "dist": "dist/amd"
+      "dist": "dist/amd/@miruken"
     },
     "dependencies": {
       "reflect-metadata": "^0.1.12"
