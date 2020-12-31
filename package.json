@@ -4,14 +4,13 @@
   "registry": "npm",
   "description": "Enhancements to the javascript language",
   "keywords": [
-    "miruken",
-    "package",
-    "protocol"
+    "miruken"
   ],
   "homepage": "http://miruken.com",
   "license": "MIT",
   "author": "Craig Neuwirt <Craig.Neuwirt@Improving.com>",
   "main": "dist/cjs/miruken-core.js",
+  "module": "dist/es/miruken-core.js",
   "repository": {
     "type": "git",
     "url": "http://github.com/miruken/core"
