@@ -30,7 +30,7 @@ Handler.implement({
         }
         let _batch    = new Batch(...args),
             _complete = false;
-        const batcher = this.decorate({
+        const batcher = this.$decorate({
             @provides(Batching)
             getBatcher(inquiry) {
                 if (!$isNothing(_batch)) {
@@ -68,7 +68,7 @@ Handler.implement({
         return results;
     },
     $noBatch() {
-        return this.decorate({
+        return this.$decorate({
             handleCallback(callback, greedy, composer) {
                 let inquiry;
                 if (callback instanceof Inquiry) {

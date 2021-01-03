@@ -26,7 +26,7 @@ export class CachedHandler extends Handler {
 
         const cacheKey = createCacheKey(request);
         if ($isNothing(cacheKey)) {
-            return composer.send(request);
+            return composer.$send(request);
         }
 
         const cache = _(this).cache,
@@ -54,7 +54,7 @@ export class CachedHandler extends Handler {
 }
 
 function refreshResponse(cache, cacheKey, request, composer) {
-    const response = composer.send(request);
+    const response = composer.$send(request);
     if ($isNothing(response)) return;
 
     const entry = {

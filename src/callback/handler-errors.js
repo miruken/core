@@ -94,7 +94,7 @@ Handler.implement({
      * @for Handler
      */        
     $recover(context) {
-        return this.filter((callback, composer, proceed) => {
+        return this.$filter((callback, composer, proceed) => {
             try {
                 const handled = proceed();
                 if (!("callbackResult" in callback)) {

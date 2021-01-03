@@ -231,7 +231,7 @@ function makeNotifier() {
 
 const axisBuilder = {
     axis(axis) {
-        return this.decorate({
+        return this.$decorate({
             handleCallback(callback, greedy, composer) {
                 if (!(callback instanceof Composition)) {
                     _(this).axis = axis;                        

@@ -27,45 +27,16 @@ import {
 } from "./errors";
 
 const defaultKeyResolver = new KeyResolver();
-/**
- * Shortcut for handling a callback.
- * @method
- * @static
- * @param   {Function}  handler     -  handles callbacks
- * @param   {Any}       constraint  -  callback constraint
- * @returns {Handler} callback handler.
- * @for Handler
- */
-Handler.accepting = function (handler, constraint) {
-    const accepting = new Handler();
-    handles.addHandler(accepting, constraint, handler);
-    return accepting;
-};
 
-/**
- * Shortcut for providing a callback.
- * @method
- * @static
- * @param  {Function}  provider    -  provides callbacks
- * @param  {Any}       constraint  -  callback constraint
- * @returns {Handler} callback provider.
- * @for Handler
- */
-Handler.providing = function (provider, constraint) {
-    const providing = new Handler();
-    provides.addHandler(providing, constraint, provider);
-    return providing;
-};
-
-Handler.implement({   
+Handler.implement({
     /**
      * Handles the callback.
-     * @method command
+     * @method $command
      * @param   {Object}  callback  -  callback
      * @returns {Any} optional result
      * @for Handler
      */                        
-    command(callback) {
+    $command(callback) {
         const command = new Command(callback);
         if (!this.handle(command, false)) {
             throw new NotHandledError(callback);
@@ -74,12 +45,12 @@ Handler.implement({
     },
     /**
      * Handles the callback greedily.
-     * @method commandAll
+     * @method $commandAll
      * @param   {Object}  callback  -  callback
      * @returns {Any} optional results.
      * @for Handler
      */                                
-    commandAll(callback) {
+    $commandAll(callback) {
         const command = new Command(callback, true);
         if (!this.handle(command, true)) {
             throw new NotHandledError(callback);
@@ -134,12 +105,12 @@ Handler.implement({
     },    
     /**
      * Looks up the key.
-     * @method lookup
+     * @method $lookup
      * @param   {Any}  key  -  key
      * @returns {Any}  value of key.
      * @for Handler
      */                                        
-    lookup(key) {
+    $lookup(key) {
         let lookup;
         if (key instanceof Lookup) {
             if (key.isMany) {
@@ -155,12 +126,12 @@ Handler.implement({
     },
     /**
      * Looks up the key greedily.
-     * @method lookupAll
+     * @method $lookupAll
      * @param   {Any}  key  -  key
      * @returns {Array}  value(s) of key.
      * @for Handler
      */                                                
-    lookupAll(key) {
+    $lookupAll(key) {
         let lookup;
         if (key instanceof Lookup) {
             if (!key.isMany) {
@@ -174,12 +145,12 @@ Handler.implement({
     },
     /**
      * Creates an instance of the `type`.
-     * @method command
+     * @method $create
      * @param   {Function}  type  -  type
      * @returns {Any} instance of the type.
      * @for Handler
      */                        
-    create(type) {
+    $create(type) {
         const creation = new Creation(type);
         if (!this.handle(creation, false)) {
             throw new NotHandledError(creation);
@@ -188,12 +159,12 @@ Handler.implement({
     },
     /**
      * Creates instances of the `type`.
-     * @method createAll
+     * @method $createAll
      * @param   {Function}  type  -  type
      * @returns {Any} instances of the type.
      * @for Handler
      */                                
-    createAll(type) {
+    $createAll(type) {
         const creation = new Creation(type, true);
         if (!this.handle(creation, true)) {
             throw new NotHandledError(creation);
@@ -202,27 +173,27 @@ Handler.implement({
     },      
     /**
      * Decorates the handler.
-     * @method decorate
+     * @method $decorate
      * @param   {Object}  decorations  -  decorations
      * @returns {Handler} decorated callback handler.
      * @for Handler
      */        
-    decorate(decorations) {
+    $decorate(decorations) {
         return $decorate(this, decorations);
     },
     /**
      * Decorates the handler for filtering callbacks.
-     * @method filter
+     * @method $filter
      * @param   {Function}  filter     -  filter
      * @param   {boolean}   reentrant  -  true if reentrant, false otherwise
      * @returns {Handler} filtered callback handler.
      * @for Handler
      */                                                        
-    filter(filter, reentrant) {
+    $filter(filter, reentrant) {
         if (!$isFunction(filter)) {
             throw new TypeError(`Invalid filter: ${filter} is not a function.`);
         }
-        return this.decorate({
+        return this.$decorate({
             handleCallback(callback, greedy, composer) {
                 if (!reentrant && (callback instanceof Composition)) {
                     return this.base(callback, greedy, composer);
@@ -234,8 +205,32 @@ Handler.implement({
         });
     },
     /**
+     * Accepts a callback explicitly.
+     * @method $accepts
+     * @param   {Any}       constraint  -  callback constraint
+     * @param   {Function}  handler     -  callback handler
+     * @returns {Handler} callback handler.
+     * @for Handler
+     */
+    $accepts(constraint, handler) {
+        handles.addHandler(this, constraint, handler);
+        return this;
+    },
+    /**
+     * Providesa callback explicitly.
+     * @method $provides
+     * @param  {Any}       constraint  -  callback constraint
+     * @param  {Function}  provider    -  callback provider
+     * @returns {Handler} callback provider.
+     * @for Handler
+     */
+    $provides(constraint, provider) {
+        provides.addHandler(this, constraint, provider);
+        return this;
+    },    
+    /**
      * Decorates the handler for applying aspects to callbacks.
-     * @method aspect
+     * @method $aspect
      * @param   {Function}  before     -  before action.  Return false to reject
      * @param   {Function}  action     -  after action
      * @param   {boolean}   reentrant  -  true if reentrant, false otherwise
@@ -244,7 +239,7 @@ Handler.implement({
      * @for Handler
      */
     $aspect(before, after, reentrant) {
-        return this.filter((callback, composer, proceed) => {
+        return this.$filter((callback, composer, proceed) => {
             if ($isFunction(before)) {
                 const test = before(callback, composer);
                 if ($isPromise(test)) {
@@ -267,7 +262,7 @@ Handler.implement({
             return aspectProceed(callback, composer, proceed, after);
         }, reentrant);
     },
-    resolveArgs(args) {
+    $resolveArgs(args) {
         if ($isNothing(args) || args.length === 0) {
             return [];
         }
@@ -305,31 +300,30 @@ Handler.implement({
     },
     /**
      * Decorates the handler to provide one or more values.
-     * @method $provide
+     * @method $with
      * @param   {Array}  ...values  -  values to provide
      * @returns {Handler}  decorated callback handler.
      * @for Handler
      */
-    $provide(...values) {
+    $with(...values) {
         values = $flatten(values, true);
         if (values.length > 0) {
-            const provider = this.decorate();
+            const provider = this.$decorate();
             values.forEach(value => provides.addHandler(provider, value));
             return provider;
         }
         return this;
     },
-    $with(...values) { return this.$provide(values); },
     $withKeyValues(keyValues) {
         if ($isPlainObject(keyValues)) {
-            const provider = this.decorate();
+            const provider = this.$decorate();
             for (let key in keyValues) {
                 provides.addHandler(provider, key, keyValues[key]);
             }
             return provider;
         }
         if (keyValues instanceof Map) {
-            const provider = this.decorate();
+            const provider = this.$decorate();
             for (let [key, value] of keyValues) {
                 provides.addHandler(provider, key, value);
             }
@@ -348,7 +342,7 @@ Handler.implement({
                     return $isFunction(value) ? value(inquiry, context) : value;
                 }
             }
-            const provider = this.decorate();
+            const provider = this.$decorate();
             for (let key in keyValues) {
                 provides.addHandler(provider, key, getValue);
             }
@@ -361,7 +355,7 @@ Handler.implement({
                     return $isFunction(value) ? value(inquiry, context) : value;
                 }
             }            
-            const provider = this.decorate();
+            const provider = this.$decorate();
             for (let [key, value] of keyValues.keys) {
                 provides.addHandler(provider, key, getValue);
             }
@@ -457,7 +451,7 @@ Handler.implement({
      * @for Handler
      */                
     $promise() {
-        return this.filter((callback, composer, proceed) => {
+        return this.$filter((callback, composer, proceed) => {
             if (!("callbackResult" in callback)) {
                 return proceed();
             }
@@ -484,7 +478,7 @@ Handler.implement({
      * @for Handler
      */        
     $timeout(ms, error) {
-        return this.filter((callback, composer, proceed) => {
+        return this.$filter((callback, composer, proceed) => {
             const handled = proceed();
             if (!("callbackResult" in callback)) {
                 return handled;
@@ -523,6 +517,36 @@ Handler.implement({
         });
     },
 });
+
+/**
+ * Shortcut for handling a callback.
+ * @method
+ * @static
+ * @param   {Any}       constraint  -  callback constraint
+ * @param   {Function}  handler     -  callback handler
+ * @returns {Handler} callback handler.
+ * @for Handler
+ */
+Handler.$accepting = function (constraint, handler) {
+    const accepting = new Handler();
+    handles.addHandler(accepting, constraint, handler);
+    return accepting;
+};
+
+/**
+ * Shortcut for providing a callback.
+ * @method
+ * @static
+ * @param  {Any}       constraint  -  callback constraint
+ * @param  {Function}  provider    -  callback provider
+ * @returns {Handler} callback provider.
+ * @for Handler
+ */
+Handler.$providing = function (constraint, provider) {
+    const providing = new Handler();
+    provides.addHandler(providing, constraint, provider);
+    return providing;
+};
 
 function aspectProceed(callback, composer, proceed, after, state) {
     let promise;

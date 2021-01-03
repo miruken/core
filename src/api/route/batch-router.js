@@ -49,7 +49,7 @@ export class BatchRouter extends Handler {
               complete = Promise.all(groups.map(([uri, requests]) => {
             const messages = requests.map(r => r.message);
             return Promise.resolve(
-                composer.send(new Concurrent(messages).routeTo(uri)))
+                composer.$send(new Concurrent(messages).routeTo(uri)))
                 .then(result => {
                     const responses = result.responses;
                     // Cancel when available on Promise

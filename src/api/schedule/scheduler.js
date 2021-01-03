@@ -40,15 +40,15 @@ export class Scheduler extends Handler {
 
     @handles(Publish)
     publish(publish, { composer }) {
-        return this.publish(publish.message);
+        return this.$publish(publish.message);
     }
 }
 
 function process(request, composer) {
     try {
         const result = request instanceof Publish
-                     ? composer.publish(request.message)
-                     : composer.send(request);
+                     ? composer.$publish(request.message)
+                     : composer.$send(request);
         if ($isPromise(result)) {
             return result.then(res => Try.success(res))
                 .catch(reason => Try.failure(reason));

@@ -8,12 +8,12 @@ Handler.implement({
         const reqs = $flatten(requests, true);
         return $isNothing(reqs) || reqs.length === 0
              ? new ScheduledResult()
-             : this.send(new Concurrent(reqs));
+             : this.$send(new Concurrent(reqs));
     },
     sequential(...requests) {
         const reqs = $flatten(requests, true);
         return $isNothing(reqs) || reqs.length === 0
              ? new ScheduledResult()
-             : this.send(new Sequential(reqs));
+             : this.$send(new Sequential(reqs));
     }   
 });

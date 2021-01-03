@@ -965,9 +965,9 @@ describe("Handler", () => {
 
         it("should handle callbacks anonymously", () => {
             const countMoney = new CountMoney(),
-                  handler    = Handler.accepting(countMoney => {
+                  handler    = Handler.$accepting(CountMoney, countMoney => {
                       countMoney.record(50);
-                  }, CountMoney);
+                  });
             expect(handler.handle(countMoney)).to.be.true;
             expect(countMoney.total).to.equal(50);
         });
@@ -1060,7 +1060,7 @@ describe("Handler", () => {
                       }
                   },
                   bank = new Bank(10000, 3500);
-            Handler.for(bank).command(new WireMoney(75)).then(() => {
+            Handler.for(bank).$command(new WireMoney(75)).then(() => {
                 expect(bank.assets).to.equal(9925);
                 expect(bank.liabilities).to.equal(3500);
                 expect(bank.balance).to.equal(6425);
@@ -1084,7 +1084,7 @@ describe("Handler", () => {
                       }
                   },
                   bank = new Bank(10000, 3500);
-            await Handler.for(bank).command(new WireMoney(75));
+            await Handler.for(bank).$command(new WireMoney(75));
             expect(bank.assets).to.equal(9925);
             expect(bank.liabilities).to.equal(3500);
             expect(bank.balance).to.equal(6425);
@@ -1193,7 +1193,7 @@ describe("Handler", () => {
                       wireMoney(wireMoney, cashier) { }
                   },
                   bank = new Bank(10000, 3500);
-            Handler.for(bank).command(new WireMoney(75)).catch(err => {
+            Handler.for(bank).$command(new WireMoney(75)).catch(err => {
                 done();
             });
         });
@@ -1210,7 +1210,7 @@ describe("Handler", () => {
                       wireMoney(wireMoney, cashier) { }
                   },
                   bank = new Bank(10000, 3500);
-            Handler.for(bank).command(new WireMoney(75)).catch(err => {
+            Handler.for(bank).$command(new WireMoney(75)).catch(err => {
                 done();
             });
         });
@@ -1237,7 +1237,7 @@ describe("Handler", () => {
                   }),
                   handler    = new Casino("Paris")
                     .addHandlers(inventory, new InferenceHandler(Cashier));
-            Promise.resolve(handler.command(countMoney)).then(result => {
+            Promise.resolve(handler.$command(countMoney)).then(result => {
                 expect(countMoney.total).to.equal(750);
                 done();
             });
@@ -1259,7 +1259,7 @@ describe("Handler", () => {
                   }),
                   handler    = new Casino("Paris")
                     .addHandlers(inventory, new InferenceHandler(Cashier));
-            Promise.resolve(handler.command(countMoney)).catch(error => {
+            Promise.resolve(handler.$command(countMoney)).catch(error => {
                 expect(error).to.be.instanceOf(NotHandledError);
                 expect(error.callback).to.equal(countMoney);
                 done();
@@ -1267,12 +1267,12 @@ describe("Handler", () => {
         });        
     })
 
-    describe("#command", () => {
+    describe("#$command", () => {
         it("should handle objects eventually", done => {
             const cashier   = new Cashier(750000.00),
                   casino    = new Casino("Venetian").addHandlers(cashier),
                   wireMoney = new WireMoney(250000);
-            Promise.resolve(casino.command(wireMoney)).then(result => {
+            Promise.resolve(casino.$command(wireMoney)).then(result => {
                 expect(result).to.equal(wireMoney);
                 expect(wireMoney.received).to.equal(250000);
                 done();
@@ -1289,7 +1289,7 @@ describe("Handler", () => {
                   }),
                   casino    = new Casino("Venetian").addHandlers(bank),
                   wireMoney = new WireMoney(150000);
-            Promise.resolve(casino.command(wireMoney)).then(result => {
+            Promise.resolve(casino.$command(wireMoney)).then(result => {
                 expect(result).to.equal(wireMoney);
                 expect(wireMoney.received).to.equal(50000);
                 done();
@@ -1297,10 +1297,10 @@ describe("Handler", () => {
         });
 
         it("should handle callbacks anonymously with promise", done => {
-            const handler = Handler.accepting(
-                    countMoney => countMoney.record(50), CountMoney),
+            const handler = Handler.$accepting(
+                CountMoney, countMoney => countMoney.record(50)),
                   countMoney = new CountMoney();
-            Promise.resolve(handler.command(countMoney)).then(() => {
+            Promise.resolve(handler.$command(countMoney)).then(() => {
                 expect(countMoney.total).to.equal(50);
                 done();
             });
@@ -1809,7 +1809,7 @@ describe("Handler", () => {
         });
     });
 
-    describe("#lookup", () => {
+    describe("#$lookup", () => {
         it("should lookup by class", () => {
             const blackjack = new CardTable("BlackJack", 1, 5),
                   cardGames = new (class extends Handler {
@@ -1819,8 +1819,8 @@ describe("Handler", () => {
                       @looksup
                       everything() { return blackjack; }
                   });
-            expect(cardGames.lookup(CardTable)).to.equal(blackjack);
-            expect(cardGames.lookup(Game)).to.be.undefined;
+            expect(cardGames.$lookup(CardTable)).to.equal(blackjack);
+            expect(cardGames.$lookup(Game)).to.be.undefined;
         });
 
         it("should lookup by protocol", () => {
@@ -1832,8 +1832,8 @@ describe("Handler", () => {
                       @looksup
                       everything() { return blackjack; }
                   });
-            expect(cardGames.lookup(Game)).to.equal(blackjack);
-            expect(cardGames.lookup(CardTable)).to.be.undefined;
+            expect(cardGames.$lookup(Game)).to.equal(blackjack);
+            expect(cardGames.$lookup(CardTable)).to.be.undefined;
         });
 
         it("should lookup by string", () => {
@@ -1845,17 +1845,17 @@ describe("Handler", () => {
                       @looksup(/game/)
                       blackjack() { return blackjack; }
                   });
-            expect(cardGames.lookup("blackjack")).to.equal(blackjack);
-            expect(cardGames.lookup("game")).to.be.undefined;
+            expect(cardGames.$lookup("blackjack")).to.equal(blackjack);
+            expect(cardGames.$lookup("game")).to.be.undefined;
         });
     });
 
-    describe("#filter", () => {
+    describe("#$filter", () => {
         it("should accept callback", () => {
             const cashier    = new Cashier(1000000.00),
                   casino     = new Casino("Belagio").addHandlers(cashier),
                   countMoney = new CountMoney;
-            expect(casino.filter((cb, cm, proceed) => proceed())
+            expect(casino.$filter((cb, cm, proceed) => proceed())
                    .handle(countMoney)).to.be.true;
             expect(countMoney.total).to.equal(1000000.00);
         });
@@ -1864,7 +1864,7 @@ describe("Handler", () => {
             const cashier    = new Cashier(1000000.00),
                   casino     = new Casino("Belagio").addHandlers(cashier),
                   countMoney = new CountMoney;
-            expect(casino.filter(False).handle(countMoney)).to.be.false;
+            expect(casino.$filter(False).handle(countMoney)).to.be.false;
         });
 
         it("should ignore filter when reentrant", () => {
@@ -1872,7 +1872,7 @@ describe("Handler", () => {
                   casino       = new Casino("Belagio").addHandlers(cashier),
                   countMoney   = new CountMoney;
             let   filterCalled = 0;
-            expect(casino.filter((cb, cm, proceed) => {
+            expect(casino.$filter((cb, cm, proceed) => {
                 ++filterCalled;
                 expect(cm.resolve(Cashier)).to.equal(cashier);
                 return proceed();
@@ -1881,7 +1881,7 @@ describe("Handler", () => {
         });
     });
 
-    describe("#aspect", () => {
+    describe("#$aspect", () => {
         it("should ignore callback", () => {
             const cashier    = new Cashier(1000000.00),
                   casino     = new Casino("Belagio").addHandlers(cashier),
@@ -1922,7 +1922,7 @@ describe("Handler", () => {
                   casino    = new Casino("Venetian").addHandlers(cashier),
                   wireMoney = new WireMoney(250000);
             Promise.resolve(casino.$aspect(() => Promise.resolve(false))
-                .command(wireMoney)).then(handled => {
+                .$command(wireMoney)).then(handled => {
                 throw new Error("Should not get here");
             }, error => {
                 expect(error).to.be.instanceOf(RejectedError);
@@ -1947,7 +1947,7 @@ describe("Handler", () => {
                   casino    = new Casino("Venetian").addHandlers(cashier),
                   wireMoney = new WireMoney(250000);
             Promise.resolve(casino.$aspect(True, wire => done())
-                .command(wireMoney)).then(result => {
+                .$command(wireMoney)).then(result => {
                     expect(result).to.equal(result);
                     expect(wireMoney.received).to.equal(250000);
                 });
@@ -1977,7 +1977,7 @@ describe("Handler", () => {
             casino.$aspect(() => {
                 setTimeout(done, 2);
                 return Promise.reject(new Error("Something bad"));
-            }).command(countMoney).catch(error => {
+            }).$command(countMoney).catch(error => {
                 expect(error).to.be.instanceOf(Error);
                 expect(error.message).to.equal("Something bad");
             });
@@ -1995,13 +1995,13 @@ describe("Handler", () => {
         });
     });
 
-    describe("#create", () => {
+    describe("#$create", () => {
         it("should create instances", () => {
             const inventory = new (class extends Handler {
                       @creates(Cashier)
                       cashier() { return new Cashier(); }
                   });
-            expect(inventory.create(Cashier)).to.be.instanceOf(Cashier);
+            expect(inventory.$create(Cashier)).to.be.instanceOf(Cashier);
         });
     });
 
@@ -2043,12 +2043,12 @@ describe("Handler", () => {
         });
     });
 
-    describe("$provide", () => {
+    describe("$with", () => {
         it("should provide transient values", () => {
             const guest     = new Guest(17),
                   blackjack = new CardTable("BlackJack", 1, 5),
                   handler   = new Handler(),
-                  provider  = handler.$provide(guest, blackjack);
+                  provider  = handler.$with(guest, blackjack);
             expect(provider.resolve(Guest)).equal(guest);
             expect(provider.resolve(CardTable)).equal(blackjack);
             expect(handler.resolve(Guest)).to.be.undefined;            
@@ -2089,7 +2089,7 @@ describe("Handler", () => {
             }
             const handler = new InferenceHandler(BankApi)
                     .$serverOptions({ url: "http://localhost:3001/api" });
-                  confirm = handler.command(new WireMoney(15000));
+                  confirm = handler.$command(new WireMoney(15000));
             expect(confirm).to.be.instanceOf(ServerOptions);
             expect(confirm.url).to.equal("http://localhost:3001/api");
         });
@@ -2123,7 +2123,7 @@ describe("Handler", () => {
                     .$serverOptions({ url: "http://localhost:3001/api" });
 
             expect(() => {
-                handler.command(new WireMoney(15000));
+                handler.$command(new WireMoney(15000));
             }).to.throw(TypeError, "Unable to determine @options argument type.");
         });
 
@@ -2138,7 +2138,7 @@ describe("Handler", () => {
                     .$serverOptions({ url: "http://localhost:3001/api" });
 
             expect(() => {
-                handler.command(new WireMoney(15000));
+                handler.$command(new WireMoney(15000));
             }).to.throw(TypeError, "@options requires an Options argument, but found 'Casino'.");
         });
     });
@@ -2399,11 +2399,11 @@ describe("InvocationHandler", () => {
                       }
                   },
                   handler = Handler.for(new Poker());
-            expect(Game(handler.filter(
+            expect(Game(handler.$filter(
                 (cb, cm, proceed) => proceed())).open(5))
                 .to.equal("poker5");
             expect(() => {
-                Game(handler.filter(False)).open(5);
+                Game(handler.$filter(False)).open(5);
             }).to.throw(Error, /open could not be handled/);
         });
     })
@@ -2605,7 +2605,7 @@ describe("Handler", () => {
                   }),
                   casino    = new Casino("Venetian").addHandlers(bank),
                   wireMoney = new WireMoney(150000);
-            Promise.resolve(casino.$timeout(50).command(wireMoney)).catch(err => {
+            Promise.resolve(casino.$timeout(50).$command(wireMoney)).catch(err => {
                 expect(err).to.be.instanceOf(TimeoutError);
                 done();
             });
@@ -2621,7 +2621,7 @@ describe("Handler", () => {
                   }),
                   casino    = new Casino("Venetian").addHandlers(bank),
                   wireMoney = new WireMoney(150000);
-            Promise.resolve(casino.$timeout(100).command(wireMoney)).then(result => {
+            Promise.resolve(casino.$timeout(100).$command(wireMoney)).then(result => {
                 expect(result).to.equal(wireMoney);
                 expect(wireMoney.received).to.equal(50000);
                 done();
@@ -2639,7 +2639,7 @@ describe("Handler", () => {
                   casino    = new Casino("Venetian").addHandlers(bank),
                   wireMoney = new WireMoney(150000);
             Promise.resolve(casino.$timeout(50, new Error("Oh No!"))
-                            .command(wireMoney)).catch(err => {
+                            .$command(wireMoney)).catch(err => {
                 expect(err.message).to.equal("Oh No!");
                 done();
             });
@@ -2662,7 +2662,7 @@ describe("Handler", () => {
                   casino    = new Casino("Venetian").addHandlers(bank),
                   wireMoney = new WireMoney(150000);
             Promise.resolve(casino.$timeout(50, BankError)
-                            .command(wireMoney)).catch(err => {
+                            .$command(wireMoney)).catch(err => {
                 expect(err).to.be.instanceOf(BankError);
                 expect(err.callback.callback).to.equal(wireMoney);
                 done();
@@ -2679,7 +2679,7 @@ describe("Handler", () => {
                   casino    = new Casino("Venetian").addHandlers(bank),
                   wireMoney = new WireMoney(150000);
             Promise.resolve(casino.$timeout(50, new Error("Oh No!"))
-                            .command(wireMoney)).catch(err => {
+                            .$command(wireMoney)).catch(err => {
                 expect(err.message).to.equal("No money");
                 done();
             });

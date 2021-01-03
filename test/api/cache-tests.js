@@ -16,13 +16,13 @@ describe("Cached", () => {
         handler = new HandlerBuilder()
             .addTypes(from => from.types(StockQuoteHandler))
             .build();
-        await handler.send(new GetStockQuote("AAPL").invalidate());
+        await handler.$send(new GetStockQuote("AAPL").invalidate());
         StockQuoteHandler.called = 0;
     });
 
     it("should make initial request", async () => {
         const getQuote = new GetStockQuote("AAPL"),
-              quote    = await handler.send(getQuote.cached());
+              quote    = await handler.$send(getQuote.cached());
         expect(quote).to.be.instanceOf(StockQuote);
         expect(quote.symbol).to.equal("AAPL");
         expect(StockQuoteHandler.called).to.equal(1);
@@ -30,9 +30,9 @@ describe("Cached", () => {
 
     it("should cache initial response", async () => {
         const getQuote = new GetStockQuote("AAPL"),
-              quote1   = await handler.send(getQuote.cached()),
-              quote2   = await handler.send(getQuote.cached()),
-              quote3   = await handler.send(getQuote);
+              quote1   = await handler.$send(getQuote.cached()),
+              quote2   = await handler.$send(getQuote.cached()),
+              quote3   = await handler.$send(getQuote);
         expect(quote1).to.be.instanceOf(StockQuote);
         expect(quote2).to.equal(quote1);
         expect(quote3).to.not.equal(quote1);
@@ -41,9 +41,9 @@ describe("Cached", () => {
 
     it("should refresh response", async () => {
         const getQuote = new GetStockQuote("AAPL"),
-              quote1   = await handler.send(getQuote.cached()),
-              quote2   = await handler.send(getQuote.cached()),
-              quote3   = await handler.send(getQuote.refresh());
+              quote1   = await handler.$send(getQuote.cached()),
+              quote2   = await handler.$send(getQuote.cached()),
+              quote3   = await handler.$send(getQuote.refresh());
         expect(quote1).to.be.instanceOf(StockQuote);
         expect(quote2).to.equal(quote1);
         expect(quote3).to.not.equal(quote1);
@@ -52,18 +52,18 @@ describe("Cached", () => {
 
     it("should refresh stale response", async () => {
         const getQuote = new GetStockQuote("AAPL"),
-              quote1   = await handler.send(getQuote.cached());
+              quote1   = await handler.$send(getQuote.cached());
         await Promise.delay(200);
-        const quote2   = await handler.send(getQuote.cached(100))
+        const quote2   = await handler.$send(getQuote.cached(100))
         expect(quote2).to.not.equal(quote1);
     });
 
     it("should invalidate response", async () => {
         const getQuote = new GetStockQuote("AAPL"),
-              quote1   = await handler.send(getQuote.cached()),
-              quote2   = await handler.send(getQuote.cached()),
-              quote3   = await handler.send(getQuote.invalidate()),
-              quote4   = await handler.send(getQuote.cached());
+              quote1   = await handler.$send(getQuote.cached()),
+              quote2   = await handler.$send(getQuote.cached()),
+              quote3   = await handler.$send(getQuote.invalidate()),
+              quote4   = await handler.$send(getQuote.cached());
         expect(quote2).to.equal(quote1);
         expect(quote3).to.equal(quote1);
         expect(quote4).to.be.instanceOf(StockQuote);
@@ -74,14 +74,14 @@ describe("Cached", () => {
         const getQuote = new GetStockQuote("EX");
 
         try {
-            await handler.send(getQuote.cached());
+            await handler.$send(getQuote.cached());
             expect.fail("Expected exception!");
         } catch (ex) {
             expect(ex.message).to.equal("Stock Exchange is down");
         }
 
         try {
-            await handler.send(getQuote.cached());
+            await handler.$send(getQuote.cached());
             expect.fail("Expected exception!");
         } catch (ex) {
             expect(ex.message).to.equal("Stock Exchange is down");

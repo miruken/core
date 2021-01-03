@@ -315,7 +315,7 @@ describe("JsonMapping", () => {
         });
 
         it("should override mapping", () => {
-            const override = handler.decorate({
+            const override = handler.$decorate({
                                  @mapsTo(Date)
                                  @formats(JsonFormat)
                                  mapDateFromJson(mapTo) {
@@ -865,7 +865,7 @@ describe("JsonMapping", () => {
         });
 
         it("should override mapping", () => {
-            const override = handler.decorate({
+            const override = handler.$decorate({
                         @mapsFrom(Date)
                         @formats(JsonFormat)
                         mapDateToJson(mapFrom) {

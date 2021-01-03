@@ -21,7 +21,7 @@ describe("ErrorHandler", () => {
                 errorHandler = new ErrorHandler(),
                 error        = new Error("Something bad happended");
             handler.addHandlers(errorHandler);
-            var customize    = handler.decorate({
+            var customize    = handler.$decorate({
                 reportError(error, handler) {
                     return Promise.resolve("custom");
                 }
@@ -86,7 +86,7 @@ describe("Handler", () => {
             var handler      = new CompositeHandler(),
                 errorHandler = new ErrorHandler();
             handler.addHandlers(new Paymentech(), errorHandler);
-            var customize    = handler.decorate({
+            var customize    = handler.$decorate({
                 reportError(error, handler) {
                     return Promise.resolve("custom");
                 }
@@ -114,7 +114,7 @@ describe("Handler", () => {
             var handler      = new CompositeHandler(),
                 errorHandler = new ErrorHandler();
             handler.addHandlers(new Paymentech(), errorHandler);
-            var customize    = handler.decorate({
+            var customize    = handler.$decorate({
                 reportError(error, handler) {
                     return Promise.resolve("custom");
                 }

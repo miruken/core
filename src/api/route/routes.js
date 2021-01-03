@@ -22,7 +22,7 @@ class RoutesFilter {
         if (matches) {
             const batcher = composer.$getBatcher(BatchRouter);
             if (!$isNothing(batcher)) {
-                return composer.$enableFilters().command(
+                return composer.$enableFilters().$command(
                     new BatchRouted(routed, rawCallback));
             }
         }

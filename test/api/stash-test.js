@@ -100,7 +100,7 @@ describe("Stash", () => {
     it("should access stash", () => {
         const handler = new Stash().$chain(
             new InferenceHandler(OrderHandler, CancelOrderFilter));
-        const order = handler.command(new CancelOrder(1));
+        const order = handler.$command(new CancelOrder(1));
         expect(order).to.not.be.null;
         expect(order.id).to.equal(1);
         expect(order.status).to.equal(OrderStatus.Cancelled);

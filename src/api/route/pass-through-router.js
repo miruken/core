@@ -11,7 +11,7 @@ export class PassThroughRouter extends Handler {
     @handles(Routed)
     route(routed, { composer }) {
         return routed.route === PassThroughRouter.scheme
-             ? composer.send(routed.message)
+             ? composer.$send(routed.message)
              : $unhandled;
     }
 

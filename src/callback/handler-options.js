@@ -48,7 +48,7 @@ Handler.implement({
         if ($isNothing(options)) return this;
         const optionsType = $classOf(options);
         validateOptionsType(optionsType);
-        return this.decorate({
+        return this.$decorate({
             handleCallback(callback, greedy, composer) {
                 let fillOpttions = callback;
                 if (callback instanceof Composition) {
@@ -73,10 +73,10 @@ Handler.implement({
         Object.defineProperty(handler, method,
             Reflect.decorate([handles(optionsType)], handler, method,
                 Object.getOwnPropertyDescriptor(handler, method)));
-        return this.decorate(handler);
+        return this.$decorate(handler);
 
         -- Babel decorator bug for Symbol defined methods
-        return this.decorate({
+        return this.$decorate({
             @handles(optionsType)
             [Symbol()](receiver) {
                 options.mergeInto(receiver);         

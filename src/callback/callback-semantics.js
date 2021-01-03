@@ -134,7 +134,7 @@ Handler.implement({
      */                        
     $callOptions(options) {
         const semantics = new CallbackSemantics(options);
-        return this.decorate({
+        return this.$decorate({
             handleCallback(callback, greedy, composer) {
                 if (Composition.isComposed(callback, CallbackSemantics)) {
                     return false;

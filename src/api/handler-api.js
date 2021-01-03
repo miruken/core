@@ -5,7 +5,7 @@ import { NotHandledError } from "callback/errors";
 import { Stash } from "./stash";
 
 Handler.implement({
-    send(request) {
+    $send(request) {
         if ($isNothing(request)) return;
         const command = new Command(request);
         if (!(new Stash().$chain(this)).handle(command, false)) {
@@ -13,7 +13,7 @@ Handler.implement({
         }
         return command.callbackResult;
     },
-    publish(notification) {
+    $publish(notification) {
         if ($isNothing(notification)) return;
         const command = new Command(notification, true);
         if (!(new Stash().$chain(this)).handle(command, true)) {

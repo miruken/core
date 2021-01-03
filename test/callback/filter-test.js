@@ -397,7 +397,7 @@ describe("Filter", () => {
 
     it("should propagate rejected filter promise", done => {
         const boo = new Boo();
-        handler.command(boo).catch(error => {
+        handler.$command(boo).catch(error => {
             expect(error.message).to.equal("System shutdown");
             done();
         });

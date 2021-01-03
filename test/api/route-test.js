@@ -36,7 +36,7 @@ describe("routes", () => {
     }
 
     it("should pass through request", async () => {
-        const quote = await handler.$chain(new PassThroughRouter()).send(
+        const quote = await handler.$chain(new PassThroughRouter()).$send(
             new GetStockQuote("APPL").routeTo(PassThroughRouter.scheme));
         expect(quote.symbol).to.equal("APPL");
     });
@@ -44,8 +44,8 @@ describe("routes", () => {
     it("should route requests", async () => {
         const getQuote1 = new GetStockQuote("GOOGL"),
               getQuote2 = new GetStockQuote("APPL"),
-              quote1    = await handler.send(getQuote1.routeTo("trash")),
-              quote2    = await handler.send(getQuote2.routeTo("trash"));
+              quote1    = await handler.$send(getQuote1.routeTo("trash")),
+              quote2    = await handler.$send(getQuote2.routeTo("trash"));
         expect(quote1).to.be.undefined;
         expect(quote2).to.be.undefined;
         expect(recycleBin).to.include(getQuote1, getQuote2);
@@ -55,8 +55,8 @@ describe("routes", () => {
         const getQuote1 = new GetStockQuote("GOOGL"),
               getQuote2 = new GetStockQuote("APPL");
         handler.$batch(batch => {
-            batch.send(getQuote1.routeTo("trash"));
-            batch.send(getQuote2.routeTo("trash"));
+            batch.$send(getQuote1.routeTo("trash"));
+            batch.$send(getQuote2.routeTo("trash"));
         });
         const trash = recycleBin[0];
         expect(trash).to.be.instanceOf(Concurrent);
@@ -66,7 +66,7 @@ describe("routes", () => {
     it("should fail if missing route", async () => {
         const getQuote = new GetStockQuote("GOOGL").routeTo("nowhere");
         try {
-            await handler.send(getQuote);
+            await handler.$send(getQuote);
                 expect.fail("Should have failed");  
         } catch (error) {
             expect(error).to.be.instanceOf(NotHandledError);
