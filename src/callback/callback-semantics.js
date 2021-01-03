@@ -27,17 +27,17 @@ export const CallbackOptions = Flags({
      */                
     Strict: 1 << 1,
     /**
-     * Delivers callback to all handlers.  At least one must recognize it.
+     * Delivers callback to all handlers, requiring at least one to handle it.
      * @property {number} Broadcast
      */
-    Broadcast: 1 << 2,
+    Greedy: 1 << 2,
     /**
      * Marks callback as optional.
      * @property {number} BestEffort
      */        
     BestEffort: 1 << 3,
     /**
-     * Publishes callback to all handlers.
+     * Delivers callback to all handlers.
      * @property {number} Notify
      */                
     Notify: (1 << 2) | (1 << 3)
@@ -105,12 +105,12 @@ Handler.implement({
      */
     $strict() { return this.$callOptions(CallbackOptions.Strict); },  
     /**
-     * Establishes broadcast callback semantics.
-     * @method $broadcast
-     * @returns {Handler} broadcast semanics.
+     * Establishes greedy callback semantics.
+     * @method $greedy
+     * @returns {Handler} greedy semanics.
      * @for Handler
      */        
-    $broadcast() { return this.$callOptions(CallbackOptions.Broadcast); },
+    $greedy() { return this.$callOptions(CallbackOptions.Greedy); },
     /**
      * Establishes best-effort callback semantics.
      * @method $bestEffort
@@ -150,8 +150,8 @@ Handler.implement({
                     return this.base(callback, greedy, composer);
                 }
 
-                if (semantics.isSpecified(CallbackOptions.Broadcast)) {
-                    greedy = semantics.hasOption(CallbackOptions.Broadcast);
+                if (semantics.isSpecified(CallbackOptions.Greedy)) {
+                    greedy = semantics.hasOption(CallbackOptions.Greedy);
                 }
 
                 if (semantics.isSpecified(CallbackOptions.BestEffort) &&

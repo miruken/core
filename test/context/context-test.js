@@ -457,7 +457,7 @@ describe("Context", () => {
             child2.addHandlers(new Observer());
             child3.addHandlers(new Observer());
             child3.addHandlers(new Observer());
-            Observing(root.$publish()).observe();
+            Observing(root.$broadcast()).observe();
             expect(count).to.equal(6);
         });        
     });

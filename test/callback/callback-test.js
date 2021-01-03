@@ -2234,7 +2234,7 @@ describe("InvocationHandler", () => {
                   casino    = new Casino("Treasure Island")
                   .addHandlers(level1, level2, letItRide,
                       new InferenceHandler(Tracker));
-            Security(casino.$broadcast()).trackActivity(letItRide);
+            Security(casino.$greedy()).trackActivity(letItRide);
             expect(tracked).to.equal(1);
         });
 
@@ -2345,7 +2345,7 @@ describe("InvocationHandler", () => {
                       }
                   },                
                   handler = new CascadeHandler(new Poker(), new Slots()),
-                  id      = Game(handler.$broadcast()).open(5);
+                  id      = Game(handler.$greedy()).open(5);
             expect(id).to.equal("poker5");
             expect(count).to.equal(2);
         });
@@ -2378,7 +2378,7 @@ describe("InvocationHandler", () => {
                           }
                       })
                   );
-            Game(handler.$broadcast()).open(5).then(id => {
+            Game(handler.$greedy()).open(5).then(id => {
                 expect(id).to.equal("poker5");
                 expect(count).to.equal(2);                
                 done();
@@ -2388,7 +2388,7 @@ describe("InvocationHandler", () => {
         it("should fail invocation if unable to resolve all", () => {
             const handler = new Handler();
             expect(() => {
-                Game(handler.$broadcast()).open(4);
+                Game(handler.$greedy()).open(4);
             }).to.throw(Error, /open could not be handled/);
         });
 

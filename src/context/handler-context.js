@@ -3,12 +3,12 @@ import { ContextualHelper } from "./context-helper";
 
 Handler.implement({
     /**
-     * Establishes publish invocation semantics.
-     * @method $publish
-     * @returns {Handler} publish semantics.
+     * Establishes broadcast invocation semantics.
+     * @method $broadcast
+     * @returns {Handler} broadcast semantics.
      * @for Handler
      */
-    $publish() {
+    $broadcast() {
         let   composer = this;
         const context  = ContextualHelper.resolveContext(composer);
         if (context) {
@@ -16,7 +16,7 @@ Handler.implement({
         }
         return composer.$notify();
     },
-    $publishFromRoot() {
+    $broadcastFromRoot() {
         let   composer = this;
         const context  = ContextualHelper.resolveContext(composer);
         if (context) {
