@@ -1,0 +1,17 @@
+{
+    "plugins": [
+        ["@babel/plugin-proposal-decorators", { "legacy": true }],
+        ["babel-plugin-parameter-decorator"],
+        ["@babel/plugin-proposal-class-properties", { "loose": false }],
+        ["@babel/plugin-proposal-optional-chaining", { "loose": true }],
+        ["@babel/plugin-transform-block-scoping"]
+    ],
+    "presets": [
+        ["@babel/env", {
+            "modules": "auto",
+            "targets": {
+                "browsers": [ "last 2 Chrome versions" ]
+            }
+        }]
+    ]
+}

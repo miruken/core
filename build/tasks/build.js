@@ -1,33 +1,53 @@
-var gulp             = require('gulp');
-var runSequence      = require('run-sequence');
-var paths            = require('../paths');
-var compilerOptions  = require('../babel-options');
+var gulp             = require("gulp");
+var path             = require('path');
+var runSequence      = require("run-sequence");
+var paths            = require("../paths");
 var rollup           = require("rollup").rollup;
-var rollupMultiEntry = require("rollup-plugin-multi-entry");
-var rollupBabel      = require("rollup-plugin-babel");
+var alias            = require("@rollup/plugin-alias");
+var resolve          = require("@rollup/plugin-node-resolve").default;
+var rollupMultiEntry = require("@rollup/plugin-multi-entry");
+var rollupBabel      = require("@rollup/plugin-babel").default;
 var camelCase        = require("camelcase");
+var pkg              = require('../../package.json');
 
-var jsName = paths.packageName + '.js';
+var jsName           = paths.packageName + '.js';
+var root             = path.join(__dirname, '../..');
 
 gulp.task("rollup", function(done) {
     rollup({
-        entry:   paths.source,
+        input:   paths.source,
+        external: Object.keys(pkg.jspm.dependencies),
         plugins: [
             rollupMultiEntry(),
-            rollupBabel(compilerOptions.es2015())
+            rollupBabel({ babelHelpers: 'bundled' }),
+            alias({
+                entries: [
+                    { find: '@', replacement: path.resolve(root, 'src') },
+                    { find: 'core', replacement: path.resolve(root, 'src/core') },
+                    { find: 'callback', replacement: path.resolve(root, 'src/callback') },
+                    { find: 'context', replacement: path.resolve(root, 'src/context') },
+                    { find: 'map', replacement: path.resolve(root, 'src/map') },
+                    { find: 'api', replacement: path.resolve(root, 'src/api') }
+                ]
+            }),
+            resolve()
         ]
     })
     .then(function(bundle) {
-        var moduleTypes = ["amd", "cjs", "es", "iife"];
+        var moduleTypes = ["amd", "cjs", "es", "iife", "system", "umd"];
         moduleTypes.forEach(function(moduleType){
+            var name   = paths.packageName;
+            var output = paths.output + moduleType + '/' + jsName;
+            if (moduleType === "iife") {
+                name = name.replace('@', '').replace('/', '-');
+            }            
             bundle.write({
-                dest:       paths.output + moduleType + '/' + jsName,
-                format:     moduleType,
-                moduleName: camelCase(paths.packageName),
-                globals: {
-                    "reflect-metadata": "reflectMetadata"
-                }
+                file:   output,
+                format: moduleType,
+                name:   camelCase(name)
             });
+            gulp.src(['./package.json', './README.md'])
+                .pipe(gulp.dest(path.dirname(output)));
         }); 
         console.log('Build complete');
     })
